@@ -1759,20 +1759,27 @@ jumbo_component("base") {
       "process/process_metrics_linux.cc",
       "system/sys_info_linux.cc"
     ]
+#    sources += [
+#      "files/file_path_watcher_kqueue.cc",
+#      "files/file_path_watcher_kqueue.h",
+#      "files/file_path_watcher_stub.cc",
+#      "process/memory_stubs.cc",
+#      "process/process_handle_freebsd.cc",
+#      "process/process_iterator_freebsd.cc",
+#      "process/process_metrics_freebsd.cc",
+#      "system/sys_info_freebsd.cc",
+#    ]
+#    libs = [
+#      "execinfo", # logging.cc
+#      "kvm",      # process_metrics_freebsd
+#      "util"      # process_metrics_freebsd
+#    ]
     sources += [
-      "files/file_path_watcher_kqueue.cc",
-      "files/file_path_watcher_kqueue.h",
       "files/file_path_watcher_stub.cc",
       "process/memory_stubs.cc",
       "process/process_handle_freebsd.cc",
-      "process/process_iterator_freebsd.cc",
       "process/process_metrics_freebsd.cc",
       "system/sys_info_freebsd.cc",
-    ]
-    libs = [
-      "execinfo", # logging.cc
-      "kvm",      # process_metrics_freebsd
-      "util"      # process_metrics_freebsd
     ]
   }
 

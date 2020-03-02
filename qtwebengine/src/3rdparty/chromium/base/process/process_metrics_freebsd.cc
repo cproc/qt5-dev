@@ -17,8 +17,10 @@
 
 #include <unistd.h> /* getpagesize() */
 #include <fcntl.h>  /* O_RDONLY */
+#if 0
 #include <kvm.h>
 #include <libutil.h>
+#endif
 
 namespace base {
 
@@ -76,7 +78,8 @@ size_t GetSystemCommitCharge() {
 
 int GetNumberOfThreads(ProcessHandle process) {
   // Taken from FreeBSD top (usr.bin/top/machine.c)
-
+  return 0;
+#if 0
   kvm_t* kd = kvm_open(NULL, "/dev/null", NULL, O_RDONLY, "kvm_open");
   if (kd == NULL)
     return 0;
@@ -91,6 +94,7 @@ int GetNumberOfThreads(ProcessHandle process) {
     return 0;
 
   return nproc;
+#endif
 }
 
 bool GetSystemMemoryInfo(SystemMemoryInfoKB *meminfo) {
@@ -129,6 +133,8 @@ bool GetSystemMemoryInfo(SystemMemoryInfoKB *meminfo) {
 }
 
 int ProcessMetrics::GetOpenFdCount() const {
+  return -1;
+#if 0
   struct kinfo_file * kif;
   int cnt;
 
@@ -138,6 +144,7 @@ int ProcessMetrics::GetOpenFdCount() const {
   free(kif);
 
   return cnt;
+#endif
 }
 
 int ProcessMetrics::GetOpenFdSoftLimit() const {
