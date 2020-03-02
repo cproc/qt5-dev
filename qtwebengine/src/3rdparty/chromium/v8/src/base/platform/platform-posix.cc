@@ -60,7 +60,7 @@
 #include <sys/resource.h>
 #endif
 
-#if !defined(_AIX) && !defined(V8_OS_FUCHSIA)
+#if !defined(_AIX) && !defined(V8_OS_FUCHSIA) && 0
 #include <sys/syscall.h>
 #endif
 

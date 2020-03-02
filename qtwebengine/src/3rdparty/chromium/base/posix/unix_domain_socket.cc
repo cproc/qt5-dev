@@ -8,7 +8,9 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#if defined(OS_BSD)
 #include <sys/ucred.h>
+#endif
 #if !defined(OS_NACL_NONSFI)
 #include <sys/un.h>
 #endif

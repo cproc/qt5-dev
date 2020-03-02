@@ -65,7 +65,9 @@
 #include <sys/ioctl.h>
 #include <sys/ipc.h>
 #include <sys/time.h>
+#if 0
 #include <sys/shm.h>
+#endif
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
