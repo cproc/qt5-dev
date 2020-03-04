@@ -72,10 +72,12 @@ std::unique_ptr<VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
       base::CommandLine::ForCurrentProcess();
   // Use a Fake or File Video Device Factory if the command line flags are
   // present, otherwise use the normal, platform-dependent, device factory.
+#if 0
   if (command_line->HasSwitch(switches::kUseFakeDeviceForMediaStream)) {
     if (command_line->HasSwitch(switches::kUseFileForFakeVideoCapture)) {
       return std::make_unique<FileVideoCaptureDeviceFactory>();
     } else {
+#endif
       std::vector<FakeVideoCaptureDeviceSettings> config;
       FakeVideoCaptureDeviceFactory::ParseFakeDevicesConfigFromOptionsString(
           command_line->GetSwitchValueASCII(
@@ -84,12 +86,14 @@ std::unique_ptr<VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
       auto result = std::make_unique<FakeVideoCaptureDeviceFactory>();
       result->SetToCustomDevicesConfig(config);
       return std::move(result);
+#if 0
     }
   } else {
     // |ui_task_runner| is needed for the Linux ChromeOS factory to retrieve
     // screen rotations.
     return CreatePlatformSpecificVideoCaptureDeviceFactory(ui_task_runner);
   }
+#endif
 }
 
 }  // namespace media
