@@ -74,7 +74,9 @@
 #if defined(Q_OS_FREEBSD)
 #  include <net/if.h>
 #  include <net/if_types.h>
+#if 0
 #  include <net/if_var.h>
+#endif
 #endif 
 
 QT_BEGIN_NAMESPACE
