@@ -71,6 +71,12 @@
 #  include <resolv.h>
 #endif
 
+#if defined(Q_OS_FREEBSD)
+#  include <net/if.h>
+#  include <net/if_types.h>
+#  include <net/if_var.h>
+#endif 
+
 QT_BEGIN_NAMESPACE
 
 // Almost always the same. If not, specify in qplatformdefs.h.
