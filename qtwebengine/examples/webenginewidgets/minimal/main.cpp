@@ -58,7 +58,7 @@ QUrl commandLineUrlArgument()
         if (!arg.startsWith(QLatin1Char('-')))
             return QUrl::fromUserInput(arg);
     }
-    return QUrl(QStringLiteral("https://www.qt.io"));
+    return QUrl(QStringLiteral("http://www.opencms.org"));
 }
 
 int main(int argc, char *argv[])
