@@ -716,6 +716,7 @@ setBootstrapVariable()
 }
 
 # build qmake
+if [ '!' -f "$outpath/bin/qmake" ] ; then 
     echo "Creating qmake..."
     mkdir -p "$outpath/qmake" || exit
 
@@ -813,6 +814,7 @@ setBootstrapVariable()
         fi
         echo "Done."
     fi
+fi # Creating qmake
 
 #-------------------------------------------------------------------------------
 # create a qt.conf for the Qt build tree itself
