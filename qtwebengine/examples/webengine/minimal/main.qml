@@ -58,6 +58,6 @@ Window {
     visible: true
     WebEngineView {
         anchors.fill: parent
-        url: "https://www.qt.io"
+        url: "http://www.opencms.org"
     }
 }
