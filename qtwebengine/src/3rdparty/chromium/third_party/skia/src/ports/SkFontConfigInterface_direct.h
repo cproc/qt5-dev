@@ -11,7 +11,9 @@
 
 #include "SkFontConfigInterface.h"
 
+#if 0
 #include <fontconfig/fontconfig.h>
+#endif
 
 class SkFontConfigInterfaceDirect : public SkFontConfigInterface {
 public:
@@ -29,11 +31,13 @@ public:
 protected:
     virtual bool isAccessible(const char* filename);
 
+#if 0
 private:
     bool isValidPattern(FcPattern* pattern);
     FcPattern* MatchFont(FcFontSet* font_set, const char* post_config_family,
                          const SkString& family);
     typedef SkFontConfigInterface INHERITED;
+#endif
 };
 
 #endif

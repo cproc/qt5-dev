@@ -3,8 +3,9 @@
 // found in the LICENSE file.
 
 #include "components/services/font/fontconfig_matching.h"
-
+#if 0
 #include <fontconfig/fontconfig.h>
+#endif
 #include "base/files/file.h"
 #include "base/posix/eintr_wrapper.h"
 #include "base/strings/string_util.h"
@@ -16,6 +17,7 @@ namespace font_service {
 base::Optional<FontConfigLocalMatching::FontConfigMatchResult>
 FontConfigLocalMatching::FindFontByPostscriptNameOrFullFontName(
     const std::string& font_name) {
+#if 0
   // TODO(crbug.com/876652): This FontConfig-backed implementation will
   // match PostScript and full font name in any language, and we're okay
   // with that for now since it is what FireFox does.
@@ -26,8 +28,11 @@ FontConfigLocalMatching::FindFontByPostscriptNameOrFullFontName(
     return postscript_result;
 
   return FindFontBySpecifiedName(FC_FULLNAME, font_name);
+#else
+  return base::nullopt;
+#endif
 }
-
+#if 0
 base::Optional<FontConfigLocalMatching::FontConfigMatchResult>
 FontConfigLocalMatching::FindFontBySpecifiedName(
     const char* fontconfig_parameter_name,
@@ -103,4 +108,5 @@ FontConfigLocalMatching::FindFontBySpecifiedName(
   match_result.ttc_index = ttc_index;
   return match_result;
 }
+#endif
 }  // namespace font_service

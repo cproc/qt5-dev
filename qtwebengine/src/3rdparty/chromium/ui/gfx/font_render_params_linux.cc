@@ -4,7 +4,9 @@
 
 #include "ui/gfx/font_render_params.h"
 
+#if 0
 #include <fontconfig/fontconfig.h>
+#endif
 #include <stddef.h>
 #include <stdint.h>
 
@@ -27,7 +29,7 @@
 namespace gfx {
 
 namespace {
-
+#if 0
 int FontWeightToFCWeight(Font::Weight weight) {
   const int weight_number = static_cast<int>(weight);
   if (weight_number <= (static_cast<int>(Font::Weight::THIN) +
@@ -65,7 +67,7 @@ int FontWeightToFCWeight(Font::Weight weight) {
   else
     return FC_WEIGHT_BLACK;
 }
-
+#endif
 // A device scale factor used to determine if subpixel positioning
 // should be used.
 float device_scale_factor_ = 1.0f;
@@ -101,7 +103,7 @@ struct SynchronizedCache {
 
 base::LazyInstance<SynchronizedCache>::Leaky g_synchronized_cache =
     LAZY_INSTANCE_INITIALIZER;
-
+#if 0
 // Converts Fontconfig FC_HINT_STYLE to FontRenderParams::Hinting.
 FontRenderParams::Hinting ConvertFontconfigHintStyle(int hint_style) {
   switch (hint_style) {
@@ -235,11 +237,12 @@ uint32_t HashFontRenderParamsQuery(const FontRenderParamsQuery& query) {
       base::JoinString(query.families, ",").c_str(),
       query.device_scale_factor));
 }
-
+#endif
 }  // namespace
 
 FontRenderParams GetFontRenderParams(const FontRenderParamsQuery& query,
                                      std::string* family_out) {
+#if 0
   FontRenderParamsQuery actual_query(query);
   if (actual_query.device_scale_factor == 0)
     actual_query.device_scale_factor = device_scale_factor_;
@@ -307,6 +310,9 @@ FontRenderParams GetFontRenderParams(const FontRenderParamsQuery& query,
   }
 
   return params;
+#else
+  return FontRenderParams();
+#endif
 }
 
 void ClearFontRenderParamsCacheForTest() {
