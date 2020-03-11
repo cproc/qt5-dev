@@ -93,7 +93,7 @@ if (use_bundled_fontconfig) {
   }
 } else {
   config("fontconfig_config") {
-    libs = [ "fontconfig" ]
+#    libs = [ "fontconfig" ]
   }
 
   group("fontconfig") {

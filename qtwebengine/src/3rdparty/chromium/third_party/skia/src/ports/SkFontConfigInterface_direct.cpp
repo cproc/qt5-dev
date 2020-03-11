@@ -20,7 +20,9 @@
 #include "SkTemplates.h"
 #include "SkTypeface.h"
 
+#if 0
 #include <fontconfig/fontconfig.h>
+#endif
 #include <unistd.h>
 
 #ifdef SK_DEBUG
@@ -40,6 +42,7 @@ void DeleteThreadFcLocked(void* v) { delete static_cast<bool*>(v); }
         static_cast<bool*>(SkTLS::Get(CreateThreadFcLocked, DeleteThreadFcLocked))
 #endif
 
+#if 0
 struct FCLocker {
     // Assume FcGetVersion() has always been thread safe.
 
@@ -70,7 +73,7 @@ struct FCLocker {
         }
     ) }
 };
-
+#endif
 } // namespace
 
 size_t SkFontConfigInterface::FontIdentity::writeToMemory(void* addr) const {
@@ -158,7 +161,7 @@ static void fontconfiginterface_unittest() {
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
-
+#if 0
 // Returns the string from the pattern, or nullptr
 static const char* get_string(FcPattern* pattern, const char field[], int index = 0) {
     const char* name;
@@ -167,7 +170,7 @@ static const char* get_string(FcPattern* pattern, const char field[], int index 
     }
     return name;
 }
-
+#endif
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace {
@@ -358,7 +361,7 @@ bool IsFallbackFontAllowed(const SkString& family) {
          strcasecmp(family_cstr, "serif") == 0 ||
          strcasecmp(family_cstr, "monospace") == 0;
 }
-
+#if 0
 // Retrieves |is_bold|, |is_italic| and |font_family| properties from |font|.
 static int get_int(FcPattern* pattern, const char object[], int missing) {
     int value;
@@ -494,7 +497,7 @@ static void fcpattern_from_skfontstyle(SkFontStyle style, FcPattern* pattern) {
     FcPatternAddInteger(pattern, FC_WIDTH , width);
     FcPatternAddInteger(pattern, FC_SLANT , slant);
 }
-
+#endif
 }  // anonymous namespace
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -506,11 +509,13 @@ const char* kFontFormatCFF = "CFF";
 #endif
 
 SkFontConfigInterfaceDirect::SkFontConfigInterfaceDirect() {
+#if 0
     FCLocker lock;
 
     FcInit();
 
     SkDEBUGCODE(fontconfiginterface_unittest();)
+#endif
 }
 
 SkFontConfigInterfaceDirect::~SkFontConfigInterfaceDirect() {
@@ -522,7 +527,7 @@ bool SkFontConfigInterfaceDirect::isAccessible(const char* filename) {
     }
     return true;
 }
-
+#if 0
 bool SkFontConfigInterfaceDirect::isValidPattern(FcPattern* pattern) {
 #ifdef SK_FONT_CONFIG_INTERFACE_ONLY_ALLOW_SFNT_FONTS
     const char* font_format = get_string(pattern, FC_FONTFORMAT);
@@ -581,12 +586,13 @@ FcPattern* SkFontConfigInterfaceDirect::MatchFont(FcFontSet* font_set,
 
   return match;
 }
-
+#endif
 bool SkFontConfigInterfaceDirect::matchFamilyName(const char familyName[],
                                                   SkFontStyle style,
                                                   FontIdentity* outIdentity,
                                                   SkString* outFamilyName,
                                                   SkFontStyle* outStyle) {
+#if 0
     SkString familyStr(familyName ? familyName : "");
     if (familyStr.size() > kMaxFontFamilyLength) {
         return false;
@@ -686,6 +692,9 @@ bool SkFontConfigInterfaceDirect::matchFamilyName(const char familyName[],
         *outStyle = skfontstyle_from_fcpattern(match);
     }
     return true;
+#else
+    return false;
+#endif
 }
 
 SkStreamAsset* SkFontConfigInterfaceDirect::openStream(const FontIdentity& identity) {
