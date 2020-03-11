@@ -4,7 +4,9 @@
 
 #include "ui/gfx/font_fallback_linux.h"
 
+#if 0
 #include <fontconfig/fontconfig.h>
+#endif
 
 #include <map>
 #include <memory>
@@ -20,7 +22,7 @@
 #endif
 
 namespace gfx {
-
+#if 0
 namespace {
 
 const char kFontFormatTrueType[] = "TrueType";
@@ -38,7 +40,7 @@ std::vector<Font> GetFallbackFonts(const Font& font) {
       &g_fallback_cache.Get()[font_family];
   if (!fallback_fonts->empty())
     return *fallback_fonts;
-
+#if 0
   FcPattern* pattern = FcPatternCreate();
   FcValue family;
   family.type = FcTypeString;
@@ -64,7 +66,7 @@ std::vector<Font> GetFallbackFonts(const Font& font) {
     }
   }
   FcPatternDestroy(pattern);
-
+#endif
   if (fallback_fonts->empty())
     fallback_fonts->push_back(Font(font_family, 13));
 
@@ -255,12 +257,16 @@ base::LazyInstance<FontSetCache>::Leaky g_font_sets_by_locale =
     LAZY_INSTANCE_INITIALIZER;
 
 }  // namespace
-
+#endif
 FallbackFontData GetFallbackFontForChar(UChar32 c, const std::string& locale) {
+#if 0
   auto& cached_font_set = g_font_sets_by_locale.Get()[locale];
   if (!cached_font_set)
     cached_font_set = CachedFontSet::CreateForLocale(locale);
   return cached_font_set->GetFallbackFontForChar(c);
+#else
+  return FallbackFontData();
+#endif
 }
 
 }  // namespace gfx
