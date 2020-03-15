@@ -42,7 +42,6 @@
 
 #ifndef QBASICATOMIC_H
 #define QBASICATOMIC_H
-
 #if defined(QT_BOOTSTRAPPED)
 #  include <QtCore/qatomic_bootstrap.h>
 

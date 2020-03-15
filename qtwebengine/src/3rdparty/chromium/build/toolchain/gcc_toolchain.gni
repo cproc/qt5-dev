@@ -48,6 +48,7 @@ analyzer_wrapper =
                 root_build_dir) + " --mode=clang"
 
 declare_args() {
+  extra_cflags = ""
   extra_cxxflags = ""
   extra_ldflags = ""
 }
@@ -276,6 +277,11 @@ template("gcc_toolchain") {
     } else {
       solink_libs_section_postfix = ""
     }
+
+#    if (target_os == "linux") {
+        extra_cflags += "-Daaa "
+        extra_cxxflags += "-Dbbb "
+#    }
 
     if (defined(invoker.extra_cflags) && invoker.extra_cflags != "") {
       extra_cflags = " " + invoker.extra_cflags

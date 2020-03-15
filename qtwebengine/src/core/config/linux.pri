@@ -138,6 +138,8 @@ host_build {
         # but currently we don't it available at this point
         gn_args += target_cpu=\"$$GN_TARGET_CPU\"
         gn_args += target_os=\"$$GN_TARGET_OS\"
+        gn_args += extra_cflags=\"$$QMAKE_CFLAGS\"
+        gn_args += extra_cxxflags=\"$$QMAKE_CXXFLAGS\"
     } else {
         gn_args += host_cpu=\"$$GN_TARGET_CPU\"
     }

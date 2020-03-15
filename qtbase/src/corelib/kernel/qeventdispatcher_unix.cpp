@@ -74,8 +74,7 @@
 #endif
 
 #ifdef Q_OS_GENODE
-#include <timer_session/connection.h>
-#define perror Genode::error
+//#define perror Genode::error
 #endif /* Q_OS_GENODE */
 
 QT_BEGIN_NAMESPACE
