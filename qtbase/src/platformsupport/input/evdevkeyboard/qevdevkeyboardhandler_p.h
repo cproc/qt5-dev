@@ -189,7 +189,10 @@ public:
     bool loadKeymap(const QString &file);
     void unloadKeymap();
 
+#ifndef Q_OS_GENODE
+private slots:
     void readKeycode();
+#endif /* Q_OS_GENODE */
     KeycodeAction processKeycode(quint16 keycode, bool pressed, bool autorepeat);
 
     void switchLang();
