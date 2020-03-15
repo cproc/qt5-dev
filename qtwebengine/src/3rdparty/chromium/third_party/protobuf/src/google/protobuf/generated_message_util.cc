@@ -786,6 +786,7 @@ void InitSCC_DFS(SCCInfoBase* scc) {
 }  // namespace
 
 void InitSCCImpl(SCCInfoBase* scc) {
+#if 0
   static WrappedMutex mu{GOOGLE_PROTOBUF_LINKER_INITIALIZED};
   // Either the default in case no initialization is running or the id of the
   // thread that is currently initializing.
@@ -806,6 +807,7 @@ void InitSCCImpl(SCCInfoBase* scc) {
   InitSCC_DFS(scc);
   runner.store(std::thread::id{}, std::memory_order_relaxed);
   mu.Unlock();
+#endif
 }
 
 }  // namespace internal

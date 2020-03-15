@@ -48,14 +48,16 @@ namespace internal {
 class LIBPROTOBUF_EXPORT WrappedMutex {
  public:
   WrappedMutex() = default;
-  void Lock() { mu_.lock(); }
-  void Unlock() { mu_.unlock(); }
+  void Lock() { /*mu_.lock();*/ }
+  void Unlock() { /*mu_.unlock();*/ }
   // Crash if this Mutex is not held exclusively by this thread.
   // May fail to crash when it should; will never crash when it should not.
   void AssertHeld() const {}
 
+#if 0
  private:
   std::mutex mu_;
+#endif
 };
 
 using Mutex = WrappedMutex;
