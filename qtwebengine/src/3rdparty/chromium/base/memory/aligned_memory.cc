@@ -28,10 +28,15 @@ void* AlignedAlloc(size_t size, size_t alignment) {
 #elif defined(OS_ANDROID)
   ptr = memalign(alignment, size);
 #else
+#if 0
   if (int ret = posix_memalign(&ptr, alignment, size)) {
     DLOG(ERROR) << "posix_memalign() returned with error " << ret;
     ptr = nullptr;
   }
+#else
+  perror("*** Error: AlignedAlloc() not implemented\n");
+  ptr = nullptr;
+#endif
 #endif
   // Since aligned allocations may fail for non-memory related reasons, force a
   // crash if we encounter a failed allocation; maintaining consistent behavior
