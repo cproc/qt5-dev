@@ -503,7 +503,7 @@ int OS::GetCurrentThreadId() {
   return static_cast<int>(gettid());
 #elif V8_OS_DRAGONFLYBSD || defined(__DragonFly__)
   return static_cast<int>(lwp_gettid());
-#elif V8_OS_FREEBSD
+#elif V8_OS_FREEBSD && 0
   return static_cast<int>(pthread_getthreadid_np());
 #elif V8_OS_NETBSD
   return static_cast<int>(_lwp_self());
@@ -717,7 +717,7 @@ Thread::~Thread() {
 
 
 static void SetThreadName(const char* name) {
-#if V8_OS_DRAGONFLYBSD || V8_OS_FREEBSD || V8_OS_OPENBSD
+#if (V8_OS_DRAGONFLYBSD || V8_OS_FREEBSD || V8_OS_OPENBSD) && 0
   pthread_set_name_np(pthread_self(), name);
 #elif V8_OS_NETBSD
   STATIC_ASSERT(Thread::kMaxThreadNameLength <= PTHREAD_MAX_NAMELEN_NP);
