@@ -221,7 +221,6 @@ QHostInfo QHostInfoAgent::fromName(const QString &hostName)
         char hbuf[NI_MAXHOST];
         if (sa && getnameinfo(sa, saSize, hbuf, sizeof(hbuf), 0, 0, 0) == 0)
             results.setHostName(QString::fromLatin1(hbuf));
-
         if (results.hostName().isEmpty())
             results.setHostName(address.toString());
         results.setAddresses(QList<QHostAddress>() << address);
