@@ -85,10 +85,16 @@ namespace google {
 namespace protobuf {
 namespace internal {
 
+#if !defined(__FreeBSD__)
 using once_flag = std::once_flag;
+#else
+  typedef void* once_flag;
+#endif
 template <typename... Args>
 void call_once(Args&&... args ) {
+#if !defined(__FreeBSD__)
   std::call_once(std::forward<Args>(args)...);
+#endif
 }
 
 }  // namespace internal
@@ -101,7 +107,9 @@ void GoogleOnceInit(ProtobufOnceType* once, void (*init_func)());
 template <typename Arg>
 inline void GoogleOnceInitArg(ProtobufOnceType* once, void (*init_func)(Arg*),
                               Arg* arg) {
+#if !defined(__FreeBSD__)
   std::call_once(*once, init_func, arg);
+#endif
 }
 
 class GoogleOnceDynamic {
