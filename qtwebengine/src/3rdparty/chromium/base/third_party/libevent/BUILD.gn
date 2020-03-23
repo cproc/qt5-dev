@@ -57,7 +57,7 @@ static_library("bundled_libevent") {
     include_dirs = [ "linux" ]
   } else if (is_bsd) {
     sources += [ 
-      "kqueue.c",
+#      "kqueue.c",
       "freebsd/config.h",
       "freebsd/event-config.h",
     ]

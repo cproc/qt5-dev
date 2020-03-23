@@ -33,7 +33,11 @@ void* AlignedAllocInternal(size_t size, size_t alignment) {
   // memalign. See http://code.google.com/p/android/issues/detail?id=35391.
   ptr = memalign(alignment, size);
 #else
+#if 0 /* XXX */
   if (posix_memalign(&ptr, alignment, size)) ptr = nullptr;
+#else
+  ptr = nullptr;
+#endif
 #endif
   return ptr;
 }
