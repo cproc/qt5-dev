@@ -175,8 +175,8 @@ QString subProcessPath()
                 break;
             }
         }
-        if (processPath.isEmpty())
-            qFatal("Could not find %s", processBinary.toUtf8().constData());
+//        if (processPath.isEmpty())
+//            qFatal("Could not find %s", processBinary.toUtf8().constData());
 
     }
 
