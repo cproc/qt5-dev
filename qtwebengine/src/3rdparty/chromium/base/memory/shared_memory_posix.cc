@@ -198,6 +198,9 @@ bool SharedMemory::Create(const SharedMemoryCreateOptions& options) {
   readonly_shm_ =
       SharedMemoryHandle(FileDescriptor(readonly_mapped_file, false),
                          options.size, shm_.GetGUID());
+
+fprintf(stderr, "%s: path: %s\n", __PRETTY_FUNCTION__, path.value().c_str());
+
   return result;
 }
 
@@ -289,6 +292,9 @@ bool SharedMemory::MapAt(off_t offset, size_t bytes) {
     }
   }
 #endif
+
+fprintf(stderr, "*** %s: fd: %d\n", __PRETTY_FUNCTION__, shm_.GetHandle());
+//exit(-1);
 
   memory_ = mmap(nullptr, bytes, PROT_READ | (read_only_ ? 0 : PROT_WRITE),
                  MAP_SHARED, shm_.GetHandle(), offset);

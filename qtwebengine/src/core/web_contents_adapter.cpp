@@ -592,7 +592,7 @@ void WebContentsAdapter::load(const QUrl &url)
     QWebEngineHttpRequest request(url);
     load(request);
 }
-
+extern "C" void wait_for_continue();
 void WebContentsAdapter::load(const QWebEngineHttpRequest &request)
 {
     GURL gurl = toGurl(request.url());
@@ -601,7 +601,8 @@ void WebContentsAdapter::load(const QWebEngineHttpRequest &request)
             content::SiteInstance::CreateForURL(m_profileAdapter->profile(), gurl);
         initialize(site.get());
     }
-
+fprintf(stderr, "*** load()\n");
+//wait_for_continue();
     CHECK_VALID_RENDER_WIDGET_HOST_VIEW(m_webContents->GetRenderViewHost());
 
     // The situation can occur when relying on the editingFinished signal in QML to set the url

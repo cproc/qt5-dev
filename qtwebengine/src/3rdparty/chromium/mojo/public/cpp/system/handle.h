@@ -96,7 +96,9 @@ class ScopedHandleBase {
 
   const HandleType& get() const { return handle_; }
   const HandleType* operator->() const {
+#if 0
     DCHECK(handle_.is_valid());
+#endif
     return &handle_;
   }
 

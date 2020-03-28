@@ -21,8 +21,10 @@ struct ScopedPathUnlinkerTraits {
   static const FilePath* InvalidValue() { return nullptr; }
 
   static void Free(const FilePath* path) {
+#if 0
     if (unlink(path->value().c_str()))
       PLOG(WARNING) << "unlink";
+#endif
   }
 };
 
@@ -32,6 +34,7 @@ using ScopedPathUnlinker =
 
 #if !defined(OS_NACL)
 bool CheckFDAccessMode(int fd, int expected_mode) {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
   int fd_status = fcntl(fd, F_GETFL);
   if (fd_status == -1) {
     DPLOG(ERROR) << "fcntl(" << fd << ", F_GETFL) failed";
@@ -72,6 +75,9 @@ PlatformSharedMemoryRegion PlatformSharedMemoryRegion::Take(
     Mode mode,
     size_t size,
     const UnguessableToken& guid) {
+
+fprintf(stderr, "*** %s: fd: %d\n", __PRETTY_FUNCTION__, handle.fd.get());
+
   if (!handle.fd.is_valid())
     return {};
 
@@ -113,6 +119,8 @@ PlatformSharedMemoryRegion
 PlatformSharedMemoryRegion::TakeFromSharedMemoryHandle(
     const SharedMemoryHandle& handle,
     Mode mode) {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__); exit(-1);
+
   CHECK(mode == Mode::kReadOnly || mode == Mode::kUnsafe);
   if (!handle.IsValid())
     return {};
@@ -123,15 +131,21 @@ PlatformSharedMemoryRegion::TakeFromSharedMemoryHandle(
 }
 
 FDPair PlatformSharedMemoryRegion::GetPlatformHandle() const {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
+
   return handle_.get();
 }
 
 bool PlatformSharedMemoryRegion::IsValid() const {
+//fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
+
   return handle_.fd.is_valid() &&
          (mode_ == Mode::kWritable ? handle_.readonly_fd.is_valid() : true);
 }
 
 PlatformSharedMemoryRegion PlatformSharedMemoryRegion::Duplicate() const {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
+
   if (!IsValid())
     return {};
 
@@ -143,12 +157,16 @@ PlatformSharedMemoryRegion PlatformSharedMemoryRegion::Duplicate() const {
     DPLOG(ERROR) << "dup(" << handle_.fd.get() << ") failed";
     return {};
   }
+fprintf(stderr, "*** %s: source fd: %d, duped_fd: %d\n", __PRETTY_FUNCTION__, handle_.fd.get(), duped_fd.get());
 
   return PlatformSharedMemoryRegion({std::move(duped_fd), ScopedFD()}, mode_,
                                     size_, guid_);
 }
 
 bool PlatformSharedMemoryRegion::ConvertToReadOnly() {
+fprintf(stderr, "*** %s: original fd: %d, original readonly_fd: %d\n",
+        __PRETTY_FUNCTION__, handle_.fd.get(), handle_.readonly_fd.get());
+
   if (!IsValid())
     return false;
 
@@ -157,10 +175,16 @@ bool PlatformSharedMemoryRegion::ConvertToReadOnly() {
 
   handle_.fd.reset(handle_.readonly_fd.release());
   mode_ = Mode::kReadOnly;
+
+fprintf(stderr, "*** %s: new fd: %d, new readonly_fd: %d\n",
+        __PRETTY_FUNCTION__, handle_.fd.get(), handle_.readonly_fd.get());
+
   return true;
 }
 
 bool PlatformSharedMemoryRegion::ConvertToUnsafe() {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
+
   if (!IsValid())
     return false;
 
@@ -176,9 +200,11 @@ bool PlatformSharedMemoryRegion::MapAtInternal(off_t offset,
                                                size_t size,
                                                void** memory,
                                                size_t* mapped_size) const {
+fprintf(stderr, "*** %s: fd: %d, offset: %zd, size: %zu\n", __PRETTY_FUNCTION__, handle_.fd.get(), offset, size);
+
   bool write_allowed = mode_ != Mode::kReadOnly;
   *memory = mmap(nullptr, size, PROT_READ | (write_allowed ? PROT_WRITE : 0),
-                 MAP_SHARED, handle_.fd.get(), offset);
+                 MAP_SHARED/*MAP_PRIVATE*/, handle_.fd.get(), offset);
 
   bool mmap_succeeded = *memory && *memory != MAP_FAILED;
   if (!mmap_succeeded) {
@@ -186,13 +212,19 @@ bool PlatformSharedMemoryRegion::MapAtInternal(off_t offset,
     return false;
   }
 
+  fprintf(stderr, "*** %s: *memory: %p\n", __PRETTY_FUNCTION__, *memory);
+
   *mapped_size = size;
   return true;
 }
-
+extern "C" void wait_for_continue();
 // static
 PlatformSharedMemoryRegion PlatformSharedMemoryRegion::Create(Mode mode,
                                                               size_t size) {
+#if !defined(OS_LINUX)
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
+//wait_for_continue();
+#endif
 #if defined(OS_NACL)
   // Untrusted code can't create descriptors or handles.
   return {};
@@ -270,6 +302,8 @@ PlatformSharedMemoryRegion PlatformSharedMemoryRegion::Create(Mode mode,
       return {};
     }
   }
+  
+  fprintf(stderr, "*** %s: fd: %d, readonly_fd: %d\n", __PRETTY_FUNCTION__, fd.get(), readonly_fd.get());
 
   return PlatformSharedMemoryRegion({std::move(fd), std::move(readonly_fd)},
                                     mode, size, UnguessableToken::Create());
@@ -280,6 +314,8 @@ bool PlatformSharedMemoryRegion::CheckPlatformHandlePermissionsCorrespondToMode(
     PlatformHandle handle,
     Mode mode,
     size_t size) {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
+
 #if !defined(OS_NACL)
   if (!CheckFDAccessMode(handle.fd,
                          mode == Mode::kReadOnly ? O_RDONLY : O_RDWR)) {
@@ -309,7 +345,11 @@ PlatformSharedMemoryRegion::PlatformSharedMemoryRegion(
     Mode mode,
     size_t size,
     const UnguessableToken& guid)
-    : handle_(std::move(handle)), mode_(mode), size_(size), guid_(guid) {}
+    : handle_(std::move(handle)), mode_(mode), size_(size), guid_(guid) {
+fprintf(stderr, "*** %s: fd: %d, readonly_fd: %d\n",
+        __PRETTY_FUNCTION__, handle_.fd.get(), handle_.readonly_fd.get());
+
+}
 
 }  // namespace subtle
 }  // namespace base
