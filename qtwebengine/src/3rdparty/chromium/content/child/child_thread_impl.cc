@@ -761,9 +761,11 @@ void ChildThreadImpl::OnProcessFinalRelease() {
 
   ProcessShutdown();
 }
-
+//extern "C" void wait_for_continue();
 void ChildThreadImpl::EnsureConnected() {
   VLOG(0) << "ChildThreadImpl::EnsureConnected()";
+  //wait_for_continue();
+  fprintf(stderr, "### %s\n", __PRETTY_FUNCTION__); exit(-1);
   base::Process::TerminateCurrentProcessImmediately(0);
 }
 
