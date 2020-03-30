@@ -1,9 +1,9 @@
 /****************************************************************************
 **
-** Copyright (C) 2018 The Qt Company Ltd.
+** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the QtWebEngine module of the Qt Toolkit.
+** This file is part of the qmake spec of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** Commercial License Usage
@@ -37,29 +37,9 @@
 **
 ****************************************************************************/
 
-#ifndef ACCESSIBILITY_ACTIVATION_OBSERVER_H
-#define ACCESSIBILITY_ACTIVATION_OBSERVER_H
+#ifndef QPLATFORMDEFS_H
+#define QPLATFORMDEFS_H
 
-#include <QtGui/qtguiglobal.h>
+#include "../common/bsd/qplatformdefs.h"
 
-#ifndef QT_NO_ACCESSIBILITY
-#include <QtGui/qaccessible.h>
-
-namespace QtWebEngineCore {
-
-class RenderWidgetHostViewQt;
-
-class AccessibilityActivationObserver : public QAccessible::ActivationObserver
-{
-public:
-    AccessibilityActivationObserver();
-    ~AccessibilityActivationObserver();
-
-    void accessibilityActiveChanged(bool active) override;
-};
-
-} // namespace QtWebEngineCore
-
-#endif // QT_NO_ACCESSIBILITY
-
-#endif // ACCESSIBILITY_ACTIVATION_OBSERVER_H
+#endif // QPLATFORMDEFS_H
