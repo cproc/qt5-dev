@@ -58,6 +58,6 @@ Window {
     visible: true
     WebEngineView {
         anchors.fill: parent
-        url: "http://www.opencms.org"
+        url: "about:blank"
     }
 }
