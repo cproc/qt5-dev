@@ -81,7 +81,7 @@ namespace content {
 namespace {
 
 // How long to wait for a connection to the browser process before giving up.
-const int kConnectionTimeoutS = 15;
+const int kConnectionTimeoutS = 1500;
 
 base::LazyInstance<base::ThreadLocalPointer<ChildThreadImpl>>::DestructorAtExit
     g_lazy_child_thread_impl_tls = LAZY_INSTANCE_INITIALIZER;
@@ -214,6 +214,7 @@ base::LazyInstance<QuitClosure>::DestructorAtExit g_quit_closure =
 base::Optional<mojo::IncomingInvitation> InitializeMojoIPCChannel() {
   TRACE_EVENT0("startup", "InitializeMojoIPCChannel");
   mojo::PlatformChannelEndpoint endpoint;
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
 #if defined(OS_WIN)
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           mojo::PlatformChannel::kHandleSwitch)) {
@@ -237,6 +238,7 @@ base::Optional<mojo::IncomingInvitation> InitializeMojoIPCChannel() {
   // TODO(crbug.com/604282): Support Mojo in the remaining processes.
   if (!endpoint.is_valid())
     return base::nullopt;
+fprintf(stderr, "*** %s finished\n", __PRETTY_FUNCTION__);
 
   return mojo::IncomingInvitation::Accept(std::move(endpoint));
 }
@@ -385,6 +387,8 @@ void ChildThreadImpl::OnFieldTrialGroupFinalized(
 }
 
 void ChildThreadImpl::ConnectChannel() {
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
   DCHECK(service_manager_connection_);
   IPC::mojom::ChannelBootstrapPtr bootstrap;
   mojo::ScopedMessagePipeHandle handle =
@@ -416,6 +420,7 @@ void ChildThreadImpl::Init(const Options& options) {
       this, ChildProcess::current()->io_task_runner(),
       ipc_task_runner_ ? ipc_task_runner_ : base::ThreadTaskRunnerHandle::Get(),
       ChildProcess::current()->GetShutDownEvent());
+
 #if BUILDFLAG(IPC_MESSAGE_LOG_ENABLED)
   if (!IsInBrowserProcess())
     IPC::Logging::GetInstance()->SetIPCSender(this);
@@ -519,9 +524,8 @@ void ChildThreadImpl::Init(const Options& options) {
   // This must always be done after ConnectChannel, because ConnectChannel() may
   // add a ConnectionFilter to the connection.
   if (options.auto_start_service_manager_connection &&
-      service_manager_connection_) {
+      service_manager_connection_)
     StartServiceManagerConnection();
-  }
 
   int connection_timeout = kConnectionTimeoutS;
   std::string connection_override =
@@ -598,10 +602,12 @@ bool ChildThreadImpl::ShouldBeDestroyed() {
 }
 
 void ChildThreadImpl::OnChannelConnected(int32_t peer_pid) {
+fprintf(stderr, "*** %p: %s: %d\n", &peer_pid, __PRETTY_FUNCTION__, peer_pid);
   channel_connected_factory_.reset();
 }
 
 void ChildThreadImpl::OnChannelError() {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
   on_channel_error_called_ = true;
   // If this thread runs in the browser process, only Thread::Stop should
   // stop its message loop. Otherwise, QuitWhenIdle could race Thread::Stop.
@@ -687,6 +693,7 @@ std::unique_ptr<base::SharedMemory> ChildThreadImpl::AllocateSharedMemory(
 }
 
 bool ChildThreadImpl::OnMessageReceived(const IPC::Message& msg) {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
   if (msg.routing_id() == MSG_ROUTING_CONTROL)
     return OnControlMessageReceived(msg);
 
@@ -761,9 +768,10 @@ void ChildThreadImpl::OnProcessFinalRelease() {
 
   ProcessShutdown();
 }
-
+extern "C" void wait_for_continue();
 void ChildThreadImpl::EnsureConnected() {
   VLOG(0) << "ChildThreadImpl::EnsureConnected()";
+  //wait_for_continue();
   base::Process::TerminateCurrentProcessImmediately(0);
 }
 

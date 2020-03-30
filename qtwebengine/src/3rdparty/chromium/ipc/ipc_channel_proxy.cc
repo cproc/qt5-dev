@@ -132,6 +132,7 @@ bool ChannelProxy::Context::OnMessageReceivedNoFilter(const Message& message) {
 
 // Called on the IPC::Channel thread
 void ChannelProxy::Context::OnChannelConnected(int32_t peer_pid) {
+fprintf(stderr, "*** %s: peer_pid: %d\n", __PRETTY_FUNCTION__, peer_pid);
   // We cache off the peer_pid so it can be safely accessed from both threads.
   {
     base::AutoLock l(peer_pid_lock_);
@@ -232,6 +233,8 @@ void ChannelProxy::Context::OnSendMessage(std::unique_ptr<Message> message) {
 
 // Called on the IPC::Channel thread
 void ChannelProxy::Context::OnAddFilter() {
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
   // Our OnChannelConnected method has not yet been called, so we can't be
   // sure that channel_ is valid yet. When OnChannelConnected *is* called,
   // it invokes OnAddFilter, so any pending filter(s) will be added at that
@@ -301,6 +304,7 @@ void ChannelProxy::Context::AddFilter(MessageFilter* filter) {
 
 // Called on the listener's thread
 void ChannelProxy::Context::OnDispatchMessage(const Message& message) {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
   if (!listener_)
     return;
 

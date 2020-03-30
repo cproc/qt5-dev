@@ -251,6 +251,8 @@ class ServiceManagerConnectionImpl::IOThreadContext
   void OnBindInterface(const service_manager::BindSourceInfo& source_info,
                        const std::string& interface_name,
                        mojo::ScopedMessagePipeHandle interface_pipe) override {
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
     DCHECK(io_thread_checker_.CalledOnValidThread());
     if (source_info.identity.name() == service_manager::mojom::kServiceName &&
         interface_name == service_manager::mojom::ServiceFactory::Name_) {

@@ -495,6 +495,8 @@ void SyncChannel::SyncContext::OnChannelError() {
 }
 
 void SyncChannel::SyncContext::OnChannelOpened() {
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
   if (shutdown_event_) {
     shutdown_watcher_.StartWatching(
         shutdown_event_,

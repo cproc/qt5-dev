@@ -76,7 +76,10 @@ class SimpleWatcher::Context : public base::RefCountedThreadSafe<Context> {
           int watch_id)
       : weak_watcher_(weak_watcher),
         task_runner_(task_runner),
-        watch_id_(watch_id) {}
+        watch_id_(watch_id)
+  {
+    fprintf(stderr, "*** %p: %s: %p\n", &watch_id, __PRETTY_FUNCTION__, this);
+  }
 
   ~Context() {
     // TODO(https://crbug.com/896419): Remove this once it's been live for a
@@ -116,6 +119,8 @@ class SimpleWatcher::Context : public base::RefCountedThreadSafe<Context> {
       // the default task runner for the IO thread.
       weak_watcher_->OnHandleReady(watch_id_, result, state);
     } else {
+int dummy;
+fprintf(stderr, "*** %p: %s: %p\n", &dummy, __PRETTY_FUNCTION__, this);
       task_runner_->PostTask(
           FROM_HERE, base::Bind(&SimpleWatcher::OnHandleReady, weak_watcher_,
                                 watch_id_, result, state));
@@ -255,6 +260,8 @@ void SimpleWatcher::ArmOrNotify() {
     return;
 
   DCHECK_EQ(MOJO_RESULT_FAILED_PRECONDITION, rv);
+int dummy;
+fprintf(stderr, "*** %p: %s: %p\n", &dummy, __PRETTY_FUNCTION__, context_.get());
   task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&SimpleWatcher::OnHandleReady, weak_factory_.GetWeakPtr(),
@@ -264,6 +271,7 @@ void SimpleWatcher::ArmOrNotify() {
 void SimpleWatcher::OnHandleReady(int watch_id,
                                   MojoResult result,
                                   const HandleSignalsState& state) {
+fprintf(stderr, "*** %p: %s: %p\n", &watch_id, __PRETTY_FUNCTION__, context_.get());
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   // This notification may be for a previously watched context, in which case

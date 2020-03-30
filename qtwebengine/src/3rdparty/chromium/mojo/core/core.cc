@@ -593,6 +593,7 @@ MojoResult Core::ReadMessage(MojoHandle message_pipe_handle,
 MojoResult Core::FuseMessagePipes(MojoHandle handle0,
                                   MojoHandle handle1,
                                   const MojoFuseMessagePipesOptions* options) {
+fprintf(stderr, "*** %p: %s\n", &handle0, __PRETTY_FUNCTION__);
   RequestContext request_context;
   scoped_refptr<Dispatcher> dispatcher0;
   scoped_refptr<Dispatcher> dispatcher1;

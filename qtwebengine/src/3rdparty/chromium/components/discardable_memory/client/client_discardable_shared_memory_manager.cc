@@ -85,6 +85,7 @@ class DiscardableMemoryImpl : public base::DiscardableMemory {
 
 void InitManagerMojoOnIO(mojom::DiscardableSharedMemoryManagerPtr* manager_mojo,
                          mojom::DiscardableSharedMemoryManagerPtrInfo info) {
+fprintf(stderr, "*** %p: %s\n", &info, __PRETTY_FUNCTION__);
   manager_mojo->Bind(std::move(info));
 }
 

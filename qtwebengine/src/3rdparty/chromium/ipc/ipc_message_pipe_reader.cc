@@ -78,6 +78,7 @@ void MessagePipeReader::GetRemoteInterface(
 }
 
 void MessagePipeReader::SetPeerPid(int32_t peer_pid) {
+fprintf(stderr, "*** %p: %s\n", &peer_pid, __PRETTY_FUNCTION__);
   delegate_->OnPeerPidReceived(peer_pid);
 }
 

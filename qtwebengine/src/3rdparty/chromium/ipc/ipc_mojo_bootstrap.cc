@@ -698,6 +698,7 @@ class ChannelAssociatedGroupController
   }
 
   void SendMessageOnMasterThread(mojo::Message message) {
+fprintf(stderr, "*** %p: %s\n", &message, __PRETTY_FUNCTION__);
     DCHECK(thread_checker_.CalledOnValidThread());
     if (!SendMessage(&message))
       RaiseError();

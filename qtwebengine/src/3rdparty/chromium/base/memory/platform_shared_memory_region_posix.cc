@@ -204,7 +204,7 @@ fprintf(stderr, "*** %s: fd: %d, offset: %zd, size: %zu\n", __PRETTY_FUNCTION__,
 
   bool write_allowed = mode_ != Mode::kReadOnly;
   *memory = mmap(nullptr, size, PROT_READ | (write_allowed ? PROT_WRITE : 0),
-                 MAP_SHARED/*MAP_PRIVATE*/, handle_.fd.get(), offset);
+                 /*MAP_SHARED*/MAP_PRIVATE, handle_.fd.get(), offset);
 
   bool mmap_succeeded = *memory && *memory != MAP_FAILED;
   if (!mmap_succeeded) {

@@ -158,6 +158,7 @@ void ServiceBinding::OnBindInterface(
     const std::string& interface_name,
     mojo::ScopedMessagePipeHandle interface_pipe,
     OnBindInterfaceCallback callback) {
+fprintf(stderr, "*** %p: %s\n", &callback, __PRETTY_FUNCTION__);
   // Acknowledge this request.
   std::move(callback).Run();
 

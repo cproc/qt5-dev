@@ -126,6 +126,7 @@ ChannelMojo::ChannelMojo(
 }
 
 void ChannelMojo::ForwardMessageFromThreadSafePtr(mojo::Message message) {
+fprintf(stderr, "*** %p: %s\n", &message, __PRETTY_FUNCTION__);
   DCHECK(task_runner_->RunsTasksInCurrentSequence());
   if (!message_reader_ || !message_reader_->sender().is_bound())
     return;
@@ -147,7 +148,7 @@ ChannelMojo::~ChannelMojo() {
   DCHECK(task_runner_->RunsTasksInCurrentSequence());
   Close();
 }
-
+extern "C" void wait_for_continue();
 bool ChannelMojo::Connect() {
   DCHECK(task_runner_->RunsTasksInCurrentSequence());
 
@@ -158,9 +159,15 @@ bool ChannelMojo::Connect() {
   bootstrap_->Connect(&sender, &receiver);
 
   DCHECK(!message_reader_);
+
+fprintf(stderr, "*** %p: %s: calling sender->SetPeerPid(): %d\n", &sender, __PRETTY_FUNCTION__, GetSelfPID());
+//wait_for_continue();
   sender->SetPeerPid(GetSelfPID());
+fprintf(stderr, "*** %p: %s: sender->SetPeerPid() returned\n", &sender, __PRETTY_FUNCTION__);
+
   message_reader_.reset(new internal::MessagePipeReader(
       pipe_, std::move(sender), std::move(receiver), this));
+
   return true;
 }
 

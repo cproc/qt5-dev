@@ -210,7 +210,12 @@ void MessagePumpLibevent::Run(Delegate* delegate) {
     mac::ScopedNSAutoreleasePool autorelease_pool;
 #endif
 
+fprintf(stderr, "*** %p: %s\n", &delegate, __PRETTY_FUNCTION__);
+
     bool did_work = delegate->DoWork();
+
+fprintf(stderr, "*** %p: %s: did_work 1.1: %u\n", &delegate, __PRETTY_FUNCTION__, did_work);
+
     if (!keep_running_)
       break;
 
@@ -220,9 +225,13 @@ void MessagePumpLibevent::Run(Delegate* delegate) {
     if (!keep_running_)
       break;
 
+fprintf(stderr, "*** %p: %s: did_work 1.2: %u\n", &delegate, __PRETTY_FUNCTION__, did_work);
+
     did_work |= delegate->DoDelayedWork(&delayed_work_time_);
     if (!keep_running_)
       break;
+
+fprintf(stderr, "*** %p: %s: did_work 1.3: %u\n", &delegate, __PRETTY_FUNCTION__, did_work);
 
     if (did_work)
       continue;
@@ -231,8 +240,12 @@ void MessagePumpLibevent::Run(Delegate* delegate) {
     if (!keep_running_)
       break;
 
+fprintf(stderr, "*** %p: %s: did_work 2: %u\n", &delegate, __PRETTY_FUNCTION__, did_work);
+
     if (did_work)
       continue;
+
+fprintf(stderr, "*** %p: %s: waiting for event\n", &delegate, __PRETTY_FUNCTION__);
 
     // EVLOOP_ONCE tells libevent to only block once,
     // but to service all pending events when it wakes up.
@@ -259,6 +272,7 @@ void MessagePumpLibevent::Run(Delegate* delegate) {
     if (!keep_running_)
       break;
   }
+fprintf(stderr, "*** %p: %s finished\n", &delegate, __PRETTY_FUNCTION__);
 }
 
 void MessagePumpLibevent::Quit() {

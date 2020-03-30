@@ -36,6 +36,7 @@ class Gpu::GpuPtrIO {
   void Initialize(
       mojom::GpuPtrInfo ptr_info,
       mojom::GpuMemoryBufferFactoryRequest memory_buffer_factory_request) {
+fprintf(stderr, "*** %p: %s\n", &ptr_info, __PRETTY_FUNCTION__);
     DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
 
     gpu_ptr_.Bind(std::move(ptr_info));
