@@ -59,6 +59,7 @@ namespace {
 
 // SetTCPKeepAlive sets SO_KEEPALIVE.
 bool SetTCPKeepAlive(int fd, bool enable, int delay) {
+#if 0
   // Enabling TCP keepalives is the same on all platforms.
   int on = enable ? 1 : 0;
   if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on))) {
@@ -99,6 +100,7 @@ bool SetTCPKeepAlive(int fd, bool enable, int delay) {
     PLOG(ERROR) << "Failed to set TCP_KEEPINTVL on fd: " << fd;
     return false;
   }
+#endif
 #endif
   return true;
 }

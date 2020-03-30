@@ -129,8 +129,10 @@ bool CleanupProcesses(const FilePath::StringType& executable_name,
                       int exit_code,
                       const ProcessFilter* filter) {
   bool exited_cleanly = WaitForProcessesToExit(executable_name, wait, filter);
+#if 0
   if (!exited_cleanly)
     KillProcesses(executable_name, exit_code, filter);
+#endif
   return exited_cleanly;
 }
 

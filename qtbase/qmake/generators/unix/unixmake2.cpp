@@ -468,7 +468,7 @@ UnixMakefileGenerator::writeMakeParts(QTextStream &t)
                 incr_objs += incr_target_dir_f;
             } else {
                 //actual target
-                QString incr_target_dir = var("DESTDIR") + "lib" + incr_target + "." +
+                QString incr_target_dir = var("DESTDIR") + project->first("QMAKE_PREFIX_SHLIB") + incr_target + "." +
                                           project->first("QMAKE_EXTENSION_SHLIB");
                 QString incr_target_dir_d = escapeDependencyPath(incr_target_dir);
                 QString incr_target_dir_f = escapeFilePath(incr_target_dir);
@@ -1256,9 +1256,9 @@ void UnixMakefileGenerator::init2()
                 project->values("TARGET_x.y").append(target);
             }
         } else if(project->isActiveConfig("plugin")) {
-            QString prefix;
+            ProString prefix;
             if(!project->isActiveConfig("no_plugin_name_prefix"))
-                prefix = "lib";
+                prefix = project->first("QMAKE_PREFIX_PLUGIN");
             project->values("PRL_TARGET").prepend(prefix + project->first("TARGET"));
             project->values("TARGET_x.y.z").append(prefix +
                                                         project->first("TARGET") + "." +
@@ -1315,31 +1315,31 @@ void UnixMakefileGenerator::init2()
             }
             project->values("TARGET") = project->values("TARGET_x.y.z");
         } else {
-            project->values("PRL_TARGET").prepend("lib" + project->first("TARGET"));
-            project->values("TARGET_").append("lib" + project->first("TARGET") + "." +
+            project->values("PRL_TARGET").prepend(project->first("QMAKE_PREFIX_SHLIB") + project->first("TARGET"));
+            project->values("TARGET_").append(project->first("QMAKE_PREFIX_SHLIB") + project->first("TARGET") + "." +
                                                    project->first("QMAKE_EXTENSION_SHLIB"));
             if(project->isActiveConfig("lib_version_first")) {
-                project->values("TARGET_x").append("lib" + project->first("TARGET") + "." +
+                project->values("TARGET_x").append(project->first("QMAKE_PREFIX_SHLIB") + project->first("TARGET") + "." +
                                                         project->first("VER_MAJ") + "." +
                                                         project->first("QMAKE_EXTENSION_SHLIB"));
-                project->values("TARGET_x.y").append("lib" + project->first("TARGET") + "." +
+                project->values("TARGET_x.y").append(project->first("QMAKE_PREFIX_SHLIB") + project->first("TARGET") + "." +
                                                           project->first("VER_MAJ") +
                                                           "." + project->first("VER_MIN") + "." +
                                                           project->first("QMAKE_EXTENSION_SHLIB"));
-                project->values("TARGET_x.y.z").append("lib" + project->first("TARGET") + "." +
+                project->values("TARGET_x.y.z").append(project->first("QMAKE_PREFIX_SHLIB") + project->first("TARGET") + "." +
                                                             project->first("VER_MAJ") + "." +
                                                             project->first("VER_MIN") +  "." +
                                                             project->first("VER_PAT") + "." +
                                                             project->first("QMAKE_EXTENSION_SHLIB"));
             } else {
-                project->values("TARGET_x").append("lib" + project->first("TARGET") + "." +
+                project->values("TARGET_x").append(project->first("QMAKE_PREFIX_SHLIB") + project->first("TARGET") + "." +
                                                         project->first("QMAKE_EXTENSION_SHLIB") +
                                                         "." + project->first("VER_MAJ"));
-                project->values("TARGET_x.y").append("lib" + project->first("TARGET") + "." +
+                project->values("TARGET_x.y").append(project->first("QMAKE_PREFIX_SHLIB") + project->first("TARGET") + "." +
                                                       project->first("QMAKE_EXTENSION_SHLIB")
                                                       + "." + project->first("VER_MAJ") +
                                                       "." + project->first("VER_MIN"));
-                project->values("TARGET_x.y.z").append("lib" + project->first("TARGET") +
+                project->values("TARGET_x.y.z").append(project->first("QMAKE_PREFIX_SHLIB") + project->first("TARGET") +
                                                             "." +
                                                             project->first(
                                                                 "QMAKE_EXTENSION_SHLIB") + "." +
@@ -1360,7 +1360,7 @@ void UnixMakefileGenerator::init2()
             } else if(!project->isEmpty("QMAKE_BUNDLE")) {
                 soname += project->first("TARGET_x.y");
             } else if(project->isActiveConfig("unversioned_soname")) {
-                soname = "lib" + project->first("QMAKE_ORIG_TARGET")
+                soname = project->first("QMAKE_PREFIX_SHLIB") + project->first("QMAKE_ORIG_TARGET")
                     + "." + project->first("QMAKE_EXTENSION_SHLIB");
             } else if(!project->values("TARGET_x").isEmpty()) {
                 soname += project->first("TARGET_x");

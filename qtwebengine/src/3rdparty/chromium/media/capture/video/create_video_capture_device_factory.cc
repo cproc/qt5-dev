@@ -33,7 +33,7 @@ namespace {
 std::unique_ptr<VideoCaptureDeviceFactory>
 CreatePlatformSpecificVideoCaptureDeviceFactory(
     scoped_refptr<base::SingleThreadTaskRunner> ui_task_runner) {
-#if (defined(OS_LINUX) && !defined(OS_CHROMEOS)) || defined(OS_BSD)
+#if (defined(OS_LINUX) && !defined(OS_CHROMEOS)) || defined(OS_BSD) && 0
   return std::make_unique<VideoCaptureDeviceFactoryLinux>(ui_task_runner);
 #elif defined(OS_CHROMEOS)
   // On Chrome OS we have to support two use cases:
