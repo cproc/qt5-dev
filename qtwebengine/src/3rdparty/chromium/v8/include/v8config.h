@@ -13,7 +13,9 @@
 #elif defined(__APPLE__)
 # include <TargetConditionals.h>
 #elif defined(__linux__)
+#if 0
 # include <features.h>
+#endif
 #endif
 
 
