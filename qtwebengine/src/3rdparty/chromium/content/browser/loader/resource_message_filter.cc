@@ -109,6 +109,7 @@ base::WeakPtr<ResourceMessageFilter> ResourceMessageFilter::GetWeakPtr() {
   DCHECK(io_thread_task_runner_->BelongsToCurrentThread());
   return is_channel_closed_ ? nullptr : weak_ptr_factory_.GetWeakPtr();
 }
+extern "C" void wait_for_continue();
 
 void ResourceMessageFilter::CreateLoaderAndStart(
     network::mojom::URLLoaderRequest request,
@@ -141,7 +142,9 @@ void ResourceMessageFilter::CreateLoaderAndStart(
                             url_request.render_frame_id));
     return;
   }
-
+//int dummy;
+//fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
+//wait_for_continue();
   url_loader_factory_->CreateLoaderAndStart(
       std::move(request), routing_id, request_id, options, url_request,
       std::move(client), traffic_annotation);
