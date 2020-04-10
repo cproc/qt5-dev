@@ -58,6 +58,6 @@ Window {
     visible: true
     WebEngineView {
         anchors.fill: parent
-        url: "http://192.168.2.103"
+        url: "https://www.google.de"
     }
 }
