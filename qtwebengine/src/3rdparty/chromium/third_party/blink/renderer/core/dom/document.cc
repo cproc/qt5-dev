@@ -6262,6 +6262,7 @@ Vector<IconURL> Document::IconURLs(int icon_types_mask) {
   }
 
   Vector<IconURL> icon_urls;
+#if 0
   if (first_favicon.icon_type_ != kInvalidIcon)
     icon_urls.push_back(first_favicon);
   else if (url_.ProtocolIsInHTTPFamily() && icon_types_mask & kFavicon)
@@ -6273,6 +6274,7 @@ Vector<IconURL> Document::IconURLs(int icon_types_mask) {
     icon_urls.push_back(first_touch_precomposed_icon);
   for (int i = secondary_icons.size() - 1; i >= 0; --i)
     icon_urls.push_back(secondary_icons[i]);
+#endif
   return icon_urls;
 }
 
