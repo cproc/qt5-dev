@@ -1527,6 +1527,7 @@ void ThreadState::CollectGarbage(BlinkGC::StackState stack_state,
                                  BlinkGC::MarkingType marking_type,
                                  BlinkGC::SweepingType sweeping_type,
                                  BlinkGC::GCReason reason) {
+#if 1
   // Nested garbage collection invocations are not supported.
   CHECK(!IsGCForbidden());
   // Garbage collection during sweeping is not supported. This can happen when
@@ -1589,6 +1590,7 @@ void ThreadState::CollectGarbage(BlinkGC::StackState stack_state,
           << " marking: " << MarkingTypeString(marking_type)
           << " sweeping: " << SweepingTypeString(sweeping_type)
           << " reason: " << GcReasonString(reason);
+#endif
 }
 
 void ThreadState::AtomicPauseMarkPrologue(BlinkGC::StackState stack_state,
