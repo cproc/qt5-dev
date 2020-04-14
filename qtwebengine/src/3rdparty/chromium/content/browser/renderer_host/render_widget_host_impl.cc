@@ -1691,10 +1691,13 @@ void RenderWidgetHostImpl::RemoveObserver(RenderWidgetHostObserver* observer) {
 
 void RenderWidgetHostImpl::GetScreenInfo(ScreenInfo* result) {
   TRACE_EVENT0("renderer_host", "RenderWidgetHostImpl::GetScreenInfo");
-  if (view_)
+  if (view_) {
+fprintf(stderr, "*** %p: %s 1\n", &result, __PRETTY_FUNCTION__);
     view_->GetScreenInfo(result);
-  else
+  } else {
+fprintf(stderr, "*** %p: %s 2\n", &result, __PRETTY_FUNCTION__);
     DisplayUtil::GetDefaultScreenInfo(result);
+  }
 
   if (display::Display::HasForceRasterColorProfile())
     result->color_space = display::Display::GetForcedRasterColorProfile();

@@ -373,7 +373,7 @@ static bool PreferCompositingToLCDText(CompositorDependencies* compositor_deps,
 }  // namespace
 
 // RenderWidget ---------------------------------------------------------------
-
+extern "C" void wait_for_continue();
 RenderWidget::RenderWidget(int32_t widget_routing_id,
                            CompositorDependencies* compositor_deps,
                            const ScreenInfo& screen_info,
@@ -422,7 +422,9 @@ RenderWidget::RenderWidget(int32_t widget_routing_id,
       weak_ptr_factory_(this) {
   DCHECK_NE(routing_id_, MSG_ROUTING_NONE);
   DCHECK(RenderThread::Get());
-
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
+//wait_for_continue();
   // In tests there may not be a RenderThreadImpl.
   if (RenderThreadImpl::current()) {
     render_widget_scheduling_state_ = RenderThreadImpl::current()
@@ -699,7 +701,8 @@ void RenderWidget::OnClose() {
 void RenderWidget::OnSynchronizeVisualProperties(
     const VisualProperties& original_params) {
   TRACE_EVENT0("renderer", "RenderWidget::OnSynchronizeVisualProperties");
-
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
   VisualProperties params = original_params;
   if (delegate()) {
     if (size_ != params.new_size) {
@@ -1384,10 +1387,12 @@ bool RenderWidget::WillHandleMouseEvent(const blink::WebMouseEvent& event) {
 
 ///////////////////////////////////////////////////////////////////////////////
 // RenderWidgetScreenMetricsDelegate
-
+extern "C" void wait_for_continue();
 void RenderWidget::ResizeWebWidget() {
   gfx::Size size = GetSizeForWebWidget();
   if (delegate()) {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
+//wait_for_continue();
     delegate()->ResizeWebWidgetForWidget(size, top_controls_height_,
                                          bottom_controls_height_,
                                          browser_controls_shrink_blink_size_);
@@ -1397,6 +1402,7 @@ void RenderWidget::ResizeWebWidget() {
 }
 
 gfx::Size RenderWidget::GetSizeForWebWidget() const {
+fprintf(stderr, "*** %s: %d x %d, %d\n", __PRETTY_FUNCTION__, size_.width(), size_.height(), GetOriginalScreenInfo().device_scale_factor);
   if (compositor_deps_->IsUseZoomForDSFEnabled()) {
     return gfx::ScaleToCeiledSize(size_,
                                   GetOriginalScreenInfo().device_scale_factor);
@@ -1457,7 +1463,7 @@ void RenderWidget::SynchronizeVisualProperties(const VisualProperties& params) {
     display_mode_ = params.display_mode;
 
     size_ = params.new_size;
-
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
     ResizeWebWidget();
 
     WebSize visual_viewport_size;

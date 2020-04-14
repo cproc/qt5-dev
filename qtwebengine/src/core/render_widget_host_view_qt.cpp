@@ -933,6 +933,7 @@ void RenderWidgetHostViewQt::notifyHidden()
 
 void RenderWidgetHostViewQt::visualPropertiesChanged()
 {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
     if (!m_delegate)
         return;
 
