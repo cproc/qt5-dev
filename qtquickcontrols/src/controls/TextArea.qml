@@ -290,7 +290,6 @@ ScrollView {
         By default this property is \c false.
     */
     property alias readOnly: edit.readOnly
-    Accessible.readOnly: readOnly
 
     /*!
         \qmlproperty string TextArea::selectedText
@@ -706,8 +705,6 @@ ScrollView {
     frameVisible: true
 
     activeFocusOnTab: true
-
-    Accessible.role: Accessible.EditableText
 
     style: Settings.styleComponent(Settings.style, "TextAreaStyle.qml", area)
 

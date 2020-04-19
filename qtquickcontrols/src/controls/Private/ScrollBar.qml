@@ -59,7 +59,6 @@ Item {
 
     activeFocusOnTab: false
 
-    Accessible.role: Accessible.ScrollBar
     implicitWidth: panelLoader.implicitWidth
     implicitHeight: panelLoader.implicitHeight
 
