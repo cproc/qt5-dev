@@ -52,7 +52,6 @@ FocusScope {
     property alias __panel: loader.item
 
     activeFocusOnTab: true
-    Accessible.role: Accessible.Button
     implicitWidth: __panel ? __panel.implicitWidth : 0
     implicitHeight: __panel ? __panel.implicitHeight : 0
 

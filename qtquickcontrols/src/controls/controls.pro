@@ -1,4 +1,4 @@
-requires(contains(QT_CONFIG, accessibility))
+#requires(contains(QT_CONFIG, accessibility))
 
 TARGET  = qtquickcontrolsplugin
 TARGETPATH = QtQuick/Controls

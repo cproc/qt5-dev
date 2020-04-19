@@ -281,7 +281,7 @@ FocusScope {
                 var tabAdded = false
                 for (var i = 0 ; i < tabs.length ; ++i) {
                     var tab = tabs[i]
-                    if (!tab.__inserted && tab.Accessible.role === Accessible.LayeredPane) {
+                    if (!tab.__inserted) {
                         tab.__inserted = true
                         // reparent tabs created dynamically by createObject(tabView)
                         tab.parent = stack
