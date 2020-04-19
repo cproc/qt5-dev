@@ -77,7 +77,6 @@ FocusScope {
     id: statusbar
 
     activeFocusOnTab: false
-    Accessible.role: Accessible.StatusBar
 
     width: parent ? parent.width : implicitWidth
     implicitWidth: container.leftMargin + container.rightMargin

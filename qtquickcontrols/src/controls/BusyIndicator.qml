@@ -78,8 +78,5 @@ Control {
     */
     property bool running: true
 
-    Accessible.role: Accessible.Indicator
-    Accessible.name: "busy"
-
     style: Settings.styleComponent(Settings.style, "BusyIndicatorStyle.qml", indicator)
 }

@@ -146,9 +146,6 @@ AbstractCheckable {
 
     activeFocusOnTab: true
 
-    Accessible.role: Accessible.CheckBox
-    Accessible.name: text
-
     __cycleStatesHandler: __cycleCheckBoxStates
 
     onCheckedChanged: {

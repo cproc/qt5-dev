@@ -112,7 +112,6 @@ FocusScope {
     ListView {
         id: tabrow
         objectName: "tabrow"
-        Accessible.role: Accessible.PageTabList
         LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
         spacing: -tabOverlap
         orientation: Qt.Horizontal
@@ -286,9 +285,6 @@ FocusScope {
                     }
                 ]
             }
-
-            Accessible.role: Accessible.PageTab
-            Accessible.name: modelData.title
         }
     }
 
