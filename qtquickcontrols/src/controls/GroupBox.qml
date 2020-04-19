@@ -172,9 +172,6 @@ FocusScope {
     Layout.minimumWidth: implicitWidth
     Layout.minimumHeight: implicitHeight
 
-    Accessible.role: Accessible.Grouping
-    Accessible.name: title
-
     activeFocusOnTab: false
 
 

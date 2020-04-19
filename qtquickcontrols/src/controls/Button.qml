@@ -89,8 +89,6 @@ BasicButton {
 
     activeFocusOnTab: true
 
-    Accessible.name: text
-
     style: Settings.styleComponent(Settings.style, "ButtonStyle.qml", button)
 
     Binding {
