@@ -120,8 +120,6 @@ MenuBarPrivate {
     property Component __menuBarComponent: Loader {
         id: menuBarLoader
 
-        Accessible.role: Accessible.MenuBar
-
         onStatusChanged: if (status === Loader.Error) console.error("Failed to load panel for", root)
 
         visible: status === Loader.Ready
@@ -264,10 +262,6 @@ MenuBarPrivate {
                 model: root.menus
                 Loader {
                     id: menuItemLoader
-
-                    Accessible.role: Accessible.MenuItem
-                    Accessible.name: StyleHelpers.removeMnemonics(opts.text)
-                    Accessible.onPressAction: d.openMenuAtIndex(opts.index)
 
                     property var styleData: QtObject {
                         id: opts

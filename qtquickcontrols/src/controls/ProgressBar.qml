@@ -135,9 +135,6 @@ Control {
 
     activeFocusOnTab: false
 
-    Accessible.role: Accessible.ProgressBar
-    Accessible.name: value
-
     implicitWidth:(__panel ? __panel.implicitWidth : 0)
     implicitHeight: (__panel ? __panel.implicitHeight: 0)
 

@@ -69,8 +69,6 @@ BasicTableView {
 
     style: Settings.styleComponent(Settings.style, "TableViewStyle.qml", root)
 
-    Accessible.role: Accessible.Table
-
     // Internal stuff. Do not look
 
     onModelChanged: selection.clear()

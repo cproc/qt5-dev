@@ -84,8 +84,6 @@ Control {
         This property is \c true if the control is checked.
     */
     property bool checked: false
-    Accessible.checked: checked
-    Accessible.checkable: true
 
     /*!
         This property is \c true if the control takes the focus when it is
@@ -110,7 +108,6 @@ Control {
         \since QtQuick.Controls 1.7
     */
     property string tooltip
-    Accessible.description: tooltip
 
     /*! \internal */
     property var __cycleStatesHandler: cycleRadioButtonStates
