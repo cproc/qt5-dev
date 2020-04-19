@@ -73,7 +73,6 @@ Loader {
     /*! \internal */
     property bool __inserted: false
 
-    Accessible.role: Accessible.LayeredPane
     active: false
     visible: false
 
