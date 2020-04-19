@@ -71,6 +71,5 @@ Style {
         activeControl: control.checkable ? "checkbox" : ""
         properties: { "checkable" : control.checkable , "sunken" : !control.flat}
         border {top: 32 ; bottom: 8}
-        Accessible.role: Accessible.Grouping
     }
 }

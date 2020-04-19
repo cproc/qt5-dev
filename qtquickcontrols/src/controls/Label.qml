@@ -87,6 +87,4 @@ Text {
     color: SystemPaletteSingleton.windowText(enabled)
     activeFocusOnTab: false
     renderType: Settings.isMobile ? Text.QtRendering : Text.NativeRendering
-    Accessible.name: text
-    Accessible.role: Accessible.StaticText
 }

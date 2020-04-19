@@ -194,7 +194,6 @@ Control {
 
     activeFocusOnTab: true
 
-    Accessible.role: Accessible.Slider
     /*! \internal */
     function accessibleIncreaseAction() {
         range.increaseSingleStep()
