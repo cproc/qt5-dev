@@ -49,7 +49,6 @@ import QtQuick.Controls.Private 1.0
 Item {
     id: root
     activeFocusOnTab: false
-    Accessible.role: Accessible.StatusBar
 
     anchors.topMargin: focusMargin
     anchors.leftMargin: focusMargin

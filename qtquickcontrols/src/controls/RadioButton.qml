@@ -84,9 +84,6 @@ AbstractCheckable {
 
     activeFocusOnTab: true
 
-    Accessible.name: text
-    Accessible.role: Accessible.RadioButton
-
     /*!
         The style that should be applied to the radio button. Custom style
         components can be created with:
