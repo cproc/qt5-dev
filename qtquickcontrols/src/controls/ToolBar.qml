@@ -93,7 +93,6 @@ FocusScope {
     id: toolbar
 
     activeFocusOnTab: false
-    Accessible.role: Accessible.ToolBar
     LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
     LayoutMirroring.childrenInherit: true
 
