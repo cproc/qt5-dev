@@ -47,8 +47,6 @@ Loader {
 
     property var __menu
 
-    Accessible.role: Accessible.PopupMenu
-
     visible: status === Loader.Ready
     width: content.width + (d.style ? d.style.padding.left + d.style.padding.right : 0)
     height: content.height + (d.style ? d.style.padding.top + d.style.padding.bottom : 0)
@@ -179,19 +177,6 @@ Loader {
         id: menuItemComponent
         Loader {
             id: menuItemLoader
-
-            Accessible.role: opts.type === MenuItemType.Item || opts.type === MenuItemType.Menu ?
-                                 Accessible.MenuItem : Accessible.NoRole
-            Accessible.name: StyleHelpers.removeMnemonics(opts.text)
-            Accessible.checkable: opts.checkable
-            Accessible.checked: opts.checked
-            Accessible.onPressAction: {
-                if (opts.type === MenuItemType.Item) {
-                    d.triggerAndDismiss(menuItemLoader)
-                } else if (opts.type === MenuItemType.Menu) {
-                    __showSubMenu(true /*immediately*/)
-                }
-            }
 
             property QtObject styleData: QtObject {
                 id: opts
