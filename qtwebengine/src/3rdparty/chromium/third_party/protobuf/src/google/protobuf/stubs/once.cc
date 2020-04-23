@@ -38,7 +38,10 @@ namespace google {
 namespace protobuf {
 
 void GoogleOnceInit(ProtobufOnceType* once, void (*init_func)()) {
+fprintf(stderr, "*** %p: %s\n", &once, __PRETTY_FUNCTION__);
+#if !defined(__FreeBSD__) || 1
   std::call_once(*once, init_func);
+#endif
 }
 
 }  // namespace protobuf
