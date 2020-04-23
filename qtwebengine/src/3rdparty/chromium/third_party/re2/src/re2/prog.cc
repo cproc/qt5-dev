@@ -188,9 +188,13 @@ string Prog::DumpByteMap() {
 }
 
 int Prog::first_byte() {
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
+#if 1
   std::call_once(first_byte_once_, [](Prog* prog) {
     prog->first_byte_ = prog->ComputeFirstByte();
   }, this);
+#endif
   return first_byte_;
 }
 
