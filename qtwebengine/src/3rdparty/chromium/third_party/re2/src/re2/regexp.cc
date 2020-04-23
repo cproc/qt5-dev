@@ -88,12 +88,15 @@ int Regexp::Ref() {
 // Increments reference count, returns object as convenience.
 Regexp* Regexp::Incref() {
   if (ref_ >= kMaxRef-1) {
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
+#if 1
     static std::once_flag ref_once;
     std::call_once(ref_once, []() {
       ref_mutex = new Mutex;
       ref_map = new std::map<Regexp*, int>;
     });
-
+#endif
     // Store ref count in overflow map.
     MutexLock l(ref_mutex);
     if (ref_ == kMaxRef) {
