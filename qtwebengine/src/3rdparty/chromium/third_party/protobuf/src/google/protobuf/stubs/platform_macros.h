@@ -122,7 +122,9 @@ GOOGLE_PROTOBUF_PLATFORM_ERROR
 // we use pthread_key_create()/pthread_getspecific()/... methods for
 // TLS support on android.
 // iOS and OpenBSD also do not support the __thread keyword.
+#if 0
 #define GOOGLE_PROTOBUF_NO_THREADLOCAL
+#endif
 #endif
 
 #endif  // GOOGLE_PROTOBUF_PLATFORM_MACROS_H_
