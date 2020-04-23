@@ -1812,23 +1812,31 @@ DFA* Prog::GetDFA(MatchKind kind) {
   // For a reverse DFA, all the memory goes to the
   // "longest match" DFA, because RE2 never does reverse
   // "first match" searches.
+fprintf(stderr, "*** %p: %s\n", &kind, __PRETTY_FUNCTION__);
+
   if (kind == kFirstMatch) {
+#if 1
     std::call_once(dfa_first_once_, [](Prog* prog) {
       prog->dfa_first_ = new DFA(prog, kFirstMatch, prog->dfa_mem_ / 2);
     }, this);
+#endif
     return dfa_first_;
   } else if (kind == kManyMatch) {
+#if 1
     std::call_once(dfa_first_once_, [](Prog* prog) {
       prog->dfa_first_ = new DFA(prog, kManyMatch, prog->dfa_mem_);
     }, this);
+#endif
     return dfa_first_;
   } else {
+#if 1
     std::call_once(dfa_longest_once_, [](Prog* prog) {
       if (!prog->reversed_)
         prog->dfa_longest_ = new DFA(prog, kLongestMatch, prog->dfa_mem_ / 2);
       else
         prog->dfa_longest_ = new DFA(prog, kLongestMatch, prog->dfa_mem_);
     }, this);
+#endif
     return dfa_longest_;
   }
 }
