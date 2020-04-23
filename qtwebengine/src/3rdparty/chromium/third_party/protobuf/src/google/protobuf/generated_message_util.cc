@@ -786,6 +786,9 @@ void InitSCC_DFS(SCCInfoBase* scc) {
 }  // namespace
 
 void InitSCCImpl(SCCInfoBase* scc) {
+int dummy;
+fprintf(stderr, "*** %p: %s\n", &dummy, __PRETTY_FUNCTION__);
+#if !defined(__FreeBSD__) || 1
   static WrappedMutex mu{GOOGLE_PROTOBUF_LINKER_INITIALIZED};
   // Either the default in case no initialization is running or the id of the
   // thread that is currently initializing.
@@ -806,6 +809,7 @@ void InitSCCImpl(SCCInfoBase* scc) {
   InitSCC_DFS(scc);
   runner.store(std::thread::id{}, std::memory_order_relaxed);
   mu.Unlock();
+#endif
 }
 
 }  // namespace internal
