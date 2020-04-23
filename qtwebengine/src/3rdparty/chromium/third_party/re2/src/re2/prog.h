@@ -405,9 +405,11 @@ class Prog {
 
   uint8_t bytemap_[256];    // map from input bytes to byte classes
 
+#if 1
   std::once_flag first_byte_once_;
   std::once_flag dfa_first_once_;
   std::once_flag dfa_longest_once_;
+#endif
 
   Prog(const Prog&) = delete;
   Prog& operator=(const Prog&) = delete;
