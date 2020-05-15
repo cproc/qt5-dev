@@ -1,6 +1,8 @@
 TEMPLATE = subdirs
 QT_FOR_CONFIG += gui-private
 
+genode: SUBDIRS += nitpicker
+
 android:!android-embedded: SUBDIRS += android
 
 !android: SUBDIRS += minimal
