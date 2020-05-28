@@ -9,8 +9,8 @@ host_build {
 }
 QT.global.enabled_features = cross_compile shared c++11 c++14 c++1z c99 c11 thread future concurrent
 QT.global.disabled_features = framework rpath appstore-compliant debug_and_release simulator_and_device build_all c++2a force_asserts pkg-config separate_debug_info static
-CONFIG += cross_compile shared debug
-QT_CONFIG += shared debug c++11 c++14 c++1z concurrent no-pkg-config reduce_exports reduce_relocations release_tools stl
+CONFIG += cross_compile shared release
+QT_CONFIG += shared release c++11 c++14 c++1z concurrent no-pkg-config reduce_exports reduce_relocations stl
 QT_VERSION = 5.13.2
 QT_MAJOR_VERSION = 5
 QT_MINOR_VERSION = 13
