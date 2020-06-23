@@ -1,0 +1,1 @@
+../../../qtbase/src/plugins/platforms/nitpicker/qnitpickerplatformwindow.h
