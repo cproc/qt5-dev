@@ -1,5 +1,4 @@
-#define QT_FEATURE_accessibility -1
-#define QT_NO_ACCESSIBILITY 
+#define QT_FEATURE_accessibility 1
 #define QT_NO_ACCESSIBILITY_ATSPI_BRIDGE 
 #define QT_FEATURE_action 1
 #define QT_FEATURE_opengles2 -1
