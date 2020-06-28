@@ -106,14 +106,18 @@ void* TrimMappingInternal(void* base,
   // We can resize the allocation run. Release unneeded memory before and after
   // the aligned range.
   if (pre_slack) {
+#if 0
     int res = munmap(base, pre_slack);
     CHECK(!res);
+#endif
     ret = reinterpret_cast<char*>(base) + pre_slack;
   }
+#if 0
   if (post_slack) {
     int res = munmap(reinterpret_cast<char*>(ret) + trim_length, post_slack);
     CHECK(!res);
   }
+#endif
   return ret;
 }
 
@@ -121,14 +125,20 @@ bool TrySetSystemPagesAccessInternal(
     void* address,
     size_t length,
     PageAccessibilityConfiguration accessibility) {
+#if !defined(OS_GENODE)
   return 0 == mprotect(address, length, GetAccessFlags(accessibility));
+#else
+  return true;
+#endif
 }
 
 void SetSystemPagesAccessInternal(
     void* address,
     size_t length,
     PageAccessibilityConfiguration accessibility) {
+#if !defined(OS_GENODE)
   CHECK_EQ(0, mprotect(address, length, GetAccessFlags(accessibility)));
+#endif
 }
 
 void FreePagesInternal(void* address, size_t length) {
