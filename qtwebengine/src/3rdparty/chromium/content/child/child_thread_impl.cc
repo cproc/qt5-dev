@@ -81,7 +81,7 @@ namespace content {
 namespace {
 
 // How long to wait for a connection to the browser process before giving up.
-const int kConnectionTimeoutS = 15;
+const int kConnectionTimeoutS = 15000;
 
 base::LazyInstance<base::ThreadLocalPointer<ChildThreadImpl>>::DestructorAtExit
     g_lazy_child_thread_impl_tls = LAZY_INSTANCE_INITIALIZER;
