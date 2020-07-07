@@ -4397,6 +4397,7 @@ HeapObject Heap::AllocateRawCodeInLargeObjectSpace(int size) {
 }
 
 void Heap::SetUp() {
+fprintf(stderr, "Heap::SetUp(): ret: %p\n", __builtin_return_address(0));
 #ifdef V8_ENABLE_ALLOCATION_TIMEOUT
   allocation_timeout_ = NextAllocationTimeout();
 #endif
@@ -4509,6 +4510,7 @@ void Heap::SetUp() {
   }
 
   write_protect_code_memory_ = FLAG_write_protect_code_memory;
+fprintf(stderr, "Heap::SetUp() finished\n");
 }
 
 void Heap::InitializeHashSeed() {

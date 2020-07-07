@@ -55,6 +55,7 @@ Code InstructionStream::TryLookupCode(Isolate* isolate, Address address) {
 void InstructionStream::CreateOffHeapInstructionStream(Isolate* isolate,
                                                        uint8_t** data,
                                                        uint32_t* size) {
+fprintf(stderr, "InstructionStream::CreateOffHeapInstructionStream(): ret: %p\n", __builtin_return_address(0)); 
   EmbeddedData d = EmbeddedData::FromIsolate(isolate);
 
   v8::PageAllocator* page_allocator = v8::internal::GetPlatformPageAllocator();
@@ -74,6 +75,7 @@ void InstructionStream::CreateOffHeapInstructionStream(Isolate* isolate,
   *data = allocated_bytes;
   *size = d.size();
 
+fprintf(stderr, "InstructionStream::CreateOffHeapInstructionStream(): data: %p, size: %u\n", *data, *size); 
   d.Dispose();
 }
 
@@ -173,6 +175,7 @@ void FinalizeEmbeddedCodeTargets(Isolate* isolate, EmbeddedData* blob) {
 
 // static
 EmbeddedData EmbeddedData::FromIsolate(Isolate* isolate) {
+fprintf(stderr, "EmbeddedData::FromIsolate(): ret: %p\n", __builtin_return_address(0));
   Builtins* builtins = isolate->builtins();
 
   // Store instruction stream lengths and offsets.
@@ -262,6 +265,7 @@ EmbeddedData EmbeddedData::FromIsolate(Isolate* isolate) {
   DCHECK_EQ(hash, d.Hash());
 
   if (FLAG_serialization_statistics) d.PrintStatistics();
+fprintf(stderr, "EmbeddedData::FromIsolate() finished\n");
 
   return d;
 }

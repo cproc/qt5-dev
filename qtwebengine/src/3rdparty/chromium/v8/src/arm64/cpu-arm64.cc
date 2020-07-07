@@ -9,6 +9,9 @@
 #include "src/arm64/utils-arm64.h"
 #include "src/cpu-features.h"
 
+/* Genode */
+#include <libc/genode.h>
+
 namespace v8 {
 namespace internal {
 
@@ -40,7 +43,7 @@ class CacheLineSizes {
 void CpuFeatures::FlushICache(void* address, size_t length) {
 #if defined(V8_OS_WIN)
   FlushInstructionCache(GetCurrentProcess(), address, length);
-#elif defined(V8_HOST_ARCH_ARM64)
+#elif defined(V8_HOST_ARCH_ARM64) && 0
   // The code below assumes user space cache operations are allowed. The goal
   // of this routine is to make sure the code generated is visible to the I
   // side of the CPU.
@@ -109,6 +112,10 @@ void CpuFeatures::FlushICache(void* address, size_t length) {
     // move this code before the code is generated.
     : "cc", "memory"
   );  // NOLINT
+#else
+  int dummy;
+  //fprintf(stderr, "FlushICache(): address: %p, length: %zu, ret: %p, stack: %p\n", address, length, __builtin_return_address(0), &dummy);
+  genode_cache_coherent(address, length);
 #endif  // V8_HOST_ARCH_ARM64
 }
 

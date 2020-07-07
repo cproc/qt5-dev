@@ -75,6 +75,7 @@ void* SystemAllocPagesInternal(void* hint,
                                PageAccessibilityConfiguration accessibility,
                                PageTag page_tag,
                                bool commit) {
+fprintf(stderr, "SystemAllocPagesInternal(): length: %zu, ret: %p\n", length, __builtin_return_address(0));
 #if defined(OS_MACOSX)
   // Use a custom tag to make it easier to distinguish Partition Alloc regions
   // in vmmap(1). Tags between 240-255 are supported.

@@ -3146,6 +3146,8 @@ void Isolate::InitializeDefaultEmbeddedBlob() {
 void Isolate::CreateAndSetEmbeddedBlob() {
   base::MutexGuard guard(current_embedded_blob_refcount_mutex_.Pointer());
 
+fprintf(stderr, "Isolate::CreateAndSetEmbeddedBlob(): ret: %p\n", __builtin_return_address(0));
+
   PrepareBuiltinSourcePositionMap();
 
   // If a sticky blob has been set, we reuse it.
@@ -3157,7 +3159,7 @@ void Isolate::CreateAndSetEmbeddedBlob() {
     uint8_t* data;
     uint32_t size;
     InstructionStream::CreateOffHeapInstructionStream(this, &data, &size);
-
+fprintf(stderr, "Isolate::CreateAndSetEmbeddedBlob(): data: %p, size: %u\n", data, size);
     CHECK_EQ(0, current_embedded_blob_refs_);
     const uint8_t* const_data = const_cast<const uint8_t*>(data);
     SetEmbeddedBlob(const_data, size);
@@ -3188,7 +3190,7 @@ void Isolate::TearDownEmbeddedBlob() {
 
 bool Isolate::Init(StartupDeserializer* des) {
   TRACE_ISOLATE(init);
-
+fprintf(stderr, "*** Isolate::Init()\n");
   base::ElapsedTimer timer;
   if (des == nullptr && FLAG_profile_deserialization) timer.Start();
 
@@ -3385,7 +3387,7 @@ bool Isolate::Init(StartupDeserializer* des) {
     double ms = timer.Elapsed().InMillisecondsF();
     PrintF("[Initializing isolate from scratch took %0.3f ms]\n", ms);
   }
-
+fprintf(stderr, "*** Isolate::Init() finished\n");
   return true;
 }
 

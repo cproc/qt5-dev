@@ -169,6 +169,7 @@ void* AllocatePages(v8::PageAllocator* page_allocator, void* address,
   DCHECK_NOT_NULL(page_allocator);
   DCHECK_EQ(address, AlignedAddress(address, alignment));
   DCHECK(IsAligned(size, page_allocator->AllocatePageSize()));
+fprintf(stderr, "internal::AllocatePages(): size: %zu, ret: %p\n", size, __builtin_return_address(0));
   void* result = nullptr;
   for (int i = 0; i < kAllocationTries; ++i) {
     result = page_allocator->AllocatePages(address, size, alignment, access);
@@ -222,6 +223,7 @@ bool OnCriticalMemoryPressure(size_t length) {
 VirtualMemory::VirtualMemory(v8::PageAllocator* page_allocator, size_t size,
                              void* hint, size_t alignment)
     : page_allocator_(page_allocator) {
+fprintf(stderr, "VirtualMemory(): size: %zu, ret: %p\n", size, __builtin_return_address(0));
   DCHECK_NOT_NULL(page_allocator);
   DCHECK(IsAligned(size, page_allocator_->CommitPageSize()));
   size_t page_size = page_allocator_->AllocatePageSize();

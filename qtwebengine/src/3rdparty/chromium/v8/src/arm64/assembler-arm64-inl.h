@@ -635,6 +635,7 @@ void Assembler::set_target_address_at(Address pc, Address constant_pool,
     }
     instr->SetBranchImmTarget(reinterpret_cast<Instruction*>(target));
     if (icache_flush_mode != SKIP_ICACHE_FLUSH) {
+//fprintf(stderr, "set_target_address_at(): ret: %p\n", __builtin_return_address(0));
       Assembler::FlushICache(pc, kInstrSize);
     }
   }

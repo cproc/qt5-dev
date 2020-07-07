@@ -48,6 +48,7 @@ void* AllocPagesIncludingReserved(void* address,
                                   PageAccessibilityConfiguration accessibility,
                                   PageTag page_tag,
                                   bool commit) {
+fprintf(stderr, "AllocPagesIncludingReserved(): length: %zu, ret: %p\n", length, __builtin_return_address(0));
   void* ret =
       SystemAllocPages(address, length, accessibility, page_tag, commit);
   if (ret == nullptr) {
@@ -90,6 +91,7 @@ void* SystemAllocPages(void* hint,
                        PageAccessibilityConfiguration accessibility,
                        PageTag page_tag,
                        bool commit) {
+fprintf(stderr, "SystemAllocPages(): length: %zu, ret: %p\n", length, __builtin_return_address(0));
   DCHECK(!(length & kPageAllocationGranularityOffsetMask));
   DCHECK(!(reinterpret_cast<uintptr_t>(hint) &
            kPageAllocationGranularityOffsetMask));
@@ -114,7 +116,7 @@ void* AllocPages(void* address,
   uintptr_t align_offset_mask = align - 1;
   uintptr_t align_base_mask = ~align_offset_mask;
   DCHECK(!(reinterpret_cast<uintptr_t>(address) & align_offset_mask));
-
+fprintf(stderr, "AllocPages(): length: %zu, ret: %p\n", length, __builtin_return_address(0));
 #if (defined(OS_BSD) || defined(OS_LINUX)) && defined(ARCH_CPU_64_BITS)
   // On 64 bit Linux, we may need to adjust the address space limit for
   // guarded allocations.

@@ -139,6 +139,7 @@ MemoryAllocator::MemoryAllocator(Isolate* isolate, size_t capacity,
       lowest_ever_allocated_(static_cast<Address>(-1ll)),
       highest_ever_allocated_(kNullAddress),
       unmapper_(isolate->heap(), this) {
+fprintf(stderr, "MemoryAllocator(): capacity: %zu, code_range_size: %zu, ret: %p\n", capacity, code_range_size, __builtin_return_address(0));
   InitializeCodePageAllocator(data_page_allocator_, code_range_size);
 }
 

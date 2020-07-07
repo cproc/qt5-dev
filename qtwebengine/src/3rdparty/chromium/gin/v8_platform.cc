@@ -215,6 +215,7 @@ class PageAllocator : public v8::PageAllocator {
                       size_t length,
                       size_t alignment,
                       v8::PageAllocator::Permission permissions) override {
+fprintf(stderr, "v8 AllocatePages(): length: %zu, ret: %p\n", length, __builtin_return_address(0));
     base::PageAccessibilityConfiguration config = GetPageConfig(permissions);
     bool commit = (permissions != v8::PageAllocator::Permission::kNoAccess);
     return base::AllocPages(address, length, alignment, config,

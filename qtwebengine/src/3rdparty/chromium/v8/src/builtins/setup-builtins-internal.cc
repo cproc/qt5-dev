@@ -64,6 +64,7 @@ typedef void (*MacroAssemblerGenerator)(MacroAssembler*);
 typedef void (*CodeAssemblerGenerator)(compiler::CodeAssemblerState*);
 
 Handle<Code> BuildPlaceholder(Isolate* isolate, int32_t builtin_index) {
+fprintf(stderr, "BuildPlaceholder(): ret: %p\n", __builtin_return_address(0));
   HandleScope scope(isolate);
   constexpr int kBufferSize = 1 * KB;
   byte buffer[kBufferSize];
@@ -87,6 +88,7 @@ Handle<Code> BuildPlaceholder(Isolate* isolate, int32_t builtin_index) {
 Code BuildWithMacroAssembler(Isolate* isolate, int32_t builtin_index,
                              MacroAssemblerGenerator generator,
                              const char* s_name) {
+fprintf(stderr, "BuildWithMacroAssembler(): ret: %p\n", __builtin_return_address(0));
   HandleScope scope(isolate);
   // Canonicalize handles, so that we can share constant pool entries pointing
   // to code targets without dereferencing their handles.
@@ -134,6 +136,7 @@ Code BuildWithMacroAssembler(Isolate* isolate, int32_t builtin_index,
 Code BuildAdaptor(Isolate* isolate, int32_t builtin_index,
                   Address builtin_address,
                   Builtins::ExitFrameType exit_frame_type, const char* name) {
+fprintf(stderr, "BuildAdaptor(): ret: %p\n", __builtin_return_address(0));
   HandleScope scope(isolate);
   // Canonicalize handles, so that we can share constant pool entries pointing
   // to code targets without dereferencing their handles.
@@ -232,6 +235,7 @@ void SetupIsolateDelegate::PopulateWithPlaceholders(Isolate* isolate) {
 
 // static
 void SetupIsolateDelegate::ReplacePlaceholders(Isolate* isolate) {
+fprintf(stderr, "ReplacePlaceholders(): ret: %p\n", __builtin_return_address(0));
   // Replace references from all code objects to placeholders.
   Builtins* builtins = isolate->builtins();
   DisallowHeapAllocation no_gc;
@@ -273,6 +277,7 @@ void SetupIsolateDelegate::ReplacePlaceholders(Isolate* isolate) {
                              code->raw_instruction_size());
     }
   }
+fprintf(stderr, "ReplacePlaceholders() finished\n");
 }
 
 namespace {
@@ -296,6 +301,7 @@ Code GenerateBytecodeHandler(Isolate* isolate, int builtin_index,
 
 // static
 void SetupIsolateDelegate::SetupBuiltinsInternal(Isolate* isolate) {
+fprintf(stderr, "SetupBuiltinsInternal(): ret: %p\n", __builtin_return_address(0));
   Builtins* builtins = isolate->builtins();
   DCHECK(!builtins->initialized_);
 

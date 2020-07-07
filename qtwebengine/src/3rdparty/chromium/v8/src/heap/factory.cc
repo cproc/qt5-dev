@@ -2707,6 +2707,7 @@ MaybeHandle<Code> Factory::TryNewCode(
     MaybeHandle<DeoptimizationData> maybe_deopt_data, Movability movability,
     bool is_turbofanned, int stack_slots, int safepoint_table_offset,
     int handler_table_offset) {
+fprintf(stderr, "TryNewCode(): ret: %p\n", __builtin_return_address(0));
   // Allocate objects needed for code initialization.
   Handle<ByteArray> reloc_info = NewByteArray(
       desc.reloc_size,
@@ -2764,6 +2765,7 @@ Handle<Code> Factory::NewCode(
     MaybeHandle<DeoptimizationData> maybe_deopt_data, Movability movability,
     bool is_turbofanned, int stack_slots, int safepoint_table_offset,
     int handler_table_offset) {
+fprintf(stderr, "NewCode(): ret: %p\n", __builtin_return_address(0));
   // Allocate objects needed for code initialization.
   Handle<ByteArray> reloc_info = NewByteArray(
       desc.reloc_size,
@@ -2817,6 +2819,8 @@ Handle<Code> Factory::NewOffHeapTrampolineFor(Handle<Code> code,
   CHECK_NOT_NULL(isolate()->embedded_blob());
   CHECK_NE(0, isolate()->embedded_blob_size());
   CHECK(Builtins::IsIsolateIndependentBuiltin(*code));
+
+fprintf(stderr, "NewOffHeapTrampolineFor(): ret: %p\n", __builtin_return_address(0));
 
   Handle<Code> result =
       Builtins::GenerateOffHeapTrampolineFor(isolate(), off_heap_entry);

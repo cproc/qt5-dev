@@ -295,7 +295,7 @@ Handle<Code> Builtins::GenerateOffHeapTrampolineFor(Isolate* isolate,
                                                     Address off_heap_entry) {
   DCHECK_NOT_NULL(isolate->embedded_blob());
   DCHECK_NE(0, isolate->embedded_blob_size());
-
+fprintf(stderr, "GenerateOffHeapTrampolineFor(): ret: %p\n", __builtin_return_address(0));
   OffHeapTrampolineGenerator generator(isolate);
   CodeDesc desc = generator.Generate(off_heap_entry);
 

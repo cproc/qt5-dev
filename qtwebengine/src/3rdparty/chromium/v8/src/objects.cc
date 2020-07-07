@@ -14642,6 +14642,7 @@ void Code::ClearEmbeddedObjects(Heap* heap) {
 
 
 void Code::Relocate(intptr_t delta) {
+fprintf(stderr, "Code::Relocate(): ret: %p\n", __builtin_return_address(0));
   for (RelocIterator it(*this, RelocInfo::kApplyMask); !it.done(); it.next()) {
     it.rinfo()->apply(delta);
   }
