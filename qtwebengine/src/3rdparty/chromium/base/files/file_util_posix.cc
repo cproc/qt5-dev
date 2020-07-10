@@ -407,7 +407,7 @@ bool CopyDirectoryExcl(const FilePath& from_path,
 #endif  // !defined(OS_NACL_NONSFI)
 
 bool CreateLocalNonBlockingPipe(int fds[2]) {
-#if defined(OS_LINUX) || defined(OS_BSD)
+#if (defined(OS_LINUX) || defined(OS_BSD)) && 0
   return pipe2(fds, O_CLOEXEC | O_NONBLOCK) == 0;
 #else
   int raw_fds[2];
@@ -441,6 +441,7 @@ bool SetNonBlocking(int fd) {
 }
 
 bool SetCloseOnExec(int fd) {
+#if 0
 #if defined(OS_NACL_NONSFI)
   const int flags = 0;
 #else
@@ -452,6 +453,7 @@ bool SetCloseOnExec(int fd) {
 #endif  // defined(OS_NACL_NONSFI)
   if (HANDLE_EINTR(fcntl(fd, F_SETFD, flags | FD_CLOEXEC)) == -1)
     return false;
+#endif
   return true;
 }
 
