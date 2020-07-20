@@ -58,6 +58,6 @@ Window {
     visible: true
     WebEngineView {
         anchors.fill: parent
-        url: "https://www.google.com"
+        url: "https://web.basemark.com"
     }
 }
