@@ -10,7 +10,7 @@
 #if defined(OS_ANDROID)
 #include <malloc.h>
 #endif
-
+extern "C" void wait_for_continue();
 namespace base {
 
 void* AlignedAlloc(size_t size, size_t alignment) {
@@ -27,6 +27,13 @@ void* AlignedAlloc(size_t size, size_t alignment) {
 // http://code.google.com/p/android/issues/detail?id=35391
 #elif defined(OS_ANDROID)
   ptr = memalign(alignment, size);
+#elif defined(OS_GENODE)
+  /* XXX: alignment not implemented yet, result address must be compatible with 'free()' */
+  ptr = malloc(size);
+  if ((reinterpret_cast<uintptr_t>(ptr) & (alignment - 1)) != 0U) {
+    fprintf(stderr, "Warning: AlignedAlloc(): could not fulfill alignment request of %zu bytes\n", alignment);
+    wait_for_continue();
+  }
 #else
   if (int ret = posix_memalign(&ptr, alignment, size)) {
     DLOG(ERROR) << "posix_memalign() returned with error " << ret;
