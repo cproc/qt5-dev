@@ -599,6 +599,15 @@ void QGenodePlatformWindow::setVisible(bool visible)
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setVisible(" << visible << ")";
 
+	/*
+	 * This function must be called before the
+	 * 'QWindowSystemInterface::handleEnterEvent()' calls below to get the same
+	 * window event order as on Linux (xcb). Otherwise, a button with menu is
+	 * not displayed correctly when clicking on the button and then clicking
+	 * outside of the button.
+	 */
+	QPlatformWindow::setVisible(visible);
+
 	typedef Gui::Session::Command Command;
 
 	if (visible) {
@@ -612,17 +621,28 @@ void QGenodePlatformWindow::setVisible(bool visible)
 		_gui_session.enqueue<Command::Geometry>(_view_handle,
 			Gui::Rect(Gui::Point(g.x(), g.y()),
 			Gui::Area(g.width(), g.height())));
+
+		/*
+		 * xcb sends an enter event when a popup menu opens and this
+		 * appears to be necessary for correct button display in some cases.
+		 */
+		if (window()->type() == Qt::Popup)
+			QWindowSystemInterface::handleEnterEvent(window());
 	} else {
 
 		_gui_session.enqueue<Command::Geometry>(_view_handle,
 		     Gui::Rect(Gui::Point(), Gui::Area(0, 0)));
+
+		/*
+		 * xcb sends an enter event when a popup menu is closed and this
+		 * appears to be necessary for correct button display in some cases.
+		 */
+		if (window()->type() == Qt::Popup)
+			QWindowSystemInterface::handleEnterEvent(window()->transientParent(),
+			                                         QCursor::pos());
 	}
 
 	_gui_session.execute();
-
-
-
-	QPlatformWindow::setVisible(visible);
 
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setVisible() finished";
