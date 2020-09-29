@@ -140,6 +140,7 @@ int GetFlagsForMemoryPermission(OS::MemoryPermission access) {
 void* Allocate(void* address, size_t size, OS::MemoryPermission access) {
   int prot = GetProtectionFromMemoryPermission(access);
   int flags = GetFlagsForMemoryPermission(access);
+  fprintf(stderr, "Allocate(): %p, %zu\n", address, size);
   void* result = mmap(address, size, prot, flags, kMmapFd, kMmapFdOffset);
   if (result == MAP_FAILED) return nullptr;
   return result;

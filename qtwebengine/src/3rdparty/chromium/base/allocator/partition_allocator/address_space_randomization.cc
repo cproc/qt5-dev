@@ -79,6 +79,9 @@ void SetRandomPageBaseSeed(int64_t seed) {
 }
 
 void* GetRandomPageBase() {
+#if defined(OS_GENODE) && 0
+  return nullptr;
+#else
   uintptr_t random = static_cast<uintptr_t>(RandomValue(GetRandomContext()));
 
 #if defined(ARCH_CPU_64_BITS)
@@ -123,6 +126,7 @@ void* GetRandomPageBase() {
 
   DCHECK_EQ(0ULL, (random & kPageAllocationGranularityOffsetMask));
   return reinterpret_cast<void*>(random);
+#endif
 }
 
 }  // namespace base

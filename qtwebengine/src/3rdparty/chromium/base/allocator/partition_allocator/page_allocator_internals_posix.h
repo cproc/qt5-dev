@@ -69,7 +69,7 @@ bool AdjustAddressSpaceLimit(int64_t amount) {
 constexpr size_t kMinimumGuardedMemorySize = 1ULL << 32;  // 4 GiB
 
 #endif  // (defined(OS_BSD) || defined(OS_LINUX)) && defined(ARCH_CPU_64_BITS)
-
+extern "C" void wait_for_continue();
 void* SystemAllocPagesInternal(void* hint,
                                size_t length,
                                PageAccessibilityConfiguration accessibility,
@@ -93,8 +93,11 @@ void* SystemAllocPagesInternal(void* hint,
    */
   access_flag |= PROT_EXEC;
 #endif
+fprintf(stderr, "SystemAllocPagesInternal(): hint: %p, size: 0x%x\n", hint, length);
+//wait_for_continue();
   void* ret =
       mmap(hint, length, access_flag, MAP_ANONYMOUS | MAP_PRIVATE, fd, 0);
+fprintf(stderr, "SystemAllocPagesInternal(): got %p - %p, size: 0x%x\n", ret, ret + length - 1, length);
   if (ret == MAP_FAILED) {
     s_allocPageErrorCode = errno;
     ret = nullptr;
@@ -109,6 +112,7 @@ void* TrimMappingInternal(void* base,
                           bool commit,
                           size_t pre_slack,
                           size_t post_slack) {
+fprintf(stderr, "TrimMappingInternal(): base: %p, base_length: 0x%zx, pre_slack: 0x%zx, trim_length: 0x%zx, post_slack: 0x%zx\n", base, base_length, pre_slack, trim_length, post_slack);
   void* ret = base;
   // We can resize the allocation run. Release unneeded memory before and after
   // the aligned range.
@@ -119,12 +123,10 @@ void* TrimMappingInternal(void* base,
 #endif
     ret = reinterpret_cast<char*>(base) + pre_slack;
   }
-#if 0
   if (post_slack) {
     int res = munmap(reinterpret_cast<char*>(ret) + trim_length, post_slack);
-    CHECK(!res);
+    //CHECK(!res);
   }
-#endif
   return ret;
 }
 
@@ -148,6 +150,7 @@ void FreePagesInternal(void* address, size_t length) {
    * Sometimes only parts of the originally allocated area are to be freed,
    * which is currently not supported on Genode.
    */
+  fprintf(stderr, "FreePagesInternal(): %p, size: 0x%x\n", address, length);
   munmap(address, length);
 #else
   CHECK(!munmap(address, length));

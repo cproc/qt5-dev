@@ -428,6 +428,7 @@ void MemoryAllocator::FreeMemory(v8::PageAllocator* page_allocator,
 Address MemoryAllocator::AllocateAlignedMemory(
     size_t reserve_size, size_t commit_size, size_t alignment,
     Executability executable, void* hint, VirtualMemory* controller) {
+fprintf(stderr, "AllocateAlignedMemory(): reserve_size: 0x%zx, commit_size: 0x%zx, alignment: 0x%zx, ret: %p\n", reserve_size, commit_size, alignment, __builtin_return_address(0));
   v8::PageAllocator* page_allocator = this->page_allocator(executable);
   DCHECK(commit_size <= reserve_size);
   VirtualMemory reservation(page_allocator, reserve_size, hint, alignment);
@@ -876,6 +877,7 @@ MemoryChunk* MemoryAllocator::AllocateChunk(size_t reserve_area_size,
     size_t commit_size = ::RoundUp(
         MemoryChunkLayout::ObjectStartOffsetInDataPage() + commit_area_size,
         GetCommitPageSize());
+fprintf(stderr, "AllocateChunk(): 0x%zx\n", MemoryChunk::kAlignment);
     base =
         AllocateAlignedMemory(chunk_size, commit_size, MemoryChunk::kAlignment,
                               executable, address_hint, &reservation);

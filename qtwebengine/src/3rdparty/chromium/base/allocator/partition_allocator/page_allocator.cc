@@ -48,6 +48,7 @@ void* AllocPagesIncludingReserved(void* address,
                                   PageAccessibilityConfiguration accessibility,
                                   PageTag page_tag,
                                   bool commit) {
+fprintf(stderr, "AllocPagesIncludingReserved(): 0x%zx\n", length);
   void* ret =
       SystemAllocPages(address, length, accessibility, page_tag, commit);
   if (ret == nullptr) {
@@ -71,6 +72,7 @@ void* TrimMapping(void* base,
                   uintptr_t alignment,
                   PageAccessibilityConfiguration accessibility,
                   bool commit) {
+fprintf(stderr, "TrimMapping(): alignment: 0x%zx\n", alignment);
   size_t pre_slack = reinterpret_cast<uintptr_t>(base) & (alignment - 1);
   if (pre_slack) {
     pre_slack = alignment - pre_slack;
@@ -104,6 +106,7 @@ void* AllocPages(void* address,
                  PageAccessibilityConfiguration accessibility,
                  PageTag page_tag,
                  bool commit) {
+fprintf(stderr, "AllocPages(): length: 0x%zx, align: 0x%zx, ret: %p\n", length, align, __builtin_return_address(0));
   DCHECK(length >= kPageAllocationGranularity);
   DCHECK(!(length & kPageAllocationGranularityOffsetMask));
   DCHECK(align >= kPageAllocationGranularity);
@@ -233,6 +236,7 @@ void DiscardSystemPages(void* address, size_t length) {
 }
 
 bool ReserveAddressSpace(size_t size) {
+fprintf(stderr, "ReserveAddressSpace(): 0x%zx\n", size);
   // To avoid deadlock, call only SystemAllocPages.
   subtle::SpinLock::Guard guard(GetReserveLock());
   if (s_reservation_address == nullptr) {
