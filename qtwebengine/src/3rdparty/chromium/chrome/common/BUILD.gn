@@ -294,6 +294,7 @@ static_library("common") {
 
   deps = [
     "//components/metrics:call_stack_profile_builder",
+    "//chrome/app:generated_resources",
   ]
 
   if (enable_plugins) {
