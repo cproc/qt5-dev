@@ -89,6 +89,7 @@ void PlatformInputContext::update(Qt::InputMethodQueries queries)
 {
     VIRTUALKEYBOARD_DEBUG() << "PlatformInputContext::update():" << queries;
     bool enabled = inputMethodQuery(Qt::ImEnabled).toBool();
+qDebug() << "PlatformInputContext::update(): m_inputContext: " << m_inputContext << ", enabled: " << enabled;
 #ifdef QT_VIRTUALKEYBOARD_DESKTOP
     if (enabled && !m_inputPanel) {
         m_inputPanel = new DesktopInputPanel(this);
@@ -101,6 +102,7 @@ void PlatformInputContext::update(Qt::InputMethodQueries queries)
 #endif
     if (m_inputContext) {
         if (enabled) {
+qDebug() << "PlatformInputContext::update(): calling m_inputContext->priv()->update()";
             m_inputContext->priv()->update(queries);
             if (m_visible)
                 updateInputPanelVisible();
@@ -183,9 +185,11 @@ QObject *PlatformInputContext::focusObject()
 {
     return m_focusObject;
 }
-
+extern "C" void wait_for_continue();
 void PlatformInputContext::setFocusObject(QObject *object)
 {
+qDebug() << "setFocusObject()";
+//wait_for_continue();
     VIRTUALKEYBOARD_DEBUG() << "PlatformInputContext::setFocusObject():" << object;
     Q_ASSERT(m_inputContext == nullptr ||
              m_inputContext->priv()->shadow()->inputItem() == nullptr ||

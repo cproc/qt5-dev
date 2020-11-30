@@ -314,6 +314,7 @@ Qt::LayoutDirection QInputMethod::inputDirection() const
 */
 void QInputMethod::update(Qt::InputMethodQueries queries)
 {
+qDebug() << "QInputMethod::update(): " << queries;
     Q_D(QInputMethod);
 
     if (queries & Qt::ImEnabled) {
@@ -323,8 +324,12 @@ void QInputMethod::update(Qt::InputMethodQueries queries)
     }
 
     QPlatformInputContext *ic = d->platformInputContext();
-    if (ic)
+qDebug() << "QInputMethod::update(): ic: " << ic;
+    if (ic) {
+qDebug() << "QInputMethod::update(): calling ic->update()";
         ic->update(queries);
+qDebug() << "QInputMethod::update(): ic->update() returned";
+    }
 
     if (queries & Qt::ImCursorRectangle)
         emit cursorRectangleChanged();

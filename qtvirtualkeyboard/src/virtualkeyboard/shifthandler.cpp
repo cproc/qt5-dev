@@ -36,6 +36,7 @@
 #include <QGuiApplication>
 #include <QTime>
 #include <QStyleHints>
+#include <QDebug>
 
 QT_BEGIN_NAMESPACE
 namespace QtVirtualKeyboard {
@@ -156,6 +157,7 @@ bool ShiftHandler::isShiftActive() const
 
 void ShiftHandler::setShiftActive(bool active)
 {
+qDebug() << "setShiftActive(): " << active;
     Q_D(ShiftHandler);
     if (d->shift != active) {
         d->shift = active;
@@ -251,14 +253,17 @@ void ShiftHandler::clearToggleShiftTimer()
     Q_D(ShiftHandler);
     d->timer = QTime();
 }
-
+extern "C" void wait_for_continue();
 void ShiftHandler::reset()
 {
+qDebug() << "ShiftHandler::reset()";
     Q_D(ShiftHandler);
     if (d->inputContext->priv()->inputItem()) {
         Qt::InputMethodHints inputMethodHints = d->inputContext->inputMethodHints();
+qDebug() << "ShiftHandler::reset(): inputMethodHints: " << inputMethodHints;
         QVirtualKeyboardInputEngine::InputMode inputMode = d->inputContext->inputEngine()->inputMode();
         bool preferUpperCase = (inputMethodHints & (Qt::ImhPreferUppercase | Qt::ImhUppercaseOnly));
+qDebug() << "ShiftHandler::reset(): inputMethodHints: " << inputMethodHints;
         bool autoCapitalizationEnabled = !(d->inputContext->inputMethodHints() & (Qt::ImhNoAutoUppercase |
               Qt::ImhUppercaseOnly | Qt::ImhLowercaseOnly | Qt::ImhEmailCharactersOnly |
               Qt::ImhUrlCharactersOnly | Qt::ImhDialableCharactersOnly | Qt::ImhFormattedNumbersOnly |
@@ -354,6 +359,7 @@ void ShiftHandler::setAutoCapitalizationEnabled(bool enabled)
 
 void ShiftHandler::setToggleShiftEnabled(bool enabled)
 {
+qDebug() << "setToggleShiftEnabled(): " << enabled;
     Q_D(ShiftHandler);
     if (d->toggleShiftEnabled != enabled) {
         d->toggleShiftEnabled = enabled;

@@ -177,6 +177,7 @@ void QVirtualKeyboardInputContextPrivate::setLocale(const QString &locale)
 
 QObject *QVirtualKeyboardInputContextPrivate::inputItem() const
 {
+qDebug() << "inputItem(): focusObject: " << platformInputContext->focusObject();
     return platformInputContext ? platformInputContext->focusObject() : nullptr;
 }
 
@@ -328,9 +329,11 @@ void QVirtualKeyboardInputContextPrivate::commit()
 {
     inputEngine->update();
 }
-
+extern "C" void wait_for_continue();
 void QVirtualKeyboardInputContextPrivate::update(Qt::InputMethodQueries queries)
 {
+qDebug() << "QVirtualKeyboardInputContextPrivate::update(): " << queries;
+wait_for_continue();
     Q_Q(QVirtualKeyboardInputContext);
 
     // No need to fetch input clip rectangle during animation
