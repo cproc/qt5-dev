@@ -31,7 +31,7 @@ enum OpenBSDAudioIO {
 static const int kMaxOutputStreams = 4;
 
 // Default sample rate for input and output streams.
-static const int kDefaultSampleRate = 48000;
+static const int kDefaultSampleRate = 44100;
 
 void AddDefaultDevice(AudioDeviceNames* device_names) {
   DCHECK(device_names->empty());

@@ -244,7 +244,7 @@ source_set("audio") {
     sources += [ "linux/audio_manager_linux.cc" ]
   }
   if (use_sndio) {
-    libs += [ "sndio" ]
+    #libs += [ "sndio" ]
     sources += [
       "openbsd/audio_manager_openbsd.cc",
       "sndio/sndio_input.cc",
