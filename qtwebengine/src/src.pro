@@ -13,8 +13,7 @@ webengine_plugin.depends = webengine
 core.depends = buildtools
 
 SUBDIRS += buildtools \
-           core \
-           process
+           core
 
 qtConfig(webengine-spellchecker):!qtConfig(webengine-native-spellchecker):!cross_compile {
     SUBDIRS += qwebengine_convert_dict
