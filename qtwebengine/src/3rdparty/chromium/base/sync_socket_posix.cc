@@ -23,6 +23,8 @@
 #include "base/threading/scoped_blocking_call.h"
 #include "build/build_config.h"
 
+#if !defined(OS_GENODE)
+
 namespace base {
 
 namespace {
@@ -251,3 +253,5 @@ bool CancelableSyncSocket::CreatePair(CancelableSyncSocket* socket_a,
 }
 
 }  // namespace base
+
+#endif /* OS_GENODE */
