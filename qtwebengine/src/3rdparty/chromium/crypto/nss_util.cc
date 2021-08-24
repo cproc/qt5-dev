@@ -715,7 +715,7 @@ class NSSInitSingleton {
 
   // Load nss's built-in root certs.
   SECMODModule* InitDefaultRootCerts() {
-    SECMODModule* root = LoadModule("Root Certs", "libnssckbi.so", nullptr);
+    SECMODModule* root = LoadModule("Root Certs", "nssckbi.lib.so", nullptr);
     if (root)
       return root;
 
