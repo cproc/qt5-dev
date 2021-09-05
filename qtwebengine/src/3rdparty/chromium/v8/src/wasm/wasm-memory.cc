@@ -32,7 +32,7 @@ void* TryAllocateBackingStore(WasmMemoryTracker* memory_tracker, Heap* heap,
                               size_t* allocation_length) {
   using AllocationStatus = WasmMemoryTracker::AllocationStatus;
 #if V8_TARGET_ARCH_64_BIT
-  bool require_full_guard_regions = true;
+  bool require_full_guard_regions = /*true*/false;
 #else
   bool require_full_guard_regions = false;
 #endif
@@ -57,6 +57,7 @@ void* TryAllocateBackingStore(WasmMemoryTracker* memory_tracker, Heap* heap,
             : RoundUp(base::bits::RoundUpToPowerOfTwo32(
                           static_cast<uint32_t>(size)),
                       kWasmPageSize);
+fprintf(stderr, "allocation_length: %zu\n", *allocation_length);
     DCHECK_GE(*allocation_length, size);
     DCHECK_GE(*allocation_length, kWasmPageSize);
 
@@ -292,6 +293,7 @@ Handle<JSArrayBuffer> SetupArrayBuffer(Isolate* isolate, void* backing_store,
 
 MaybeHandle<JSArrayBuffer> NewArrayBuffer(Isolate* isolate, size_t size,
                                           SharedFlag shared) {
+fprintf(stderr, "NewArrayBuffer(): %zu\n", size);
   // Enforce flag-limited maximum allocation size.
   if (size > max_mem_bytes()) return {};
 
