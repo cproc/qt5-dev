@@ -6030,6 +6030,7 @@ Call::Stats PeerConnection::GetCallStats() {
 }
 
 bool PeerConnection::CreateSctpTransport_n(const std::string& mid) {
+#if 0
   RTC_DCHECK(network_thread()->IsCurrent());
   RTC_DCHECK(sctp_factory_);
   cricket::DtlsTransportInternal* dtls_transport =
@@ -6053,6 +6054,10 @@ bool PeerConnection::CreateSctpTransport_n(const std::string& mid) {
   sctp_mid_ = mid;
   sctp_transport_->SetDtlsTransport(dtls_transport);
   return true;
+#else
+fprintf(stderr, "*** PeerConnection::CreateSctpTransport_n()\n");
+  return false;
+#endif
 }
 
 void PeerConnection::DestroySctpTransport_n() {
