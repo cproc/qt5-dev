@@ -12911,6 +12911,15 @@ void JSObject::LazyRegisterPrototypeUser(Handle<Map> user, Isolate* isolate) {
     // impossible to make any assumptions about the prototype chain anyway.
     if (maybe_proto->IsJSProxy()) return;
     Handle<JSObject> proto = Handle<JSObject>::cast(maybe_proto);
+
+if (user->IsJSGlobalObjectMap()) {
+	static int count = 0;
+	count++;
+	fprintf(stderr, "count: %d, ptr: 0x%lx, IsNull(): %d\n",
+	        count, proto->map()->ptr(), proto->map()->prototype()->IsNull());
+	proto->map()->MapPrint(std::cerr);
+}
+
     Handle<PrototypeInfo> proto_info =
         Map::GetOrCreatePrototypeInfo(proto, isolate);
     Handle<Object> maybe_registry(proto_info->prototype_users(), isolate);
