@@ -62,6 +62,9 @@ class CAPTURE_EXPORT VideoCaptureDeviceGenode : public VideoCaptureDevice {
   // The system time when we receive the first frame.
   base::TimeTicks first_ref_time_;
 
+  // capture data file
+  int file_ { -1 };
+
   // Guards the below variables from concurrent access between methods running
   // on the main thread and |capture_thread_|.
   base::Lock lock_;

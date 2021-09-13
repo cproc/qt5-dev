@@ -4,6 +4,8 @@
 
 #include "media/capture/video/genode/video_capture_device_genode.h"
 
+#include <fcntl.h>
+
 #include <stddef.h>
 #include <utility>
 
@@ -28,8 +30,8 @@ bool VideoCaptureDeviceGenode::GetVideoCaptureFormat(
 
   VideoCaptureFormat format;
   format.pixel_format = PIXEL_FORMAT_ARGB;
-  format.frame_size.set_width(1280);
-  format.frame_size.set_height(720);
+  format.frame_size.set_width(640);
+  format.frame_size.set_height(480);
   format.frame_rate = 30;
   if (!format.IsValid())
     return false;
@@ -41,7 +43,11 @@ bool VideoCaptureDeviceGenode::GetVideoCaptureFormat(
 
 
 VideoCaptureDeviceGenode::VideoCaptureDeviceGenode()
-: capture_thread_("CaptureThread") {}
+: capture_thread_("CaptureThread") {
+fprintf(stderr, "*** VideoCaptureDeviceGenode()\n");
+  file_ = open("/dev/capture", O_RDONLY);
+fprintf(stderr, "*** VideoCaptureDeviceGenode(): file: %d\n", file_);
+}
 
 
 VideoCaptureDeviceGenode::~VideoCaptureDeviceGenode() {
@@ -170,12 +176,17 @@ void VideoCaptureDeviceGenode::OnCaptureTask() {
 
   // Give the captured frame to the client.
 
-  static uint32_t buf[1280*720];
+  static uint32_t buf[640*480];
+
+#if 0
   static uint32_t val = 0xff000000;
-  for (int i = 0; i < sizeof(buf)/sizeof(uint32_t); i++) {
+  for (size_t i = 0; i < sizeof(buf)/sizeof(uint32_t); i++) {
   	buf[i] = val;
   	val++;
   }
+#endif
+
+  read(file_, buf, sizeof(buf));
 
   int frame_size = sizeof(buf);
   const uint8_t* frame_ptr = (const uint8_t*)buf;
