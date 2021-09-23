@@ -40,6 +40,7 @@ bool IsCaptureFormatEqual(const media::VideoCaptureFormat& format1,
 // This function receives a list of capture formats, sets all of them to I420
 // (while keeping Y16 as is), and then removes duplicates.
 void ConsolidateCaptureFormats(media::VideoCaptureFormats* formats) {
+fprintf(stderr, "*** ConsolidateCaptureFormats()\n");
   if (formats->empty())
     return;
 #if !defined(OS_GENODE)
@@ -125,6 +126,7 @@ const VideoCaptureDeviceInfo* VideoCaptureSystemImpl::LookupDeviceInfoFromId(
 
 void VideoCaptureSystemImpl::DeviceInfosReady(
     std::unique_ptr<VideoCaptureDeviceDescriptors> descriptors) {
+fprintf(stderr, "*** VideoCaptureSystemImpl::DeviceInfosReady()\n");
   DCHECK(thread_checker_.CalledOnValidThread());
   DCHECK(!device_enum_request_queue_.empty());
   // For devices for which we already have an entry in |devices_info_cache_|,
@@ -152,10 +154,12 @@ void VideoCaptureSystemImpl::DeviceInfosReady(
   // not touch the state of |this| after running the callback in this case.
   if (device_enum_request_queue_.empty()) {
     std::move(request_cb).Run(devices_info_cache_);
+fprintf(stderr, "*** VideoCaptureSystemImpl::DeviceInfosReady() finished 1\n");
     return;
   }
   std::move(request_cb).Run(devices_info_cache_);
   ProcessDeviceInfoRequest();
+fprintf(stderr, "*** VideoCaptureSystemImpl::DeviceInfosReady() finished 2\n");
 }
 
 }  // namespace media

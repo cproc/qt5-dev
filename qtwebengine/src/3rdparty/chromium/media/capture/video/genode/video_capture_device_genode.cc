@@ -46,11 +46,13 @@ bool VideoCaptureDeviceGenode::GetVideoCaptureFormat(
 
 VideoCaptureDeviceGenode::VideoCaptureDeviceGenode()
 : capture_thread_("CaptureThread") {
+fprintf(stderr, "*** VideoCaptureDeviceGenode()\n");
   file_ = open("/dev/capture", O_RDONLY);
   if (file_ == -1) {
     std::cerr << "Error: could not open /dev/capture, video capture backend will "
               << "generate a test pattern." << std::endl;
   }
+fprintf(stderr, "*** VideoCaptureDeviceGenode(): file: %d\n", file_);
 }
 
 
@@ -66,6 +68,7 @@ VideoCaptureDeviceGenode::~VideoCaptureDeviceGenode() {
 void VideoCaptureDeviceGenode::AllocateAndStart(
     const VideoCaptureParams& params,
     std::unique_ptr<VideoCaptureDevice::Client> client) {
+fprintf(stderr, "*** VideoCaptureDeviceGenode::AllocateAndStart()\n");
   DCHECK(thread_checker_.CalledOnValidThread());
   CHECK(!capture_thread_.IsRunning());
 
@@ -77,6 +80,7 @@ void VideoCaptureDeviceGenode::AllocateAndStart(
 }
 
 void VideoCaptureDeviceGenode::StopAndDeAllocate() {
+fprintf(stderr, "*** VideoCaptureDeviceGenode::StopAndDeAllocate()\n");
   DCHECK(thread_checker_.CalledOnValidThread());
   CHECK(capture_thread_.IsRunning());
 
@@ -87,6 +91,7 @@ void VideoCaptureDeviceGenode::StopAndDeAllocate() {
 }
 
 void VideoCaptureDeviceGenode::GetPhotoState(GetPhotoStateCallback callback) {
+fprintf(stderr, "*** VideoCaptureDeviceGenode::GetPhotoStateCallback()\n");
   DCHECK(thread_checker_.CalledOnValidThread());
 
   auto photo_capabilities = mojo::CreateEmptyPhotoState();
@@ -101,6 +106,7 @@ void VideoCaptureDeviceGenode::GetPhotoState(GetPhotoStateCallback callback) {
 
 void VideoCaptureDeviceGenode::SetPhotoOptions(mojom::PhotoSettingsPtr settings,
                                              SetPhotoOptionsCallback callback) {
+fprintf(stderr, "*** VideoCaptureDeviceGenode::SetPhotoOptions()\n");
   DCHECK(thread_checker_.CalledOnValidThread());
 
   if (settings->has_height &&
@@ -132,6 +138,7 @@ void VideoCaptureDeviceGenode::SetPhotoOptions(mojom::PhotoSettingsPtr settings,
 }
 
 void VideoCaptureDeviceGenode::TakePhoto(TakePhotoCallback callback) {
+fprintf(stderr, "*** VideoCaptureDeviceGenode::TakePhoto()\n");
   DCHECK(thread_checker_.CalledOnValidThread());
   base::AutoLock lock(lock_);
 
@@ -141,6 +148,7 @@ void VideoCaptureDeviceGenode::TakePhoto(TakePhotoCallback callback) {
 void VideoCaptureDeviceGenode::OnAllocateAndStart(
     const VideoCaptureParams& params,
     std::unique_ptr<VideoCaptureDevice::Client> client) {
+fprintf(stderr, "*** VideoCaptureDeviceGenode::OnAllocateAndStart()\n");
   DCHECK(capture_thread_.task_runner()->BelongsToCurrentThread());
 
   client_ = std::move(client);
@@ -156,12 +164,14 @@ void VideoCaptureDeviceGenode::OnAllocateAndStart(
 
 
 void VideoCaptureDeviceGenode::OnStopAndDeAllocate() {
+fprintf(stderr, "*** VideoCaptureDeviceGenode::OnStopAndDeAllocate()\n");
   DCHECK(capture_thread_.task_runner()->BelongsToCurrentThread());
   client_.reset();
   next_frame_time_ = base::TimeTicks();
 }
 
 void VideoCaptureDeviceGenode::OnCaptureTask() {
+//fprintf(stderr, "*** VideoCaptureDeviceGenode::OnCaptureTask()\n");
   DCHECK(capture_thread_.task_runner()->BelongsToCurrentThread());
   if (!client_)
     return;
