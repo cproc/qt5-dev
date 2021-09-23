@@ -11,6 +11,7 @@
 #include "pc/peer_connection.h"
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <queue>
 #include <set>
@@ -6030,6 +6031,7 @@ Call::Stats PeerConnection::GetCallStats() {
 }
 
 bool PeerConnection::CreateSctpTransport_n(const std::string& mid) {
+#if !defined(OS_GENODE)
   RTC_DCHECK(network_thread()->IsCurrent());
   RTC_DCHECK(sctp_factory_);
   cricket::DtlsTransportInternal* dtls_transport =
@@ -6053,6 +6055,11 @@ bool PeerConnection::CreateSctpTransport_n(const std::string& mid) {
   sctp_mid_ = mid;
   sctp_transport_->SetDtlsTransport(dtls_transport);
   return true;
+#else
+  std::cerr << "Warning: PeerConnection::CreateSctpTransport_n() not implemented for Genode\n"
+            << std::endl;
+  return false;
+#endif /* OS_GENODE */
 }
 
 void PeerConnection::DestroySctpTransport_n() {
