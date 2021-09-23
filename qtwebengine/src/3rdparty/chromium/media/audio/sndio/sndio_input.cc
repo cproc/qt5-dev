@@ -66,7 +66,7 @@ bool SndioAudioInputStream::Open() {
   sio_initpar(&par);
   par.rate = params_.sample_rate();
   par.pchan = params_.channels();
-  par.bits = SampleFormatToBytesPerChannel(kSampleFormat);
+  par.bits = SampleFormatToBitsPerChannel(kSampleFormat);
   par.bps = par.bits / 8;
   par.sig = sig = par.bits != 8 ? 1 : 0;
   par.le = SIO_LE_NATIVE;
@@ -88,7 +88,7 @@ bool SndioAudioInputStream::Open() {
 
   if (par.rate  != (unsigned int)params_.sample_rate() ||
       par.pchan != (unsigned int)params_.channels() ||
-      par.bits  != (unsigned int)SampleFormatToBytesPerChannel(kSampleFormat) ||
+      par.bits  != (unsigned int)SampleFormatToBitsPerChannel(kSampleFormat) ||
       par.sig   != (unsigned int)sig ||
       (par.bps > 1 && par.le != SIO_LE_NATIVE) ||
       (par.bits != par.bps * 8)) {
