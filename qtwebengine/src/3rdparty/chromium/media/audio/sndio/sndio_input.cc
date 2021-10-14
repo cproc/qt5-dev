@@ -96,7 +96,7 @@ bad_close:
 }
 
 void SndioAudioInputStream::Start(AudioInputCallback* cb) {
-
+fprintf(stderr, "*** %s\n", __func__);
   StartAgc();
 
   state = kRunning;
@@ -169,8 +169,9 @@ void SndioAudioInputStream::ThreadLoop(void) {
   double normalized_volume = 0.0;
 
   nframes = audio_bus->frames();
-
+fprintf(stderr, "*** %s\n", __func__);
   while (state == kRunning && !sio_eof(hdl)) {
+fprintf(stderr, "*** %s: check 1\n", __func__);
 
     GetAgcVolume(&normalized_volume);
 
@@ -179,6 +180,7 @@ void SndioAudioInputStream::ThreadLoop(void) {
     data = buffer;
     while (todo > 0) {
       n = sio_read(hdl, data, todo);
+fprintf(stderr, "*** %s: n: %zu\n", __func__, n);
       if (n == 0)
         return;	// unrecoverable I/O error
       todo -= n;
