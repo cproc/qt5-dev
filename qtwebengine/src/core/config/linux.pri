@@ -191,6 +191,11 @@ host_build {
     } else {
         gn_args += use_alsa=false
     }
+    qtConfig(webengine-oss) {
+        gn_args += use_oss=true
+    } else {
+        gn_args += use_oss=false
+    }
     qtConfig(webengine-sndio) {
         gn_args += use_sndio=true
     } else {
