@@ -83,7 +83,7 @@ sctp_userspace_set_threadname(const char *name)
 #endif
 }
 
-#if !defined(_WIN32) && !defined(__Userspace_os_NaCl)
+#if !defined(_WIN32) && !defined(__Userspace_os_NaCl) && !defined(__Userspace_os_Genode)
 int
 sctp_userspace_get_mtu_from_ifn(uint32_t if_index, int af)
 {
@@ -107,7 +107,7 @@ sctp_userspace_get_mtu_from_ifn(uint32_t if_index, int af)
 }
 #endif
 
-#if defined(__Userspace_os_NaCl)
+#if defined(__Userspace_os_NaCl) || defined(__Userspace_os_Genode)
 int
 sctp_userspace_get_mtu_from_ifn(uint32_t if_index, int af)
 {

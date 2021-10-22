@@ -5002,9 +5002,13 @@ bool PeerConnection::InitializePortAllocator_n(
   // To handle both internal and externally created port allocator, we will
   // enable BUNDLE here.
   port_allocator_flags_ = port_allocator_->flags();
+#if defined(OS_GENODE)
+  port_allocator_flags_ |= cricket::PORTALLOCATOR_ENABLE_SHARED_SOCKET;
+#else
   port_allocator_flags_ |= cricket::PORTALLOCATOR_ENABLE_SHARED_SOCKET |
                            cricket::PORTALLOCATOR_ENABLE_IPV6 |
                            cricket::PORTALLOCATOR_ENABLE_IPV6_ON_WIFI;
+#endif
   // If the disable-IPv6 flag was specified, we'll not override it
   // by experiment.
   if (configuration.disable_ipv6) {
