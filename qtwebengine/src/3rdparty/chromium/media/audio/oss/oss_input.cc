@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <sys/soundcard.h>
 
+#include <iostream>
+
 #include "base/bind.h"
 #include "base/logging.h"
 #include "base/macros.h"
@@ -40,6 +42,8 @@ OssAudioInputStream::~OssAudioInputStream() {
 }
 
 bool OssAudioInputStream::Open() {
+fprintf(stderr, "%s: channels: %d\n", __PRETTY_FUNCTION__, params.channels());
+fprintf(stderr, "%s: frames: %d\n", __PRETTY_FUNCTION__, audio_bus->frames());
 
   if (state != kClosed)
     return false;
@@ -141,7 +145,9 @@ void OssAudioInputStream::ThreadLoop(void) {
     todo = nframes * params.GetBytesPerFrame(kSampleFormat);
     data = buffer;
     while (todo > 0) {
+fprintf(stderr, "%s: todo: %zu\n", __PRETTY_FUNCTION__, todo);
       n = read(read_fd, data, todo);
+fprintf(stderr, "%s: n: %zu\n", __PRETTY_FUNCTION__, n);
       if (n == 0)
         return;	// unrecoverable I/O error
       todo -= n;
@@ -154,7 +160,14 @@ void OssAudioInputStream::ThreadLoop(void) {
       params.sample_rate());
 
     // push into bus
-    audio_bus->FromInterleaved(buffer, nframes, SampleFormatToBytesPerChannel(kSampleFormat));
+    audio_bus->FromInterleaved<SignedInt16SampleTypeTraits>(
+    	reinterpret_cast<int16_t*>(buffer), nframes);
+
+base::TimeTicks now = base::TimeTicks::Now();
+static base::TimeTicks prev_now = now;
+base::TimeDelta diff_now = now - prev_now;
+prev_now = now;
+std::cerr << "diff_now: " << diff_now.InMilliseconds() << std::endl;
 
     // invoke callback
     callback->OnData(audio_bus.get(), base::TimeTicks::Now() - delay, 1.);
