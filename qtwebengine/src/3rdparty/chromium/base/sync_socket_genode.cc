@@ -23,13 +23,6 @@
 
 namespace base {
 
-#define FD_MASK ((1 << 10) - 1)
-#define WRITE_FD_SHIFT  10
-#define CANCEL_FD_SHIFT 20
-#define READ_FD(handle)   ((handle                   ) & FD_MASK)
-#define WRITE_FD(handle)  ((handle >> WRITE_FD_SHIFT ) & FD_MASK)
-#define CANCEL_FD(handle) ((handle >> CANCEL_FD_SHIFT) & FD_MASK)
-
 namespace {
 // To avoid users sending negative message lengths to Send/Receive
 // we clamp message lengths, which are size_t, to no more than INT_MAX.
@@ -44,15 +37,15 @@ size_t SendHelper(SyncSocket::Handle handle,
   DCHECK_LE(length, kMaxMessageLength);
   DCHECK_NE(handle, SyncSocket::kInvalidHandle);
   const char* charbuffer = static_cast<const char*>(buffer);
-  return WriteFileDescriptor(WRITE_FD(handle), charbuffer, length)
+  return WriteFileDescriptor(SYNC_SOCKET_GENODE_WRITE_FD(handle), charbuffer, length)
              ? static_cast<size_t>(length)
              : 0;
 }
 
 bool CloseHandle(SyncSocket::Handle handle) {
   if (handle != SyncSocket::kInvalidHandle && 
-      ((close(READ_FD(handle)) < 0) ||
-       (close(WRITE_FD(handle)) < 0))) {
+      ((close(SYNC_SOCKET_GENODE_READ_FD(handle)) < 0) ||
+       (close(SYNC_SOCKET_GENODE_WRITE_FD(handle)) < 0))) {
     DPLOG(ERROR) << "close";
     return false;
   }
@@ -88,8 +81,8 @@ bool SyncSocket::CreatePair(SyncSocket* socket_a, SyncSocket* socket_b) {
   }
 
   // Copy the handles out for successful return.
-  socket_a->handle_ = (pipefds[1][1] << WRITE_FD_SHIFT) | pipefds[0][0];
-  socket_b->handle_ = (pipefds[0][1] << WRITE_FD_SHIFT) | pipefds[1][0];
+  socket_a->handle_ = (pipefds[1][1] << SYNC_SOCKET_GENODE_WRITE_FD_SHIFT) | pipefds[0][0];
+  socket_b->handle_ = (pipefds[0][1] << SYNC_SOCKET_GENODE_WRITE_FD_SHIFT) | pipefds[1][0];
 
   return true;
 }
@@ -124,7 +117,7 @@ size_t SyncSocket::Receive(void* buffer, size_t length) {
   DCHECK_LE(length, kMaxMessageLength);
   DCHECK_NE(handle_, kInvalidHandle);
   char* charbuffer = static_cast<char*>(buffer);
-  if (ReadFromFD(READ_FD(handle_), charbuffer, length))
+  if (ReadFromFD(SYNC_SOCKET_GENODE_READ_FD(handle_), charbuffer, length))
     return length;
   return 0;
 }
@@ -147,7 +140,7 @@ size_t SyncSocket::ReceiveWithTimeout(void* buffer,
   const TimeTicks finish_time = start_time + timeout;
 
   struct pollfd pollfd;
-  pollfd.fd = READ_FD(handle_);
+  pollfd.fd = SYNC_SOCKET_GENODE_READ_FD(handle_);
   pollfd.events = POLLIN;
   pollfd.revents = 0;
 
@@ -175,19 +168,19 @@ size_t SyncSocket::ReceiveWithTimeout(void* buffer,
     DCHECK(pollfd.revents & (POLLIN | POLLHUP | POLLERR)) << pollfd.revents;
     const size_t bytes_to_read = length - bytes_read_total;
 
-    const int flags = fcntl(READ_FD(handle_), F_GETFL);
+    const int flags = fcntl(SYNC_SOCKET_GENODE_READ_FD(handle_), F_GETFL);
     if (flags != -1 && (flags & O_NONBLOCK) == 0) {
       // Set the socket to non-blocking mode for receiving if its original mode
       // is blocking (since 'Peek()' is not supported).
-      fcntl(READ_FD(handle_), F_SETFL, flags | O_NONBLOCK);
+      fcntl(SYNC_SOCKET_GENODE_READ_FD(handle_), F_SETFL, flags | O_NONBLOCK);
     }
 
     const ssize_t bytes_received =
-        read(READ_FD(handle_), static_cast<char*>(buffer) + bytes_read_total, bytes_to_read);
+        read(SYNC_SOCKET_GENODE_READ_FD(handle_), static_cast<char*>(buffer) + bytes_read_total, bytes_to_read);
 
     if (flags != -1 && (flags & O_NONBLOCK) == 0) {
       // Restore the original flags.
-      fcntl(READ_FD(handle_), F_SETFL, flags);
+      fcntl(SYNC_SOCKET_GENODE_READ_FD(handle_), F_SETFL, flags);
     }
 
     if (bytes_received <= 0)
@@ -202,7 +195,7 @@ size_t SyncSocket::ReceiveWithTimeout(void* buffer,
 size_t SyncSocket::Peek() {
   DCHECK_NE(handle_, kInvalidHandle);
   int number_chars = 0;
-  if (ioctl(READ_FD(handle_), FIONREAD, &number_chars) == -1) {
+  if (ioctl(SYNC_SOCKET_GENODE_READ_FD(handle_), FIONREAD, &number_chars) == -1) {
     // If there is an error in ioctl, signal that the channel would block.
     return 0;
   }
@@ -229,19 +222,19 @@ bool CancelableSyncSocket::Shutdown() {
 
   /* unblock reader (if any) by writing into the write end of the pipe */
 
-  const int flags = fcntl(CANCEL_FD(handle_), F_GETFL);
+  const int flags = fcntl(SYNC_SOCKET_GENODE_CANCEL_FD(handle_), F_GETFL);
   if (flags != -1 && (flags & O_NONBLOCK) == 0) {
     // Set the fd to non-blocking mode if its original mode
     // is blocking.
-    fcntl(CANCEL_FD(handle_), F_SETFL, flags | O_NONBLOCK);
+    fcntl(SYNC_SOCKET_GENODE_CANCEL_FD(handle_), F_SETFL, flags | O_NONBLOCK);
   }
 
   char buf = 0;
-  write(CANCEL_FD(handle_), &buf, sizeof(buf));
+  write(SYNC_SOCKET_GENODE_CANCEL_FD(handle_), &buf, sizeof(buf));
 
   if (flags != -1 && (flags & O_NONBLOCK) == 0) {
     // Restore the original flags.
-    fcntl(CANCEL_FD(handle_), F_SETFL, flags);
+    fcntl(SYNC_SOCKET_GENODE_CANCEL_FD(handle_), F_SETFL, flags);
   }
 
   return true;
@@ -252,18 +245,18 @@ size_t CancelableSyncSocket::Send(const void* buffer, size_t length) {
   DCHECK_LE(length, kMaxMessageLength);
   DCHECK_NE(handle_, kInvalidHandle);
 
-  const int flags = fcntl(WRITE_FD(handle_), F_GETFL);
+  const int flags = fcntl(SYNC_SOCKET_GENODE_WRITE_FD(handle_), F_GETFL);
   if (flags != -1 && (flags & O_NONBLOCK) == 0) {
     // Set the fd to non-blocking mode for sending if its original mode
     // is blocking.
-    fcntl(WRITE_FD(handle_), F_SETFL, flags | O_NONBLOCK);
+    fcntl(SYNC_SOCKET_GENODE_WRITE_FD(handle_), F_SETFL, flags | O_NONBLOCK);
   }
 
   const size_t len = SendHelper(handle_, buffer, length);
 
   if (flags != -1 && (flags & O_NONBLOCK) == 0) {
     // Restore the original flags.
-    fcntl(WRITE_FD(handle_), F_SETFL, flags);
+    fcntl(SYNC_SOCKET_GENODE_WRITE_FD(handle_), F_SETFL, flags);
   }
 
   if (canceled_)
@@ -277,7 +270,7 @@ size_t CancelableSyncSocket::Receive(void* buffer, size_t length) {
   size_t total_read = 0;
   while (total_read < length) {
     ssize_t bytes_read =
-        HANDLE_EINTR(read(READ_FD(handle_), static_cast<char*>(buffer) + total_read, length - total_read));
+        HANDLE_EINTR(read(SYNC_SOCKET_GENODE_READ_FD(handle_), static_cast<char*>(buffer) + total_read, length - total_read));
 
     if (canceled_)
       return 0;
@@ -312,7 +305,7 @@ size_t CancelableSyncSocket::ReceiveWithTimeout(void* buffer,
   const TimeTicks finish_time = start_time + timeout;
 
   struct pollfd pollfd;
-  pollfd.fd = READ_FD(handle_);
+  pollfd.fd = SYNC_SOCKET_GENODE_READ_FD(handle_);
   pollfd.events = POLLIN;
   pollfd.revents = 0;
 
@@ -340,19 +333,19 @@ size_t CancelableSyncSocket::ReceiveWithTimeout(void* buffer,
     DCHECK(pollfd.revents & (POLLIN | POLLHUP | POLLERR)) << pollfd.revents;
     const size_t bytes_to_read = length - bytes_read_total;
 
-    const int flags = fcntl(READ_FD(handle_), F_GETFL);
+    const int flags = fcntl(SYNC_SOCKET_GENODE_READ_FD(handle_), F_GETFL);
     if (flags != -1 && (flags & O_NONBLOCK) == 0) {
       // Set the socket to non-blocking mode for receiving if its original mode
       // is blocking (since 'Peek()' is not supported).
-      fcntl(READ_FD(handle_), F_SETFL, flags | O_NONBLOCK);
+      fcntl(SYNC_SOCKET_GENODE_READ_FD(handle_), F_SETFL, flags | O_NONBLOCK);
     }
 
     const ssize_t bytes_received =
-        read(READ_FD(handle_), static_cast<char*>(buffer) + bytes_read_total, bytes_to_read);
+        read(SYNC_SOCKET_GENODE_READ_FD(handle_), static_cast<char*>(buffer) + bytes_read_total, bytes_to_read);
 
     if (flags != -1 && (flags & O_NONBLOCK) == 0) {
       // Restore the original flags.
-      fcntl(READ_FD(handle_), F_SETFL, flags);
+      fcntl(SYNC_SOCKET_GENODE_READ_FD(handle_), F_SETFL, flags);
     }
 
     if (canceled_)
@@ -373,8 +366,8 @@ bool CancelableSyncSocket::CreatePair(CancelableSyncSocket* socket_a,
   bool result = SyncSocket::CreatePair(socket_a, socket_b);
 
   if (result) {
-    socket_a->handle_ |= WRITE_FD(socket_b->handle_) << CANCEL_FD_SHIFT;
-    socket_b->handle_ |= WRITE_FD(socket_a->handle_) << CANCEL_FD_SHIFT;
+    socket_a->handle_ |= SYNC_SOCKET_GENODE_WRITE_FD(socket_b->handle_) << SYNC_SOCKET_GENODE_CANCEL_FD_SHIFT;
+    socket_b->handle_ |= SYNC_SOCKET_GENODE_WRITE_FD(socket_a->handle_) << SYNC_SOCKET_GENODE_CANCEL_FD_SHIFT;
   }
 
   return result;
