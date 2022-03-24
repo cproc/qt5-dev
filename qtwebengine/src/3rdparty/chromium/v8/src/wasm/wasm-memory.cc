@@ -32,7 +32,11 @@ void* TryAllocateBackingStore(WasmMemoryTracker* memory_tracker, Heap* heap,
                               size_t* allocation_length) {
   using AllocationStatus = WasmMemoryTracker::AllocationStatus;
 #if V8_TARGET_ARCH_64_BIT
+#if defined(V8_OS_GENODE)
+  bool require_full_guard_regions = false;
+#else
   bool require_full_guard_regions = true;
+#endif /* V8_OS_GENODE */
 #else
   bool require_full_guard_regions = false;
 #endif
