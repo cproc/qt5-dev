@@ -201,9 +201,11 @@ void WebEngineContext::destroyProfileAdapter()
         Q_ASSERT(m_profileAdapters.isEmpty());
     }
 }
-
+extern "C" void wait_for_continue();
 void WebEngineContext::addProfileAdapter(ProfileAdapter *profileAdapter)
 {
+fprintf(stderr, "*** %s\n", __PRETTY_FUNCTION__);
+//wait_for_continue();
     Q_ASSERT(!m_profileAdapters.contains(profileAdapter));
     const QString path = profileAdapter->dataPath();
     if (!path.isEmpty()) {
@@ -215,13 +217,16 @@ void WebEngineContext::addProfileAdapter(ProfileAdapter *profileAdapter)
             }
         }
     }
-
+#if 0
     if (content::RenderProcessHost::run_renderer_in_process()){
-        if (!m_profileAdapters.isEmpty())
-            qFatal("Single mode supports only single profile.");
+        if (!m_profileAdapters.isEmpty()) {
+            qWarning("Single mode supports only single profile.");
+            wait_for_continue();
+        }
         // there is only one profle therefore make it 'default'
         m_defaultProfileAdapter.reset(profileAdapter);
     }
+#endif
     m_profileAdapters.append(profileAdapter);
 }
 
