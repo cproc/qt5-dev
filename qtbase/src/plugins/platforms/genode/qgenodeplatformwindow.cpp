@@ -501,7 +501,7 @@ QString QGenodePlatformWindow::_sanitize_label(QString label)
 	return label;
 }
 
-
+extern "C" void wait_for_continue();
 QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
                                              QGenodeSignalProxyThread &signal_proxy,
                                              QWindow *window)
@@ -526,9 +526,11 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
                                &QGenodePlatformWindow::_handle_mode_changed),
   _touch_device(_init_touch_device())
 {
-	if (qnpw_verbose)
+//	if (qnpw_verbose)
+		qDebug() << (void*)this << ": QGenodePlatformWindow()";
+wait_for_continue();
 		if (window->transientParent())
-			qDebug() << "QGenodePlatformWindow(): child window of" << window->transientParent();
+			qDebug() << (void*)this << ": QGenodePlatformWindow(): child window of" << window->transientParent();
 
 	_gui_session_label_list.append(_gui_session_label);
 
@@ -571,8 +573,8 @@ QSurfaceFormat QGenodePlatformWindow::format() const
 
 void QGenodePlatformWindow::setGeometry(const QRect &rect)
 {
-	if (qnpw_verbose)
-	    qDebug() << "QGenodePlatformWindow::setGeometry(" << rect << ")";
+//	if (qnpw_verbose)
+	    qDebug() << (void*)this << ": QGenodePlatformWindow::setGeometry(" << rect << ")";
 
 	_adjust_and_set_geometry(rect);
 

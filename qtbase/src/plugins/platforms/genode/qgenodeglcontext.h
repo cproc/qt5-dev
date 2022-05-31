@@ -36,7 +36,7 @@ class QGenodeGLContext : public QPlatformOpenGLContext
 
 	public:
 
-		QGenodeGLContext(QOpenGLContext *context);
+		QGenodeGLContext(QOpenGLContext *context, EGLDisplay egl_display);
 
 		QSurfaceFormat format() const Q_DECL_OVERRIDE;
 
@@ -47,6 +47,8 @@ class QGenodeGLContext : public QPlatformOpenGLContext
 		void doneCurrent() Q_DECL_OVERRIDE;
 
 		QFunctionPointer getProcAddress(const char *procName) Q_DECL_OVERRIDE;
+
+		EGLConfig eglConfig() { return _egl_config; }
 };
 
 QT_END_NAMESPACE

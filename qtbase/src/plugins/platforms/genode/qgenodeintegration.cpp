@@ -13,6 +13,7 @@
 
 /* Qt includes */
 #include <QtGui/private/qguiapplication_p.h>
+#include <QOffscreenSurface>
 #include <qpa/qplatforminputcontextfactory_p.h>
 
 #include "qgenodeclipboard.h"
@@ -21,6 +22,7 @@
 #include "qgenodeplatformwindow.h"
 #include "qgenodescreen.h"
 #include "qgenodewindowsurface.h"
+#include "QtEglSupport/private/qeglpbuffer_p.h"
 #include "QtEventDispatcherSupport/private/qgenericunixeventdispatcher_p.h"
 #include "QtFontDatabaseSupport/private/qfreetypefontdatabase_p.h"
 
@@ -31,13 +33,38 @@ static const bool verbose = false;
 
 QGenodeIntegration::QGenodeIntegration(Genode::Env &env)
 : _env(env),
-  _genode_screen(new QGenodeScreen(env)) { }
+  _genode_screen(new QGenodeScreen(env))
+{
+	if (!eglBindAPI(EGL_OPENGL_API))
+		qFatal("eglBindAPI() failed");
 
+	m_eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
+	if (m_eglDisplay == EGL_NO_DISPLAY)
+		qFatal("eglGetDisplay() failed");
+
+	int major = -1;
+	int minor = -1;
+	if (!eglInitialize(m_eglDisplay, &major, &minor))
+		qFatal("eglInitialize() failed");
+
+	if (verbose)
+		Genode::log("eglInitialize() returned major: ", major, ", minor: ", minor);
+
+}
+
+extern "C" void wait_for_continue();
 bool QGenodeIntegration::hasCapability(QPlatformIntegration::Capability cap) const
 {
 	switch (cap) {
 		case ThreadedPixmaps: return true;
+		case MultipleWindows: return true;
+		case OpenGL:
+//			qDebug() << "OpenGL";
+//			wait_for_continue();
+			return true;
+//		case RasterGLSurface: return true;
+		case ThreadedOpenGL:  return true;
 		default: return QPlatformIntegration::hasCapability(cap);
 	}
 }
@@ -95,14 +122,49 @@ QPlatformClipboard *QGenodeIntegration::clipboard() const
 #endif
 
 
+QPlatformOffscreenSurface *QGenodeIntegration::createPlatformOffscreenSurface(QOffscreenSurface *surface) const
+{
+	qDebug() << "*** createPlatformOffscreenSurface()";
+	return new QEGLPbuffer(m_eglDisplay, surface->requestedFormat(), surface);
+}
+
 QPlatformOpenGLContext *QGenodeIntegration::createPlatformOpenGLContext(QOpenGLContext *context) const
 {
-    return new QGenodeGLContext(context);
+    return new QGenodeGLContext(context, m_eglDisplay);
 }
 
 QPlatformInputContext *QGenodeIntegration::inputContext() const
 {
     return m_inputContext.data();
+}
+
+QPlatformNativeInterface *QGenodeIntegration::nativeInterface() const
+{
+	return this;
+}
+
+void *QGenodeIntegration::nativeResourceForContext(const QByteArray &resource, QOpenGLContext *context)
+{
+	qDebug() << "*** QGenodeIntegration::nativeResourceForContext(): " << resource;
+	
+	if (resource == "eglconfig") {
+		qDebug() << "*** QGenodeIntegration::nativeResourceForContext(): eglc";
+		if (context->handle())
+			return static_cast<QGenodeGLContext *>(context->handle())->eglConfig();
+
+	}
+
+	return nullptr;
+}
+
+void *QGenodeIntegration::nativeResourceForIntegration(const QByteArray &resource)
+{
+	qDebug() << "*** QGenodeIntegration::nativeResourceForIntegration(): " << resource;
+
+	if (resource == "egldisplay")
+		return m_eglDisplay;
+
+	return nullptr;
 }
 
 QT_END_NAMESPACE

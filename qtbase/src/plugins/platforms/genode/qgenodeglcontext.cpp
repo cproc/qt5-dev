@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2013-2017 Genode Labs GmbH
+ * Copyright (C) 2013-2022 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -22,6 +22,7 @@
 
 /* Qt includes */
 #include <QtEglSupport/private/qeglconvenience_p.h>
+#include <QtEglSupport/private/qeglpbuffer_p.h>
 #include <QDebug>
 
 /* local includes */
@@ -32,26 +33,12 @@ static const bool qnglc_verbose = false;
 
 QT_BEGIN_NAMESPACE
 
-QGenodeGLContext::QGenodeGLContext(QOpenGLContext *context)
-    : QPlatformOpenGLContext()
+QGenodeGLContext::QGenodeGLContext(QOpenGLContext *context, EGLDisplay egl_display)
+: QPlatformOpenGLContext(),
+  _egl_display(egl_display)
 {
 	if (qnglc_verbose)
 		Genode::log(__func__, "called");
-
-	if (!eglBindAPI(EGL_OPENGL_API))
-		qFatal("eglBindAPI() failed");
-
-    _egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-	if (_egl_display == EGL_NO_DISPLAY)
-		qFatal("eglGetDisplay() failed");
-
-	int major = -1;
-	int minor = -1;
-	if (!eglInitialize(_egl_display, &major, &minor))
-		qFatal("eglInitialize() failed");
-
-	if (qnglc_verbose)
-		Genode::log("eglInitialize() returned major: ", major, ", minor: ", minor);
 
     _egl_config = q_configFromGLFormat(_egl_display, context->format(), false, EGL_PBUFFER_BIT);
     if (_egl_config == 0)
@@ -65,35 +52,43 @@ QGenodeGLContext::QGenodeGLContext(QOpenGLContext *context)
 }
 
 
-bool QGenodeGLContext::makeCurrent(QPlatformSurface *surface)
+bool QGenodeGLContext::makeCurrent(QPlatformSurface *platform_surface)
 {
 	if (qnglc_verbose)
 		Genode::log(__func__, " called");
 
 	doneCurrent();
 
-	QGenodePlatformWindow *w = static_cast<QGenodePlatformWindow*>(surface);
+	EGLSurface egl_surface;
 
-	Genode_egl_window egl_window = { w->geometry().width(),
-		                             w->geometry().height(),
-		                             w->framebuffer() };
+	if (platform_surface->surface()->surfaceClass() == QSurface::Window) {
 
-	if (qnglc_verbose)
-		Genode::log(__func__, ": w->framebuffer()=", w->framebuffer());
+		QGenodePlatformWindow *w = static_cast<QGenodePlatformWindow*>(platform_surface);
+qDebug() << (void*)w << ": QGenodeGLContext::makeCurrent(): " << w->geometry();
+		egl_surface = w->egl_surface();
 
-	if (w->egl_surface() != EGL_NO_SURFACE)
-		if (!eglDestroySurface(_egl_display, w->egl_surface()))
-			qFatal("eglDestroySurface() failed");
+		if (egl_surface == EGL_NO_SURFACE) {
 
-	EGLSurface egl_surface =
-		eglCreatePixmapSurface(_egl_display, _egl_config, &egl_window, 0);
+			Genode_egl_window egl_window = { w->geometry().width(),
+			                                 w->geometry().height(),
+			                                 w->framebuffer(),
+			                                 PIXMAP };
 
-	if (egl_surface == EGL_NO_SURFACE)
-		qFatal("eglCreateiWindowSurface() failed");
+			egl_surface = eglCreatePixmapSurface(_egl_display,
+			                                     _egl_config,
+			                                     &egl_window, 0);
 
-	w->egl_surface(egl_surface);
+			if (egl_surface == EGL_NO_SURFACE)
+				qFatal("eglCreatePixmapSurface() failed");
 
-	if (!eglMakeCurrent(_egl_display, w->egl_surface(), w->egl_surface(), _egl_context))
+			w->egl_surface(egl_surface);
+		}
+
+	} else {
+		egl_surface = static_cast<QEGLPbuffer *>(platform_surface)->pbuffer();
+	}
+
+	if (!eglMakeCurrent(_egl_display, egl_surface, egl_surface, _egl_context))
 		qFatal("eglMakeCurrent() failed");
 
 	return true;
