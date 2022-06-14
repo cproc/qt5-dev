@@ -39,6 +39,10 @@ class QGenodeWindowSurface : public QObject, public QPlatformBackingStore
 
 		QPaintDevice *paintDevice();
 		void flush(QWindow *window, const QRegion &region, const QPoint &offset);
+
+		/* needed for RasterGLSurface */
+		QImage toImage() const override;
+
 		void resize(const QSize &size, const QRegion &staticContents);
 
 	public slots:

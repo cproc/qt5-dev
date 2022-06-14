@@ -15,18 +15,21 @@
 #ifndef _QGENODEINTEGRATION_H_
 #define _QGENODEINTEGRATION_H_
 
+#include <EGL/egl.h>
+
 #include <QOpenGLContext>
 
-#include <qpa/qplatformintegration.h>
-#include <qpa/qplatformscreen.h>
 #include <qpa/qplatforminputcontext.h>
+#include <qpa/qplatformintegration.h>
+#include <qpa/qplatformnativeinterface.h>
+#include <qpa/qplatformscreen.h>
 
 #include "qgenodescreen.h"
 #include "qgenodesignalproxythread.h"
 
 QT_BEGIN_NAMESPACE
 
-class QGenodeIntegration : public QPlatformIntegration
+class QGenodeIntegration : public QPlatformIntegration, public QPlatformNativeInterface
 {
 	private:
 
@@ -34,6 +37,7 @@ class QGenodeIntegration : public QPlatformIntegration
 		mutable QGenodeSignalProxyThread       _signal_proxy;
 		QGenodeScreen                         *_genode_screen;
 		QScopedPointer<QPlatformInputContext>  m_inputContext;
+		EGLDisplay                             m_eglDisplay;
 
 	public:
 
@@ -52,9 +56,17 @@ class QGenodeIntegration : public QPlatformIntegration
 #ifndef QT_NO_CLIPBOARD
 		QPlatformClipboard *clipboard() const Q_DECL_OVERRIDE;
 #endif
+		QPlatformOffscreenSurface *createPlatformOffscreenSurface(QOffscreenSurface *surface) const Q_DECL_OVERRIDE;
+
 		QPlatformOpenGLContext *createPlatformOpenGLContext(QOpenGLContext *context) const Q_DECL_OVERRIDE;
 
 		QPlatformInputContext *inputContext() const Q_DECL_OVERRIDE;
+
+		QPlatformNativeInterface *nativeInterface() const override;
+
+		// QPlatformNativeInterface
+	    void *nativeResourceForContext(const QByteArray &resource, QOpenGLContext *context) override;
+		void *nativeResourceForIntegration(const QByteArray &resource) override;
 };
 
 QT_END_NAMESPACE

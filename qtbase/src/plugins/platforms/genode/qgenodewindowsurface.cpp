@@ -116,7 +116,12 @@ void QGenodeWindowSurface::flush(QWindow *window, const QRegion &region, const Q
 	}
 }
 
-void QGenodeWindowSurface::resize(const QSize &size, const QRegion &staticContents)
+QImage QGenodeWindowSurface::toImage() const
+{
+	return _image;
+}
+
+void QGenodeWindowSurface::resize(const QSize &size, const QRegion &)
 {
 	if (verbose)
 		qDebug() << "QGenodeWindowSurface::resize:" << this << size;
