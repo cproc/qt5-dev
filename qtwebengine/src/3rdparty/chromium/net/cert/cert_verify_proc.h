@@ -74,7 +74,7 @@ class NET_EXPORT CertVerifyProc
 #endif
 
 #if defined(OS_FUCHSIA) || defined(USE_NSS_CERTS) || \
-    (defined(OS_MACOSX) && !defined(OS_IOS))
+    (defined(OS_MACOSX) && !defined(OS_IOS)) || 1
   // Creates and returns a CertVerifyProcBuiltin using the SSL SystemTrustStore.
   static scoped_refptr<CertVerifyProc> CreateBuiltinVerifyProc(
       scoped_refptr<CertNetFetcher> cert_net_fetcher);

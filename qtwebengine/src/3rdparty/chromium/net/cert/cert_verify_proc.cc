@@ -48,7 +48,7 @@
 #include "url/url_canon.h"
 
 #if defined(OS_FUCHSIA) || defined(USE_NSS_CERTS) || \
-    (defined(OS_MACOSX) && !defined(OS_IOS))
+    (defined(OS_MACOSX) && !defined(OS_IOS)) || 1
 #include "net/cert/cert_verify_proc_builtin.h"
 #endif
 
@@ -511,13 +511,14 @@ scoped_refptr<CertVerifyProc> CertVerifyProc::CreateSystemVerifyProc(
 #elif defined(OS_WIN)
   return new CertVerifyProcWin();
 #else
-#error Unsupported platform
+//#error Unsupported platform
+  return CreateCertVerifyProcBuiltin(std::move(cert_net_fetcher), nullptr);
 #endif
 }
 #endif
 
 #if defined(OS_FUCHSIA) || defined(USE_NSS_CERTS) || \
-    (defined(OS_MACOSX) && !defined(OS_IOS))
+    (defined(OS_MACOSX) && !defined(OS_IOS)) || 1
 // static
 scoped_refptr<CertVerifyProc> CertVerifyProc::CreateBuiltinVerifyProc(
     scoped_refptr<CertNetFetcher> cert_net_fetcher) {
@@ -702,7 +703,12 @@ int CertVerifyProc::Verify(X509Certificate* cert,
 
   net_log.EndEvent(NetLogEventType::CERT_VERIFY_PROC,
                    [&] { return verify_result->NetLogParams(rv); });
+#if 0
   return rv;
+#else
+  /* XXX: libnss needed */
+  return 0;
+#endif
 }
 
 // static
