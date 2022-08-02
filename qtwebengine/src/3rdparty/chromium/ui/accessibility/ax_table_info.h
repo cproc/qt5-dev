@@ -5,6 +5,7 @@
 #ifndef UI_ACCESSIBILITY_AX_TABLE_INFO_H_
 #define UI_ACCESSIBILITY_AX_TABLE_INFO_H_
 
+#include <cstdint>
 #include <set>
 #include <unordered_map>
 #include <vector>
