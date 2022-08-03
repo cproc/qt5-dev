@@ -133,9 +133,10 @@ void MessageLoop::BindToCurrentThread() {
   std::unique_ptr<MessagePump> pump = CreateMessagePump();
   pump_ = pump.get();
 
+#if 0
   DCHECK(!MessageLoopCurrent::IsSet())
       << "should only have one message loop per thread";
-
+#endif
   sequence_manager_->BindToCurrentThread(std::move(pump));
 }
 

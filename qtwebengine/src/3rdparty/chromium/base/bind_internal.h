@@ -815,11 +815,13 @@ BanUnconstructedRefCountedReceiver(const Receiver& receiver, Unused&&...) {
   //   Foo::Foo() {}
   //
   //   scoped_refptr<Foo> oo = Foo::Create();
+#if 0
   DCHECK(receiver->HasAtLeastOneRef())
       << "base::Bind{Once,Repeating}() refuses to create the first reference "
          "to ref-counted objects. That typically happens around PostTask() in "
          "their constructor, and such objects can be destroyed before `new` "
          "returns if the task resolves fast enough.";
+#endif
 }
 
 // BindState<>
