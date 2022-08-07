@@ -396,7 +396,7 @@ void QGenodePlatformWindow::_mode_changed()
 
 	if ((mode.area.w() == 0) && (mode.area.h() == 0)) {
 		/* interpret a size of 0x0 as indication to close the window */
-		QWindowSystemInterface::handleCloseEvent(window(), 0);
+		QWindowSystemInterface::handleCloseEvent(window());
 		/* don't actually set geometry to 0x0; either close or remain open */
 		return;
 	}

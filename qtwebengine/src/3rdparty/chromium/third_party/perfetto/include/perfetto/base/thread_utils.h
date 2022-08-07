@@ -50,7 +50,11 @@ inline PlatformThreadId GetThreadId() {
 #elif PERFETTO_BUILDFLAG(PERFETTO_OS_FREEBSD)
 using PlatformThreadId = pid_t;
 inline PlatformThreadId GetThreadId() {
+#if 0
   return pthread_getthreadid_np();
+#else
+  return 1;
+#endif
 }
 #elif PERFETTO_BUILDFLAG(PERFETTO_OS_LINUX)
 using PlatformThreadId = pid_t;

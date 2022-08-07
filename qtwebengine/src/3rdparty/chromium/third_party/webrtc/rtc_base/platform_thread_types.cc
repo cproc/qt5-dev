@@ -34,7 +34,7 @@ PlatformThreadId CurrentThreadId() {
 #elif defined(WEBRTC_FUCHSIA)
   return zx_thread_self();
 #elif defined(__FreeBSD__)
-  return pthread_getthreadid_np();
+  return /*pthread_getthreadid_np()*/1;
 #elif defined(WEBRTC_LINUX)
   return syscall(__NR_gettid);
 #elif defined(__EMSCRIPTEN__)
