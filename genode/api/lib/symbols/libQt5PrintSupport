@@ -424,7 +424,6 @@ _ZTS23QPlatformPrinterSupport R 26
 _ZTS29QPlatformPrinterSupportPlugin R 32
 _ZTS8QPrinter R 10
 _ZTV12QPrintDialog D 560
-_ZTV12QPrintEngine D 80
 _ZTV15QPdfPrintEngine D 320
 _ZTV16QPageSetupDialog D 560
 _ZTV17QAlphaPaintEngine D 192

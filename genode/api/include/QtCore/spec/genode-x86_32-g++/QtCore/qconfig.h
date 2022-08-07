@@ -1,7 +1,7 @@
+#define QT_FEATURE_shared 1
 #define QT_FEATURE_cross_compile 1
 #define QT_FEATURE_framework -1
 #define QT_FEATURE_rpath -1
-#define QT_FEATURE_shared 1
 #define QT_COMPILER_SUPPORTS_SSE2 1
 #define QT_COMPILER_SUPPORTS_AES 1
 #define QT_FEATURE_appstore_compliant -1
@@ -33,18 +33,19 @@
 #define QT_FEATURE_future 1
 #define QT_FEATURE_concurrent 1
 #define QT_NO_DBUS 
+#define QT_FEATURE_pkg_config -1
 #define QT_COMPILER_SUPPORTS_F16C 1
 #define QT_FEATURE_force_asserts -1
-#define QT_FEATURE_pkg_config -1
 #define QT_LARGEFILE_SUPPORT 64
 #define QT_COMPILER_SUPPORTS_RDRND 1
 #define QT_VISIBILITY_AVAILABLE true
 #define QT_REDUCE_RELOCATIONS true
 #define QT_FEATURE_separate_debug_info -1
 #define QT_COMPILER_SUPPORTS_SHA 1
+#define QT_FEATURE_signaling_nan 1
 #define QT_FEATURE_static -1
 #define QT_COMPILER_SUPPORTS_SIMD_ALWAYS 1
-#define QT_VERSION_STR "5.13.2"
+#define QT_VERSION_STR "5.14.2"
 #define QT_VERSION_MAJOR 5
-#define QT_VERSION_MINOR 13
+#define QT_VERSION_MINOR 14
 #define QT_VERSION_PATCH 2

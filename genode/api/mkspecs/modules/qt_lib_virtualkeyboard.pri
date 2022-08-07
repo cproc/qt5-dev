@@ -1,4 +1,4 @@
-QT.virtualkeyboard.VERSION = 5.13.2
+QT.virtualkeyboard.VERSION = 5.14.2
 QT.virtualkeyboard.name = QtVirtualKeyboard
 QT.virtualkeyboard.module = Qt5VirtualKeyboard
 QT.virtualkeyboard.libs = $$QT_MODULE_LIB_BASE

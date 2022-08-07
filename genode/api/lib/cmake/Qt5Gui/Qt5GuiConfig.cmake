@@ -6,7 +6,7 @@ endif()
 get_filename_component(_qt5Gui_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Gui_VERSION instead.
-set(Qt5Gui_VERSION_STRING 5.13.2)
+set(Qt5Gui_VERSION_STRING 5.14.2)
 
 set(Qt5Gui_LIBRARIES Qt5::Gui)
 
@@ -54,8 +54,8 @@ if (NOT TARGET Qt5::Gui)
 
     set(_Qt5Gui_OWN_INCLUDE_DIRS "${_qt5Gui_install_prefix}/include/" "${_qt5Gui_install_prefix}/include/QtGui")
     set(Qt5Gui_PRIVATE_INCLUDE_DIRS
-        "${_qt5Gui_install_prefix}/include/QtGui/5.13.2"
-        "${_qt5Gui_install_prefix}/include/QtGui/5.13.2/QtGui"
+        "${_qt5Gui_install_prefix}/include/QtGui/5.14.2"
+        "${_qt5Gui_install_prefix}/include/QtGui/5.14.2/QtGui"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +99,7 @@ if (NOT TARGET Qt5::Gui)
     foreach(_module_dep ${_Qt5Gui_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5Gui_FIND_VERSION_EXACT}
+                5.14.2 ${_Qt5Gui_FIND_VERSION_EXACT}
                 ${_Qt5Gui_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Gui_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -123,6 +123,22 @@ if (NOT TARGET Qt5::Gui)
     list(REMOVE_DUPLICATES Qt5Gui_COMPILE_DEFINITIONS)
     list(REMOVE_DUPLICATES Qt5Gui_EXECUTABLE_COMPILE_FLAGS)
 
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::Gui)
+        return()
+    endif()
+
     set(_Qt5Gui_LIB_DEPENDENCIES "Qt5::Core")
 
 
@@ -133,8 +149,10 @@ if (NOT TARGET Qt5::Gui)
     set_property(TARGET Qt5::Gui PROPERTY
       INTERFACE_COMPILE_DEFINITIONS QT_GUI_LIB)
 
-    set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_ENABLED_FEATURES accessibility;action;clipboard;colornames;cssparser;cursor;desktopservices;imageformat_xpm;draganddrop;opengl;imageformatplugin;highdpiscaling;im;image_heuristic_mask;image_text;imageformat_bmp;imageformat_jpeg;imageformat_png;imageformat_ppm;imageformat_xbm;movie;pdf;picture;sessionmanager;shortcut;standarditemmodel;systemtrayicon;tabletevent;texthtmlparser;textodfwriter;validator;whatsthis;wheelevent)
-    set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_DISABLED_FEATURES opengles2;dynamicgl;angle;combined-angle-lib;opengles3;opengles31;opengles32;openvg;vulkan)
+    set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_ENABLED_FEATURES accessibility;action;clipboard;colornames;cssparser;cursor;desktopservices;imageformat_xpm;draganddrop;opengl;imageformatplugin;highdpiscaling;im;image_heuristic_mask;image_text;imageformat_bmp;imageformat_jpeg;imageformat_png;imageformat_ppm;imageformat_xbm;movie;pdf;picture;sessionmanager;shortcut;standarditemmodel;systemtrayicon;tabletevent;texthtmlparser;textmarkdownreader;textmarkdownwriter;textodfwriter;validator;whatsthis;wheelevent)
+    set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_DISABLED_FEATURES opengles2;dynamicgl;angle;combined-angle-lib;opengles3;opengles31;opengles32;openvg;system-textmarkdownreader;vulkan)
+
+    set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_PLUGIN_TYPES "platforms;platforms/darwin;xcbglintegrations;platformthemes;platforminputcontexts;generic;iconengines;imageformats;egldeviceintegrations")
 
     set(_Qt5Gui_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5Gui_PRIVATE_DIR ${Qt5Gui_OWN_PRIVATE_INCLUDE_DIRS})
@@ -167,7 +185,8 @@ if (NOT TARGET Qt5::Gui)
 
     file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Gui_*Plugin.cmake")
 
-    macro(_populate_Gui_plugin_properties Plugin Configuration PLUGIN_LOCATION)
+    macro(_populate_Gui_plugin_properties Plugin Configuration PLUGIN_LOCATION
+          IsDebugAndRelease)
         set_property(TARGET Qt5::${Plugin} APPEND PROPERTY IMPORTED_CONFIGURATIONS ${Configuration})
 
         set(imported_location "${_qt5Gui_install_prefix}/plugins/${PLUGIN_LOCATION}")
@@ -175,6 +194,7 @@ if (NOT TARGET Qt5::Gui)
         set_target_properties(Qt5::${Plugin} PROPERTIES
             "IMPORTED_LOCATION_${Configuration}" ${imported_location}
         )
+
     endmacro()
 
     if (pluginTargets)

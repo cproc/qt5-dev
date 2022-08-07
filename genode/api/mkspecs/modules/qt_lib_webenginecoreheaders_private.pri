@@ -1,8 +1,8 @@
-QT.webenginecoreheaders_private.VERSION = 5.13.2
+QT.webenginecoreheaders_private.VERSION = 5.14.2
 QT.webenginecoreheaders_private.name = QtWebEngineCore
 QT.webenginecoreheaders_private.module = 
 QT.webenginecoreheaders_private.libs = $$QT_MODULE_LIB_BASE
-QT.webenginecoreheaders_private.includes = $$QT_MODULE_INCLUDE_BASE $$QT_MODULE_INCLUDE_BASE/QtWebEngineCore $$QT_MODULE_INCLUDE_BASE/QtWebEngineCore/5.13.2 $$QT_MODULE_INCLUDE_BASE/QtWebEngineCore/5.13.2/QtWebEngineCore
+QT.webenginecoreheaders_private.includes = $$QT_MODULE_INCLUDE_BASE $$QT_MODULE_INCLUDE_BASE/QtWebEngineCore $$QT_MODULE_INCLUDE_BASE/QtWebEngineCore/5.14.2 $$QT_MODULE_INCLUDE_BASE/QtWebEngineCore/5.14.2/QtWebEngineCore
 QT.webenginecoreheaders_private.frameworks =
 QT.webenginecoreheaders_private.bins = $$QT_MODULE_BIN_BASE
 QT.webenginecoreheaders_private.depends =

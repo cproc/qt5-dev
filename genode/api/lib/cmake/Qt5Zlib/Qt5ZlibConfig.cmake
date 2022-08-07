@@ -63,7 +63,7 @@ if (NOT TARGET Qt5::Zlib)
     foreach(_module_dep ${_Qt5Zlib_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5Zlib_FIND_VERSION_EXACT}
+                5.14.2 ${_Qt5Zlib_FIND_VERSION_EXACT}
                 ${_Qt5Zlib_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Zlib_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -77,6 +77,22 @@ if (NOT TARGET Qt5::Zlib)
 
     endforeach()
 
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::Zlib)
+        return()
+    endif()
+
     set(_Qt5Zlib_LIB_DEPENDENCIES "")
 
 
@@ -89,6 +105,8 @@ if (NOT TARGET Qt5::Zlib)
 
     set_property(TARGET Qt5::Zlib PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::Zlib PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    set_property(TARGET Qt5::Zlib PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
     set(_Qt5Zlib_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5Zlib_PRIVATE_DIR ${Qt5Zlib_OWN_PRIVATE_INCLUDE_DIRS})

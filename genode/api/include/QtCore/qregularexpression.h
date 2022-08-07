@@ -59,7 +59,7 @@ class QRegularExpressionMatchIterator;
 struct QRegularExpressionPrivate;
 class QRegularExpression;
 
-Q_CORE_EXPORT uint qHash(const QRegularExpression &key, uint seed = 0) Q_DECL_NOTHROW;
+Q_CORE_EXPORT uint qHash(const QRegularExpression &key, uint seed = 0) noexcept;
 
 class Q_CORE_EXPORT QRegularExpression
 {
@@ -86,13 +86,10 @@ public:
     QRegularExpression(const QRegularExpression &re);
     ~QRegularExpression();
     QRegularExpression &operator=(const QRegularExpression &re);
-
-#ifdef Q_COMPILER_RVALUE_REFS
-    QRegularExpression &operator=(QRegularExpression &&re) Q_DECL_NOTHROW
+    QRegularExpression &operator=(QRegularExpression &&re) noexcept
     { d.swap(re.d); return *this; }
-#endif
 
-    void swap(QRegularExpression &other) Q_DECL_NOTHROW { d.swap(other.d); }
+    void swap(QRegularExpression &other) noexcept { d.swap(other.d); }
 
     QString pattern() const;
     void setPattern(const QString &pattern);
@@ -157,7 +154,7 @@ private:
     friend class QRegularExpressionMatch;
     friend struct QRegularExpressionMatchPrivate;
     friend class QRegularExpressionMatchIterator;
-    friend Q_CORE_EXPORT uint qHash(const QRegularExpression &key, uint seed) Q_DECL_NOTHROW;
+    friend Q_CORE_EXPORT uint qHash(const QRegularExpression &key, uint seed) noexcept;
 
     QRegularExpression(QRegularExpressionPrivate &dd);
     QExplicitlySharedDataPointer<QRegularExpressionPrivate> d;
@@ -186,12 +183,9 @@ public:
     ~QRegularExpressionMatch();
     QRegularExpressionMatch(const QRegularExpressionMatch &match);
     QRegularExpressionMatch &operator=(const QRegularExpressionMatch &match);
-
-#ifdef Q_COMPILER_RVALUE_REFS
-    QRegularExpressionMatch &operator=(QRegularExpressionMatch &&match) Q_DECL_NOTHROW
+    QRegularExpressionMatch &operator=(QRegularExpressionMatch &&match) noexcept
     { d.swap(match.d); return *this; }
-#endif
-    void swap(QRegularExpressionMatch &other) Q_DECL_NOTHROW { d.swap(other.d); }
+    void swap(QRegularExpressionMatch &other) noexcept { d.swap(other.d); }
 
     QRegularExpression regularExpression() const;
     QRegularExpression::MatchType matchType() const;
@@ -257,11 +251,9 @@ public:
     ~QRegularExpressionMatchIterator();
     QRegularExpressionMatchIterator(const QRegularExpressionMatchIterator &iterator);
     QRegularExpressionMatchIterator &operator=(const QRegularExpressionMatchIterator &iterator);
-#ifdef Q_COMPILER_RVALUE_REFS
-    QRegularExpressionMatchIterator &operator=(QRegularExpressionMatchIterator &&iterator) Q_DECL_NOTHROW
+    QRegularExpressionMatchIterator &operator=(QRegularExpressionMatchIterator &&iterator) noexcept
     { d.swap(iterator.d); return *this; }
-#endif
-    void swap(QRegularExpressionMatchIterator &other) Q_DECL_NOTHROW { d.swap(other.d); }
+    void swap(QRegularExpressionMatchIterator &other) noexcept { d.swap(other.d); }
 
     bool isValid() const;
 

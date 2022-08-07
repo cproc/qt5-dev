@@ -34,6 +34,8 @@ if (NOT TARGET Qt5::rcc)
     )
 endif()
 
+set(CMAKE_AUTOMOC_MACRO_NAMES Q_OBJECT Q_GADGET Q_NAMESPACE Q_NAMESPACE_EXPORT)
+
 set(Qt5Core_QMAKE_EXECUTABLE Qt5::qmake)
 set(Qt5Core_MOC_EXECUTABLE Qt5::moc)
 set(Qt5Core_RCC_EXECUTABLE Qt5::rcc)
@@ -84,5 +86,9 @@ set(QT_VISIBILITY_AVAILABLE "True")
 get_filename_component(_Qt5CoreConfigDir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 set(_Qt5CTestMacros "${_Qt5CoreConfigDir}/Qt5CTestMacros.cmake")
+
+if (ANDROID_PLATFORM)
+    include("${CMAKE_CURRENT_LIST_DIR}/Qt5AndroidSupport.cmake")
+endif()
 
 _qt5_Core_check_file_exists(${_Qt5CTestMacros})

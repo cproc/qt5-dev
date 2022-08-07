@@ -1,4 +1,5 @@
 #define QT_FEATURE_properties 1
+#define QT_FEATURE_easingcurve 1
 #define QT_FEATURE_animation 1
 #define QT_FEATURE_textcodec 1
 #define QT_FEATURE_big_codecs 1
@@ -18,6 +19,8 @@
 #define QT_NO_ICONV 
 #define QT_FEATURE_identityproxymodel 1
 #define QT_NO_INOTIFY 
+#define QT_FEATURE_islamiccivilcalendar 1
+#define QT_FEATURE_jalalicalendar 1
 #define QT_FEATURE_library 1
 #define QT_FEATURE_mimetype 1
 #define QT_FEATURE_process -1

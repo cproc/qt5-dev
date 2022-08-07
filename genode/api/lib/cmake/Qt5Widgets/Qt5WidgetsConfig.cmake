@@ -6,7 +6,7 @@ endif()
 get_filename_component(_qt5Widgets_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Widgets_VERSION instead.
-set(Qt5Widgets_VERSION_STRING 5.13.2)
+set(Qt5Widgets_VERSION_STRING 5.14.2)
 
 set(Qt5Widgets_LIBRARIES Qt5::Widgets)
 
@@ -54,8 +54,8 @@ if (NOT TARGET Qt5::Widgets)
 
     set(_Qt5Widgets_OWN_INCLUDE_DIRS "${_qt5Widgets_install_prefix}/include/" "${_qt5Widgets_install_prefix}/include/QtWidgets")
     set(Qt5Widgets_PRIVATE_INCLUDE_DIRS
-        "${_qt5Widgets_install_prefix}/include/QtWidgets/5.13.2"
-        "${_qt5Widgets_install_prefix}/include/QtWidgets/5.13.2/QtWidgets"
+        "${_qt5Widgets_install_prefix}/include/QtWidgets/5.14.2"
+        "${_qt5Widgets_install_prefix}/include/QtWidgets/5.14.2/QtWidgets"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +99,7 @@ if (NOT TARGET Qt5::Widgets)
     foreach(_module_dep ${_Qt5Widgets_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5Widgets_FIND_VERSION_EXACT}
+                5.14.2 ${_Qt5Widgets_FIND_VERSION_EXACT}
                 ${_Qt5Widgets_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Widgets_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -123,6 +123,22 @@ if (NOT TARGET Qt5::Widgets)
     list(REMOVE_DUPLICATES Qt5Widgets_COMPILE_DEFINITIONS)
     list(REMOVE_DUPLICATES Qt5Widgets_EXECUTABLE_COMPILE_FLAGS)
 
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::Widgets)
+        return()
+    endif()
+
     set(_Qt5Widgets_LIB_DEPENDENCIES "Qt5::Gui;Qt5::Core")
 
 
@@ -133,8 +149,10 @@ if (NOT TARGET Qt5::Widgets)
     set_property(TARGET Qt5::Widgets PROPERTY
       INTERFACE_COMPILE_DEFINITIONS QT_WIDGETS_LIB)
 
-    set_property(TARGET Qt5::Widgets PROPERTY INTERFACE_QT_ENABLED_FEATURES abstractbutton;abstractslider;groupbox;buttongroup;label;pushbutton;menu;lineedit;spinbox;slider;scrollbar;scrollarea;itemviews;tableview;toolbutton;calendarwidget;checkbox;dialog;dialogbuttonbox;colordialog;listview;columnview;combobox;commandlinkbutton;completer;contextmenu;datawidgetmapper;datetimeedit;dial;filesystemmodel;dirmodel;resizehandler;mainwindow;dockwidget;textedit;errormessage;splitter;stackedwidget;treeview;filedialog;fontcombobox;fontdialog;formlayout;fscompleter;graphicsview;graphicseffect;inputdialog;keysequenceedit;lcdnumber;listwidget;mdiarea;menubar;messagebox;paint_debug;progressbar;progressdialog;radiobutton;rubberband;scroller;sizegrip;splashscreen;statusbar;statustip;style-stylesheet;syntaxhighlighter;tabbar;tablewidget;tabwidget;textbrowser;toolbar;toolbox;tooltip;treewidget;undocommand;undostack;undogroup;undoview;wizard)
+    set_property(TARGET Qt5::Widgets PROPERTY INTERFACE_QT_ENABLED_FEATURES abstractbutton;abstractslider;groupbox;buttongroup;label;pushbutton;menu;lineedit;spinbox;slider;scrollbar;scrollarea;itemviews;tableview;toolbutton;calendarwidget;checkbox;dialog;dialogbuttonbox;colordialog;listview;columnview;combobox;commandlinkbutton;completer;contextmenu;datawidgetmapper;datetimeedit;dial;filesystemmodel;dirmodel;resizehandler;mainwindow;dockwidget;textedit;errormessage;splitter;stackedwidget;treeview;filedialog;fontcombobox;fontdialog;formlayout;fscompleter;graphicsview;graphicseffect;inputdialog;keysequenceedit;lcdnumber;listwidget;mdiarea;menubar;messagebox;progressbar;progressdialog;radiobutton;rubberband;scroller;sizegrip;splashscreen;statusbar;statustip;style-stylesheet;syntaxhighlighter;tabbar;tablewidget;tabwidget;textbrowser;toolbar;toolbox;tooltip;treewidget;undocommand;undostack;undogroup;undoview;wizard)
     set_property(TARGET Qt5::Widgets PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    set_property(TARGET Qt5::Widgets PROPERTY INTERFACE_QT_PLUGIN_TYPES "styles")
 
     set(_Qt5Widgets_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5Widgets_PRIVATE_DIR ${Qt5Widgets_OWN_PRIVATE_INCLUDE_DIRS})
@@ -167,7 +185,8 @@ if (NOT TARGET Qt5::Widgets)
 
     file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Widgets_*Plugin.cmake")
 
-    macro(_populate_Widgets_plugin_properties Plugin Configuration PLUGIN_LOCATION)
+    macro(_populate_Widgets_plugin_properties Plugin Configuration PLUGIN_LOCATION
+          IsDebugAndRelease)
         set_property(TARGET Qt5::${Plugin} APPEND PROPERTY IMPORTED_CONFIGURATIONS ${Configuration})
 
         set(imported_location "${_qt5Widgets_install_prefix}/plugins/${PLUGIN_LOCATION}")
@@ -175,6 +194,7 @@ if (NOT TARGET Qt5::Widgets)
         set_target_properties(Qt5::${Plugin} PROPERTIES
             "IMPORTED_LOCATION_${Configuration}" ${imported_location}
         )
+
     endmacro()
 
     if (pluginTargets)

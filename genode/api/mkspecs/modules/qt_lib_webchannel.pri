@@ -1,4 +1,4 @@
-QT.webchannel.VERSION = 5.13.2
+QT.webchannel.VERSION = 5.14.2
 QT.webchannel.name = QtWebChannel
 QT.webchannel.module = Qt5WebChannel
 QT.webchannel.libs = $$QT_MODULE_LIB_BASE

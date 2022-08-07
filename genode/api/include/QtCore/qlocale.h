@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 The Qt Company Ltd.
+** Copyright (C) 2020 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the QtCore module of the Qt Toolkit.
@@ -47,7 +47,7 @@
 
 QT_BEGIN_NAMESPACE
 
-
+class QCalendar;
 class QDataStream;
 class QDate;
 class QDateTime;
@@ -59,7 +59,7 @@ class QTextStreamPrivate;
 
 class QLocalePrivate;
 
-Q_CORE_EXPORT uint qHash(const QLocale &key, uint seed = 0) Q_DECL_NOTHROW;
+Q_CORE_EXPORT uint qHash(const QLocale &key, uint seed = 0) noexcept;
 
 class Q_CORE_EXPORT QLocale
 {
@@ -441,6 +441,11 @@ public:
         Sicilian = 362,
         SouthernKurdish = 363,
         WesternBalochi = 364,
+        Cebuano = 365,
+        Erzya = 366,
+        Chickasaw = 367,
+        Muscogee = 368,
+        Silesian = 369,
 
         Afan = Oromo,
         Bhutani = Dzongkha,
@@ -457,7 +462,7 @@ public:
         Twi = Akan,
         Uigur = Uighur,
 
-        LastLanguage = WesternBalochi
+        LastLanguage = Silesian
     };
 
     enum Script {
@@ -939,13 +944,11 @@ public:
     QLocale(Language language, Country country = AnyCountry);
     QLocale(Language language, Script script, Country country);
     QLocale(const QLocale &other);
-#ifdef Q_COMPILER_RVALUE_REFS
-    QLocale &operator=(QLocale &&other) Q_DECL_NOTHROW { swap(other); return *this; }
-#endif
+    QLocale &operator=(QLocale &&other) noexcept { swap(other); return *this; }
     QLocale &operator=(const QLocale &other);
     ~QLocale();
 
-    void swap(QLocale &other) Q_DECL_NOTHROW { qSwap(d, other.d); }
+    void swap(QLocale &other) noexcept { qSwap(d, other.d); }
 
     Language language() const;
     Script script() const;
@@ -1013,6 +1016,14 @@ public:
     QString toString(const QDate &date, FormatType format = LongFormat) const;
     QString toString(const QTime &time, FormatType format = LongFormat) const;
     QString toString(const QDateTime &dateTime, FormatType format = LongFormat) const;
+    /* Removing default value for `format' is done intentionally,
+     * after all tests we will remove non-calendar-aware version of these functions,
+     * and add a default value for both calendar instance, and format
+     */
+    QString toString(const QDate &date, QStringView formatStr, QCalendar cal) const;
+    QString toString(const QDate &date, FormatType format, QCalendar cal) const;
+    QString toString(const QDateTime &dateTime, FormatType format, QCalendar cal) const;
+    QString toString(const QDateTime &dateTime, QStringView formatStr, QCalendar cal) const;
 
     QString dateFormat(FormatType format = LongFormat) const;
     QString timeFormat(FormatType format = LongFormat) const;
@@ -1024,10 +1035,17 @@ public:
     QDate toDate(const QString &string, const QString &format) const;
     QTime toTime(const QString &string, const QString &format) const;
     QDateTime toDateTime(const QString &string, const QString &format) const;
+    // Calendar-aware API
+    QDate toDate(const QString &string, FormatType format, QCalendar cal) const;
+    QTime toTime(const QString &string, FormatType format, QCalendar cal) const;
+    QDateTime toDateTime(const QString &string, FormatType format, QCalendar cal) const;
+    QDate toDate(const QString &string, const QString &format, QCalendar cal) const;
+    QTime toTime(const QString &string, const QString &format, QCalendar cal) const;
+    QDateTime toDateTime(const QString &string, const QString &format, QCalendar cal) const;
 #endif
 
-    // ### Qt 5: We need to return QString from these function since
-    //           unicode data contains several characters for these fields.
+    // ### Qt 6: We need to return QString from these function since
+    //           UTF-16 may need surrogate pairs to represent these fields.
     QChar decimalPoint() const;
     QChar groupSeparator() const;
     QChar percent() const;
@@ -1048,7 +1066,7 @@ public:
     QString pmText() const;
 
     MeasurementSystem measurementSystem() const;
-
+    QLocale collation() const;
     Qt::LayoutDirection textDirection() const;
 
     QString toUpper(const QString &str) const;
@@ -1108,7 +1126,9 @@ private:
     QLocale(QLocalePrivate &dd);
     friend class QLocalePrivate;
     friend class QSystemLocale;
-    friend Q_CORE_EXPORT uint qHash(const QLocale &key, uint seed) Q_DECL_NOTHROW;
+    friend class QCalendarBackend;
+    friend class QGregorianCalendar;
+    friend Q_CORE_EXPORT uint qHash(const QLocale &key, uint seed) noexcept;
 
     QSharedDataPointer<QLocalePrivate> d;
 };

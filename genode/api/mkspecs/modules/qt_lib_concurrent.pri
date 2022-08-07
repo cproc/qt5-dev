@@ -1,4 +1,4 @@
-QT.concurrent.VERSION = 5.13.2
+QT.concurrent.VERSION = 5.14.2
 QT.concurrent.name = QtConcurrent
 QT.concurrent.module = Qt5Concurrent
 QT.concurrent.libs = $$QT_MODULE_LIB_BASE
