@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Gui module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5Gui_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Gui_VERSION instead.
-set(Qt5Gui_VERSION_STRING 5.14.2)
+set(Qt5Gui_VERSION_STRING 5.15.2)
 
 set(Qt5Gui_LIBRARIES Qt5::Gui)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::Gui)
 
     set(_Qt5Gui_OWN_INCLUDE_DIRS "${_qt5Gui_install_prefix}/include/" "${_qt5Gui_install_prefix}/include/QtGui")
     set(Qt5Gui_PRIVATE_INCLUDE_DIRS
-        "${_qt5Gui_install_prefix}/include/QtGui/5.14.2"
-        "${_qt5Gui_install_prefix}/include/QtGui/5.14.2/QtGui"
+        "${_qt5Gui_install_prefix}/include/QtGui/5.15.2"
+        "${_qt5Gui_install_prefix}/include/QtGui/5.15.2/QtGui"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::Gui)
     foreach(_module_dep ${_Qt5Gui_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5Gui_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Gui_FIND_VERSION_EXACT}
                 ${_Qt5Gui_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Gui_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::Gui)
 
     add_library(Qt5::Gui SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::Gui PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Gui_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::Gui PROPERTY
@@ -152,7 +152,21 @@ if (NOT TARGET Qt5::Gui)
     set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_ENABLED_FEATURES accessibility;action;clipboard;colornames;cssparser;cursor;desktopservices;imageformat_xpm;draganddrop;opengl;imageformatplugin;highdpiscaling;im;image_heuristic_mask;image_text;imageformat_bmp;imageformat_jpeg;imageformat_png;imageformat_ppm;imageformat_xbm;movie;pdf;picture;sessionmanager;shortcut;standarditemmodel;systemtrayicon;tabletevent;texthtmlparser;textmarkdownreader;textmarkdownwriter;textodfwriter;validator;whatsthis;wheelevent)
     set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_DISABLED_FEATURES opengles2;dynamicgl;angle;combined-angle-lib;opengles3;opengles31;opengles32;openvg;system-textmarkdownreader;vulkan)
 
-    set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_PLUGIN_TYPES "platforms;platforms/darwin;xcbglintegrations;platformthemes;platforminputcontexts;generic;iconengines;imageformats;egldeviceintegrations")
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Gui
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 accessibility;action;clipboard;colornames;cssparser;cursor;desktopservices;imageformat_xpm;draganddrop;opengl;imageformatplugin;highdpiscaling;im;image_heuristic_mask;image_text;imageformat_bmp;imageformat_jpeg;imageformat_png;imageformat_ppm;imageformat_xbm;movie;pdf;picture;sessionmanager;shortcut;standarditemmodel;systemtrayicon;tabletevent;texthtmlparser;textmarkdownreader;textmarkdownwriter;textodfwriter;validator;whatsthis;wheelevent)
+    set_property(TARGET Qt5::Gui
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 opengles2;dynamicgl;angle;combined-angle-lib;opengles3;opengles31;opengles32;openvg;system-textmarkdownreader;vulkan)
+    set_property(TARGET Qt5::Gui
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 egl;eglfs;freetype;gif;harfbuzz;ico;imageio-text-loading;jpeg;multiprocess;png;raster-64bit;tuiotouch;vkgen;vnc)
+    set_property(TARGET Qt5::Gui
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 xcb;accessibility-atspi-bridge;angle_d3d11_qdtd;direct2d;direct2d1_1;dxgi;direct3d11;direct3d11_1;direct3d9;directfb;drm_atomic;dxgi1_2;dxguid;egl_x11;eglfs_brcm;kms;eglfs_egldevice;eglfs_gbm;eglfs_mali;eglfs_openwfd;eglfs_rcar;eglfs_viv;eglfs_viv_wl;eglfs_vsp2;xlib;xcb-xlib;eglfs_x11;evdev;system-freetype;fontconfig;integrityfb;integrityhid;libinput;libinput-axis-api;linuxfb;mtdev;system-harfbuzz;system-jpeg;system-png;tslib;vsp2;xkbcommon;xkbcommon-x11)
+
+    set_property(TARGET Qt5::Gui PROPERTY INTERFACE_QT_PLUGIN_TYPES "accessiblebridge;platforms;platforms/darwin;xcbglintegrations;platformthemes;platforminputcontexts;generic;iconengines;imageformats;egldeviceintegrations")
 
     set(_Qt5Gui_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5Gui_PRIVATE_DIR ${Qt5Gui_OWN_PRIVATE_INCLUDE_DIRS})
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::Gui)
         set_property(TARGET Qt5::GuiPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Gui ${_Qt5Gui_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::GuiPrivate)
+            add_library(Qt::GuiPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::GuiPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::GuiPrivate"
+            )
+        endif()
     endif()
 
     _populate_Gui_target_properties(RELEASE "libQt5Gui.lib.so" "" FALSE)
@@ -182,8 +204,13 @@ if (NOT TARGET Qt5::Gui)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Gui_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5Gui_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Gui_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Gui_*.cmake")
+    endif()
 
     macro(_populate_Gui_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -203,11 +230,16 @@ if (NOT TARGET Qt5::Gui)
         endforeach()
     endif()
 
-
-
     include("${CMAKE_CURRENT_LIST_DIR}/Qt5GuiConfigExtras.cmake")
 
 
-_qt5_Gui_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5GuiConfigVersion.cmake")
+    _qt5_Gui_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5GuiConfigVersion.cmake")
+endif()
 
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Gui AND NOT TARGET Qt::Gui)
+    add_library(Qt::Gui INTERFACE IMPORTED)
+    set_target_properties(Qt::Gui PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Gui"
+    )
 endif()

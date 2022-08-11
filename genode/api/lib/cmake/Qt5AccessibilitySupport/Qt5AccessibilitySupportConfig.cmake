@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 AccessibilitySupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5AccessibilitySupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5AccessibilitySupport_VERSION instead.
-set(Qt5AccessibilitySupport_VERSION_STRING 5.14.2)
+set(Qt5AccessibilitySupport_VERSION_STRING 5.15.2)
 
 set(Qt5AccessibilitySupport_LIBRARIES Qt5::AccessibilitySupport)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::AccessibilitySupport)
 
     set(_Qt5AccessibilitySupport_OWN_INCLUDE_DIRS "${_qt5AccessibilitySupport_install_prefix}/include/" "${_qt5AccessibilitySupport_install_prefix}/include/QtAccessibilitySupport")
     set(Qt5AccessibilitySupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5AccessibilitySupport_install_prefix}/include/QtAccessibilitySupport/5.14.2"
-        "${_qt5AccessibilitySupport_install_prefix}/include/QtAccessibilitySupport/5.14.2/QtAccessibilitySupport"
+        "${_qt5AccessibilitySupport_install_prefix}/include/QtAccessibilitySupport/5.15.2"
+        "${_qt5AccessibilitySupport_install_prefix}/include/QtAccessibilitySupport/5.15.2/QtAccessibilitySupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::AccessibilitySupport)
     foreach(_module_dep ${_Qt5AccessibilitySupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5AccessibilitySupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5AccessibilitySupport_FIND_VERSION_EXACT}
                 ${_Qt5AccessibilitySupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5AccessibilitySupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::AccessibilitySupport)
     add_library(Qt5::AccessibilitySupport STATIC IMPORTED)
     set_property(TARGET Qt5::AccessibilitySupport PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::AccessibilitySupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5AccessibilitySupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::AccessibilitySupport PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::AccessibilitySupport)
 
     set_property(TARGET Qt5::AccessibilitySupport PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::AccessibilitySupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::AccessibilitySupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::AccessibilitySupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::AccessibilitySupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::AccessibilitySupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::AccessibilitySupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::AccessibilitySupport)
         set_property(TARGET Qt5::AccessibilitySupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::AccessibilitySupport ${_Qt5AccessibilitySupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::AccessibilitySupportPrivate)
+            add_library(Qt::AccessibilitySupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::AccessibilitySupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::AccessibilitySupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_AccessibilitySupport_target_properties(RELEASE "libQt5AccessibilitySupport.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::AccessibilitySupport)
 
 
 
+    _qt5_AccessibilitySupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5AccessibilitySupportConfigVersion.cmake")
+endif()
 
-_qt5_AccessibilitySupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5AccessibilitySupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::AccessibilitySupport AND NOT TARGET Qt::AccessibilitySupport)
+    add_library(Qt::AccessibilitySupport INTERFACE IMPORTED)
+    set_target_properties(Qt::AccessibilitySupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::AccessibilitySupport"
+    )
 endif()

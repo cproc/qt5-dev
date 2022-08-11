@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 QmlWorkerScript module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5QmlWorkerScript_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5QmlWorkerScript_VERSION instead.
-set(Qt5QmlWorkerScript_VERSION_STRING 5.14.2)
+set(Qt5QmlWorkerScript_VERSION_STRING 5.15.2)
 
 set(Qt5QmlWorkerScript_LIBRARIES Qt5::QmlWorkerScript)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::QmlWorkerScript)
 
     set(_Qt5QmlWorkerScript_OWN_INCLUDE_DIRS "${_qt5QmlWorkerScript_install_prefix}/include/" "${_qt5QmlWorkerScript_install_prefix}/include/QtQmlWorkerScript")
     set(Qt5QmlWorkerScript_PRIVATE_INCLUDE_DIRS
-        "${_qt5QmlWorkerScript_install_prefix}/include/QtQmlWorkerScript/5.14.2"
-        "${_qt5QmlWorkerScript_install_prefix}/include/QtQmlWorkerScript/5.14.2/QtQmlWorkerScript"
+        "${_qt5QmlWorkerScript_install_prefix}/include/QtQmlWorkerScript/5.15.2"
+        "${_qt5QmlWorkerScript_install_prefix}/include/QtQmlWorkerScript/5.15.2/QtQmlWorkerScript"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::QmlWorkerScript)
     foreach(_module_dep ${_Qt5QmlWorkerScript_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5QmlWorkerScript_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5QmlWorkerScript_FIND_VERSION_EXACT}
                 ${_Qt5QmlWorkerScript_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5QmlWorkerScript_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::QmlWorkerScript)
 
     add_library(Qt5::QmlWorkerScript SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::QmlWorkerScript PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5QmlWorkerScript_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::QmlWorkerScript PROPERTY
@@ -151,6 +151,20 @@ if (NOT TARGET Qt5::QmlWorkerScript)
 
     set_property(TARGET Qt5::QmlWorkerScript PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::QmlWorkerScript PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::QmlWorkerScript
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QmlWorkerScript
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QmlWorkerScript
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::QmlWorkerScript
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::QmlWorkerScript PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::QmlWorkerScript)
         set_property(TARGET Qt5::QmlWorkerScriptPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::QmlWorkerScript ${_Qt5QmlWorkerScript_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::QmlWorkerScriptPrivate)
+            add_library(Qt::QmlWorkerScriptPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::QmlWorkerScriptPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::QmlWorkerScriptPrivate"
+            )
+        endif()
     endif()
 
     _populate_QmlWorkerScript_target_properties(RELEASE "libQt5QmlWorkerScript.lib.so" "" FALSE)
@@ -182,8 +204,13 @@ if (NOT TARGET Qt5::QmlWorkerScript)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5QmlWorkerScript_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5QmlWorkerScript_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5QmlWorkerScript_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5QmlWorkerScript_*.cmake")
+    endif()
 
     macro(_populate_QmlWorkerScript_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -205,8 +232,13 @@ if (NOT TARGET Qt5::QmlWorkerScript)
 
 
 
+    _qt5_QmlWorkerScript_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QmlWorkerScriptConfigVersion.cmake")
+endif()
 
-
-_qt5_QmlWorkerScript_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QmlWorkerScriptConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::QmlWorkerScript AND NOT TARGET Qt::QmlWorkerScript)
+    add_library(Qt::QmlWorkerScript INTERFACE IMPORTED)
+    set_target_properties(Qt::QmlWorkerScript PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::QmlWorkerScript"
+    )
 endif()

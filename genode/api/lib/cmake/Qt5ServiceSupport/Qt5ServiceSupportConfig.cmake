@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 ServiceSupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5ServiceSupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5ServiceSupport_VERSION instead.
-set(Qt5ServiceSupport_VERSION_STRING 5.14.2)
+set(Qt5ServiceSupport_VERSION_STRING 5.15.2)
 
 set(Qt5ServiceSupport_LIBRARIES Qt5::ServiceSupport)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::ServiceSupport)
 
     set(_Qt5ServiceSupport_OWN_INCLUDE_DIRS "${_qt5ServiceSupport_install_prefix}/include/" "${_qt5ServiceSupport_install_prefix}/include/QtServiceSupport")
     set(Qt5ServiceSupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5ServiceSupport_install_prefix}/include/QtServiceSupport/5.14.2"
-        "${_qt5ServiceSupport_install_prefix}/include/QtServiceSupport/5.14.2/QtServiceSupport"
+        "${_qt5ServiceSupport_install_prefix}/include/QtServiceSupport/5.15.2"
+        "${_qt5ServiceSupport_install_prefix}/include/QtServiceSupport/5.15.2/QtServiceSupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::ServiceSupport)
     foreach(_module_dep ${_Qt5ServiceSupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5ServiceSupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5ServiceSupport_FIND_VERSION_EXACT}
                 ${_Qt5ServiceSupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5ServiceSupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::ServiceSupport)
     add_library(Qt5::ServiceSupport STATIC IMPORTED)
     set_property(TARGET Qt5::ServiceSupport PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::ServiceSupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5ServiceSupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::ServiceSupport PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::ServiceSupport)
 
     set_property(TARGET Qt5::ServiceSupport PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::ServiceSupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::ServiceSupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::ServiceSupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::ServiceSupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::ServiceSupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::ServiceSupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::ServiceSupport)
         set_property(TARGET Qt5::ServiceSupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::ServiceSupport ${_Qt5ServiceSupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::ServiceSupportPrivate)
+            add_library(Qt::ServiceSupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::ServiceSupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::ServiceSupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_ServiceSupport_target_properties(RELEASE "libQt5ServiceSupport.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::ServiceSupport)
 
 
 
+    _qt5_ServiceSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5ServiceSupportConfigVersion.cmake")
+endif()
 
-_qt5_ServiceSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5ServiceSupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::ServiceSupport AND NOT TARGET Qt::ServiceSupport)
+    add_library(Qt::ServiceSupport INTERFACE IMPORTED)
+    set_target_properties(Qt::ServiceSupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::ServiceSupport"
+    )
 endif()

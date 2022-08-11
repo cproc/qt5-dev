@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 QmlDebug module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5QmlDebug_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5QmlDebug_VERSION instead.
-set(Qt5QmlDebug_VERSION_STRING 5.14.2)
+set(Qt5QmlDebug_VERSION_STRING 5.15.2)
 
 set(Qt5QmlDebug_LIBRARIES Qt5::QmlDebug)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::QmlDebug)
 
     set(_Qt5QmlDebug_OWN_INCLUDE_DIRS "${_qt5QmlDebug_install_prefix}/include/" "${_qt5QmlDebug_install_prefix}/include/QtQmlDebug")
     set(Qt5QmlDebug_PRIVATE_INCLUDE_DIRS
-        "${_qt5QmlDebug_install_prefix}/include/QtQmlDebug/5.14.2"
-        "${_qt5QmlDebug_install_prefix}/include/QtQmlDebug/5.14.2/QtQmlDebug"
+        "${_qt5QmlDebug_install_prefix}/include/QtQmlDebug/5.15.2"
+        "${_qt5QmlDebug_install_prefix}/include/QtQmlDebug/5.15.2/QtQmlDebug"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -195,7 +194,7 @@ if (NOT TARGET Qt5::QmlDebug)
 
     set(Qt5QmlDebug_DEFINITIONS -DQT_QMLDEBUG_LIB)
     set(Qt5QmlDebug_COMPILE_DEFINITIONS QT_QMLDEBUG_LIB)
-    set(_Qt5QmlDebug_MODULE_DEPENDENCIES "PacketProtocol;Core;Network")
+    set(_Qt5QmlDebug_MODULE_DEPENDENCIES "Qml;PacketProtocol;Core;Network")
 
 
     set(Qt5QmlDebug_OWN_PRIVATE_INCLUDE_DIRS ${Qt5QmlDebug_PRIVATE_INCLUDE_DIRS})
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::QmlDebug)
     foreach(_module_dep ${_Qt5QmlDebug_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5QmlDebug_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5QmlDebug_FIND_VERSION_EXACT}
                 ${_Qt5QmlDebug_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5QmlDebug_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -258,7 +257,7 @@ if (NOT TARGET Qt5::QmlDebug)
         return()
     endif()
 
-    set(_Qt5QmlDebug_LIB_DEPENDENCIES "Qt5::PacketProtocol;Qt5::Core;Qt5::Network")
+    set(_Qt5QmlDebug_LIB_DEPENDENCIES "Qt5::Qml;Qt5::PacketProtocol;Qt5::Core;Qt5::Network")
 
 
     if(NOT Qt5_EXCLUDE_STATIC_DEPENDENCIES)
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::QmlDebug)
     add_library(Qt5::QmlDebug STATIC IMPORTED)
     set_property(TARGET Qt5::QmlDebug PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::QmlDebug PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5QmlDebug_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::QmlDebug PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::QmlDebug)
 
     set_property(TARGET Qt5::QmlDebug PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::QmlDebug PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::QmlDebug
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QmlDebug
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QmlDebug
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::QmlDebug
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::QmlDebug PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::QmlDebug)
         set_property(TARGET Qt5::QmlDebugPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::QmlDebug ${_Qt5QmlDebug_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::QmlDebugPrivate)
+            add_library(Qt::QmlDebugPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::QmlDebugPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::QmlDebugPrivate"
+            )
+        endif()
     endif()
 
     _populate_QmlDebug_target_properties(RELEASE "libQt5QmlDebug.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::QmlDebug)
 
 
 
+    _qt5_QmlDebug_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QmlDebugConfigVersion.cmake")
+endif()
 
-_qt5_QmlDebug_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QmlDebugConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::QmlDebug AND NOT TARGET Qt::QmlDebug)
+    add_library(Qt::QmlDebug INTERFACE IMPORTED)
+    set_target_properties(Qt::QmlDebug PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::QmlDebug"
+    )
 endif()

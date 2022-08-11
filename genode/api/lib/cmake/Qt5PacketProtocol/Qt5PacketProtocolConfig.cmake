@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 PacketProtocol module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5PacketProtocol_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5PacketProtocol_VERSION instead.
-set(Qt5PacketProtocol_VERSION_STRING 5.14.2)
+set(Qt5PacketProtocol_VERSION_STRING 5.15.2)
 
 set(Qt5PacketProtocol_LIBRARIES Qt5::PacketProtocol)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::PacketProtocol)
 
     set(_Qt5PacketProtocol_OWN_INCLUDE_DIRS "${_qt5PacketProtocol_install_prefix}/include/" "${_qt5PacketProtocol_install_prefix}/include/QtPacketProtocol")
     set(Qt5PacketProtocol_PRIVATE_INCLUDE_DIRS
-        "${_qt5PacketProtocol_install_prefix}/include/QtPacketProtocol/5.14.2"
-        "${_qt5PacketProtocol_install_prefix}/include/QtPacketProtocol/5.14.2/QtPacketProtocol"
+        "${_qt5PacketProtocol_install_prefix}/include/QtPacketProtocol/5.15.2"
+        "${_qt5PacketProtocol_install_prefix}/include/QtPacketProtocol/5.15.2/QtPacketProtocol"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::PacketProtocol)
     foreach(_module_dep ${_Qt5PacketProtocol_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5PacketProtocol_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5PacketProtocol_FIND_VERSION_EXACT}
                 ${_Qt5PacketProtocol_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5PacketProtocol_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::PacketProtocol)
     add_library(Qt5::PacketProtocol STATIC IMPORTED)
     set_property(TARGET Qt5::PacketProtocol PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::PacketProtocol PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5PacketProtocol_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::PacketProtocol PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::PacketProtocol)
 
     set_property(TARGET Qt5::PacketProtocol PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::PacketProtocol PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::PacketProtocol
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::PacketProtocol
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::PacketProtocol
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::PacketProtocol
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::PacketProtocol PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::PacketProtocol)
         set_property(TARGET Qt5::PacketProtocolPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::PacketProtocol ${_Qt5PacketProtocol_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::PacketProtocolPrivate)
+            add_library(Qt::PacketProtocolPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::PacketProtocolPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::PacketProtocolPrivate"
+            )
+        endif()
     endif()
 
     _populate_PacketProtocol_target_properties(RELEASE "libQt5PacketProtocol.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::PacketProtocol)
 
 
 
+    _qt5_PacketProtocol_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5PacketProtocolConfigVersion.cmake")
+endif()
 
-_qt5_PacketProtocol_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5PacketProtocolConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::PacketProtocol AND NOT TARGET Qt::PacketProtocol)
+    add_library(Qt::PacketProtocol INTERFACE IMPORTED)
+    set_target_properties(Qt::PacketProtocol PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::PacketProtocol"
+    )
 endif()

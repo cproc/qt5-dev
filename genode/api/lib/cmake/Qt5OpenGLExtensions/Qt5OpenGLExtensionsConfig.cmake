@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 OpenGLExtensions module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5OpenGLExtensions_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5OpenGLExtensions_VERSION instead.
-set(Qt5OpenGLExtensions_VERSION_STRING 5.14.2)
+set(Qt5OpenGLExtensions_VERSION_STRING 5.15.2)
 
 set(Qt5OpenGLExtensions_LIBRARIES Qt5::OpenGLExtensions)
 
@@ -215,7 +214,7 @@ if (NOT TARGET Qt5::OpenGLExtensions)
     foreach(_module_dep ${_Qt5OpenGLExtensions_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5OpenGLExtensions_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5OpenGLExtensions_FIND_VERSION_EXACT}
                 ${_Qt5OpenGLExtensions_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5OpenGLExtensions_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -270,6 +269,7 @@ if (NOT TARGET Qt5::OpenGLExtensions)
     add_library(Qt5::OpenGLExtensions STATIC IMPORTED)
     set_property(TARGET Qt5::OpenGLExtensions PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::OpenGLExtensions PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5OpenGLExtensions_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::OpenGLExtensions PROPERTY
@@ -277,6 +277,20 @@ if (NOT TARGET Qt5::OpenGLExtensions)
 
     set_property(TARGET Qt5::OpenGLExtensions PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::OpenGLExtensions PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::OpenGLExtensions
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::OpenGLExtensions
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::OpenGLExtensions
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::OpenGLExtensions
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::OpenGLExtensions PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -301,6 +315,14 @@ if (NOT TARGET Qt5::OpenGLExtensions)
         set_property(TARGET Qt5::OpenGLExtensionsPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::OpenGLExtensions ${_Qt5OpenGLExtensions_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::OpenGLExtensionsPrivate)
+            add_library(Qt::OpenGLExtensionsPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::OpenGLExtensionsPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::OpenGLExtensionsPrivate"
+            )
+        endif()
     endif()
 
     _populate_OpenGLExtensions_target_properties(RELEASE "libQt5OpenGLExtensions.a" "" FALSE)
@@ -308,8 +330,13 @@ if (NOT TARGET Qt5::OpenGLExtensions)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGLExtensions_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5OpenGLExtensions_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGLExtensions_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGLExtensions_*.cmake")
+    endif()
 
     macro(_populate_OpenGLExtensions_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -367,8 +394,13 @@ if (NOT TARGET Qt5::OpenGLExtensions)
 
 
 
+    _qt5_OpenGLExtensions_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGLExtensionsConfigVersion.cmake")
+endif()
 
-
-_qt5_OpenGLExtensions_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGLExtensionsConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::OpenGLExtensions AND NOT TARGET Qt::OpenGLExtensions)
+    add_library(Qt::OpenGLExtensions INTERFACE IMPORTED)
+    set_target_properties(Qt::OpenGLExtensions PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::OpenGLExtensions"
+    )
 endif()

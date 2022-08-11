@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 EglSupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5EglSupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5EglSupport_VERSION instead.
-set(Qt5EglSupport_VERSION_STRING 5.14.2)
+set(Qt5EglSupport_VERSION_STRING 5.15.2)
 
 set(Qt5EglSupport_LIBRARIES Qt5::EglSupport)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::EglSupport)
 
     set(_Qt5EglSupport_OWN_INCLUDE_DIRS "${_qt5EglSupport_install_prefix}/include/" "${_qt5EglSupport_install_prefix}/include/QtEglSupport")
     set(Qt5EglSupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5EglSupport_install_prefix}/include/QtEglSupport/5.14.2"
-        "${_qt5EglSupport_install_prefix}/include/QtEglSupport/5.14.2/QtEglSupport"
+        "${_qt5EglSupport_install_prefix}/include/QtEglSupport/5.15.2"
+        "${_qt5EglSupport_install_prefix}/include/QtEglSupport/5.15.2/QtEglSupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::EglSupport)
     foreach(_module_dep ${_Qt5EglSupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5EglSupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5EglSupport_FIND_VERSION_EXACT}
                 ${_Qt5EglSupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5EglSupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::EglSupport)
     add_library(Qt5::EglSupport STATIC IMPORTED)
     set_property(TARGET Qt5::EglSupport PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::EglSupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5EglSupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::EglSupport PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::EglSupport)
 
     set_property(TARGET Qt5::EglSupport PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::EglSupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::EglSupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::EglSupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::EglSupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::EglSupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::EglSupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::EglSupport)
         set_property(TARGET Qt5::EglSupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::EglSupport ${_Qt5EglSupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::EglSupportPrivate)
+            add_library(Qt::EglSupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::EglSupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::EglSupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_EglSupport_target_properties(RELEASE "libQt5EglSupport.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::EglSupport)
 
 
 
+    _qt5_EglSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5EglSupportConfigVersion.cmake")
+endif()
 
-_qt5_EglSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5EglSupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::EglSupport AND NOT TARGET Qt::EglSupport)
+    add_library(Qt::EglSupport INTERFACE IMPORTED)
+    set_target_properties(Qt::EglSupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::EglSupport"
+    )
 endif()

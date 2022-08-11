@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Svg module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5Svg_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Svg_VERSION instead.
-set(Qt5Svg_VERSION_STRING 5.14.2)
+set(Qt5Svg_VERSION_STRING 5.15.2)
 
 set(Qt5Svg_LIBRARIES Qt5::Svg)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::Svg)
 
     set(_Qt5Svg_OWN_INCLUDE_DIRS "${_qt5Svg_install_prefix}/include/" "${_qt5Svg_install_prefix}/include/QtSvg")
     set(Qt5Svg_PRIVATE_INCLUDE_DIRS
-        "${_qt5Svg_install_prefix}/include/QtSvg/5.14.2"
-        "${_qt5Svg_install_prefix}/include/QtSvg/5.14.2/QtSvg"
+        "${_qt5Svg_install_prefix}/include/QtSvg/5.15.2"
+        "${_qt5Svg_install_prefix}/include/QtSvg/5.15.2/QtSvg"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::Svg)
     foreach(_module_dep ${_Qt5Svg_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5Svg_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Svg_FIND_VERSION_EXACT}
                 ${_Qt5Svg_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Svg_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::Svg)
 
     add_library(Qt5::Svg SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::Svg PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Svg_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::Svg PROPERTY
@@ -151,6 +151,20 @@ if (NOT TARGET Qt5::Svg)
 
     set_property(TARGET Qt5::Svg PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::Svg PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Svg
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::Svg
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::Svg
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::Svg
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::Svg PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::Svg)
         set_property(TARGET Qt5::SvgPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Svg ${_Qt5Svg_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::SvgPrivate)
+            add_library(Qt::SvgPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::SvgPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::SvgPrivate"
+            )
+        endif()
     endif()
 
     _populate_Svg_target_properties(RELEASE "libQt5Svg.lib.so" "" FALSE)
@@ -182,8 +204,13 @@ if (NOT TARGET Qt5::Svg)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Svg_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5Svg_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Svg_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Svg_*.cmake")
+    endif()
 
     macro(_populate_Svg_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -205,8 +232,13 @@ if (NOT TARGET Qt5::Svg)
 
 
 
+    _qt5_Svg_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5SvgConfigVersion.cmake")
+endif()
 
-
-_qt5_Svg_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5SvgConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Svg AND NOT TARGET Qt::Svg)
+    add_library(Qt::Svg INTERFACE IMPORTED)
+    set_target_properties(Qt::Svg PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Svg"
+    )
 endif()

@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 EdidSupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5EdidSupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5EdidSupport_VERSION instead.
-set(Qt5EdidSupport_VERSION_STRING 5.14.2)
+set(Qt5EdidSupport_VERSION_STRING 5.15.2)
 
 set(Qt5EdidSupport_LIBRARIES Qt5::EdidSupport)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::EdidSupport)
 
     set(_Qt5EdidSupport_OWN_INCLUDE_DIRS "${_qt5EdidSupport_install_prefix}/include/" "${_qt5EdidSupport_install_prefix}/include/QtEdidSupport")
     set(Qt5EdidSupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5EdidSupport_install_prefix}/include/QtEdidSupport/5.14.2"
-        "${_qt5EdidSupport_install_prefix}/include/QtEdidSupport/5.14.2/QtEdidSupport"
+        "${_qt5EdidSupport_install_prefix}/include/QtEdidSupport/5.15.2"
+        "${_qt5EdidSupport_install_prefix}/include/QtEdidSupport/5.15.2/QtEdidSupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::EdidSupport)
     foreach(_module_dep ${_Qt5EdidSupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5EdidSupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5EdidSupport_FIND_VERSION_EXACT}
                 ${_Qt5EdidSupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5EdidSupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::EdidSupport)
     add_library(Qt5::EdidSupport STATIC IMPORTED)
     set_property(TARGET Qt5::EdidSupport PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::EdidSupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5EdidSupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::EdidSupport PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::EdidSupport)
 
     set_property(TARGET Qt5::EdidSupport PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::EdidSupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::EdidSupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::EdidSupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::EdidSupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::EdidSupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::EdidSupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::EdidSupport)
         set_property(TARGET Qt5::EdidSupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::EdidSupport ${_Qt5EdidSupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::EdidSupportPrivate)
+            add_library(Qt::EdidSupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::EdidSupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::EdidSupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_EdidSupport_target_properties(RELEASE "libQt5EdidSupport.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::EdidSupport)
 
 
 
+    _qt5_EdidSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5EdidSupportConfigVersion.cmake")
+endif()
 
-_qt5_EdidSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5EdidSupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::EdidSupport AND NOT TARGET Qt::EdidSupport)
+    add_library(Qt::EdidSupport INTERFACE IMPORTED)
+    set_target_properties(Qt::EdidSupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::EdidSupport"
+    )
 endif()

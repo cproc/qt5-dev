@@ -1,4 +1,4 @@
-QT.webenginecore.VERSION = 5.14.2
+QT.webenginecore.VERSION = 5.15.2
 QT.webenginecore.name = QtWebEngineCore
 QT.webenginecore.module = Qt5WebEngineCore
 QT.webenginecore.libs = $$QT_MODULE_LIB_BASE

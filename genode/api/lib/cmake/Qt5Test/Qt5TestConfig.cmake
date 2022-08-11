@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Test module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5Test_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Test_VERSION instead.
-set(Qt5Test_VERSION_STRING 5.14.2)
+set(Qt5Test_VERSION_STRING 5.15.2)
 
 set(Qt5Test_LIBRARIES Qt5::Test)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::Test)
 
     set(_Qt5Test_OWN_INCLUDE_DIRS "${_qt5Test_install_prefix}/include/" "${_qt5Test_install_prefix}/include/QtTest")
     set(Qt5Test_PRIVATE_INCLUDE_DIRS
-        "${_qt5Test_install_prefix}/include/QtTest/5.14.2"
-        "${_qt5Test_install_prefix}/include/QtTest/5.14.2/QtTest"
+        "${_qt5Test_install_prefix}/include/QtTest/5.15.2"
+        "${_qt5Test_install_prefix}/include/QtTest/5.15.2/QtTest"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::Test)
     foreach(_module_dep ${_Qt5Test_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5Test_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Test_FIND_VERSION_EXACT}
                 ${_Qt5Test_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Test_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::Test)
 
     add_library(Qt5::Test SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::Test PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Test_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::Test PROPERTY
@@ -151,6 +151,20 @@ if (NOT TARGET Qt5::Test)
 
     set_property(TARGET Qt5::Test PROPERTY INTERFACE_QT_ENABLED_FEATURES itemmodeltester)
     set_property(TARGET Qt5::Test PROPERTY INTERFACE_QT_DISABLED_FEATURES testlib_selfcover;valgrind)
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Test
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 itemmodeltester)
+    set_property(TARGET Qt5::Test
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 testlib_selfcover;valgrind)
+    set_property(TARGET Qt5::Test
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::Test
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::Test PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::Test)
         set_property(TARGET Qt5::TestPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Test ${_Qt5Test_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::TestPrivate)
+            add_library(Qt::TestPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::TestPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::TestPrivate"
+            )
+        endif()
     endif()
 
     _populate_Test_target_properties(RELEASE "libQt5Test.lib.so" "" FALSE)
@@ -182,8 +204,13 @@ if (NOT TARGET Qt5::Test)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Test_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5Test_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Test_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Test_*.cmake")
+    endif()
 
     macro(_populate_Test_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -203,11 +230,16 @@ if (NOT TARGET Qt5::Test)
         endforeach()
     endif()
 
-
-
     include("${CMAKE_CURRENT_LIST_DIR}/Qt5TestConfigExtras.cmake")
 
 
-_qt5_Test_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5TestConfigVersion.cmake")
+    _qt5_Test_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5TestConfigVersion.cmake")
+endif()
 
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Test AND NOT TARGET Qt::Test)
+    add_library(Qt::Test INTERFACE IMPORTED)
+    set_target_properties(Qt::Test PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Test"
+    )
 endif()

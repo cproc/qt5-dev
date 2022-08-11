@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 ThemeSupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5ThemeSupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5ThemeSupport_VERSION instead.
-set(Qt5ThemeSupport_VERSION_STRING 5.14.2)
+set(Qt5ThemeSupport_VERSION_STRING 5.15.2)
 
 set(Qt5ThemeSupport_LIBRARIES Qt5::ThemeSupport)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::ThemeSupport)
 
     set(_Qt5ThemeSupport_OWN_INCLUDE_DIRS "${_qt5ThemeSupport_install_prefix}/include/" "${_qt5ThemeSupport_install_prefix}/include/QtThemeSupport")
     set(Qt5ThemeSupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5ThemeSupport_install_prefix}/include/QtThemeSupport/5.14.2"
-        "${_qt5ThemeSupport_install_prefix}/include/QtThemeSupport/5.14.2/QtThemeSupport"
+        "${_qt5ThemeSupport_install_prefix}/include/QtThemeSupport/5.15.2"
+        "${_qt5ThemeSupport_install_prefix}/include/QtThemeSupport/5.15.2/QtThemeSupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::ThemeSupport)
     foreach(_module_dep ${_Qt5ThemeSupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5ThemeSupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5ThemeSupport_FIND_VERSION_EXACT}
                 ${_Qt5ThemeSupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5ThemeSupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::ThemeSupport)
     add_library(Qt5::ThemeSupport STATIC IMPORTED)
     set_property(TARGET Qt5::ThemeSupport PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::ThemeSupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5ThemeSupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::ThemeSupport PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::ThemeSupport)
 
     set_property(TARGET Qt5::ThemeSupport PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::ThemeSupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::ThemeSupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::ThemeSupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::ThemeSupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::ThemeSupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::ThemeSupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::ThemeSupport)
         set_property(TARGET Qt5::ThemeSupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::ThemeSupport ${_Qt5ThemeSupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::ThemeSupportPrivate)
+            add_library(Qt::ThemeSupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::ThemeSupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::ThemeSupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_ThemeSupport_target_properties(RELEASE "libQt5ThemeSupport.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::ThemeSupport)
 
 
 
+    _qt5_ThemeSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5ThemeSupportConfigVersion.cmake")
+endif()
 
-_qt5_ThemeSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5ThemeSupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::ThemeSupport AND NOT TARGET Qt::ThemeSupport)
+    add_library(Qt::ThemeSupport INTERFACE IMPORTED)
+    set_target_properties(Qt::ThemeSupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::ThemeSupport"
+    )
 endif()

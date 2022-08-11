@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Qml module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5Qml_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Qml_VERSION instead.
-set(Qt5Qml_VERSION_STRING 5.14.2)
+set(Qt5Qml_VERSION_STRING 5.15.2)
 
 set(Qt5Qml_LIBRARIES Qt5::Qml)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::Qml)
 
     set(_Qt5Qml_OWN_INCLUDE_DIRS "${_qt5Qml_install_prefix}/include/" "${_qt5Qml_install_prefix}/include/QtQml")
     set(Qt5Qml_PRIVATE_INCLUDE_DIRS
-        "${_qt5Qml_install_prefix}/include/QtQml/5.14.2"
-        "${_qt5Qml_install_prefix}/include/QtQml/5.14.2/QtQml"
+        "${_qt5Qml_install_prefix}/include/QtQml/5.15.2"
+        "${_qt5Qml_install_prefix}/include/QtQml/5.15.2/QtQml"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::Qml)
     foreach(_module_dep ${_Qt5Qml_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5Qml_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Qml_FIND_VERSION_EXACT}
                 ${_Qt5Qml_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Qml_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::Qml)
 
     add_library(Qt5::Qml SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::Qml PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Qml_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::Qml PROPERTY
@@ -151,6 +151,20 @@ if (NOT TARGET Qt5::Qml)
 
     set_property(TARGET Qt5::Qml PROPERTY INTERFACE_QT_ENABLED_FEATURES qml-debug;qml-network)
     set_property(TARGET Qt5::Qml PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Qml
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 qml-debug;qml-network)
+    set_property(TARGET Qt5::Qml
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::Qml
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 cxx14_make_unique;qml-animation;qml-itemmodel;qml-locale;qml-profiler;qml-python;qml-sequence-object;qml-worker-script;qml-xml-http-request)
+    set_property(TARGET Qt5::Qml
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 qml-devtools;qml-jit;qml-preview)
 
     set_property(TARGET Qt5::Qml PROPERTY INTERFACE_QT_PLUGIN_TYPES "qmltooling")
 
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::Qml)
         set_property(TARGET Qt5::QmlPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Qml ${_Qt5Qml_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::QmlPrivate)
+            add_library(Qt::QmlPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::QmlPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::QmlPrivate"
+            )
+        endif()
     endif()
 
     _populate_Qml_target_properties(RELEASE "libQt5Qml.lib.so" "" FALSE)
@@ -182,8 +204,13 @@ if (NOT TARGET Qt5::Qml)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Qml_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5Qml_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Qml_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Qml_*.cmake")
+    endif()
 
     macro(_populate_Qml_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -203,11 +230,16 @@ if (NOT TARGET Qt5::Qml)
         endforeach()
     endif()
 
-
-
     include("${CMAKE_CURRENT_LIST_DIR}/Qt5QmlConfigExtras.cmake")
 
 
-_qt5_Qml_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QmlConfigVersion.cmake")
+    _qt5_Qml_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QmlConfigVersion.cmake")
+endif()
 
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Qml AND NOT TARGET Qt::Qml)
+    add_library(Qt::Qml INTERFACE IMPORTED)
+    set_target_properties(Qt::Qml PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Qml"
+    )
 endif()

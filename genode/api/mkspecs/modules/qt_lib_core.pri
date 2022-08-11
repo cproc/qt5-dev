@@ -1,4 +1,4 @@
-QT.core.VERSION = 5.14.2
+QT.core.VERSION = 5.15.2
 QT.core.name = QtCore
 QT.core.module = Qt5Core
 QT.core.libs = $$QT_MODULE_LIB_BASE
@@ -10,7 +10,7 @@ QT.core.uses = libatomic
 QT.core.module_config = v2
 QT.core.CONFIG = moc resources
 QT.core.DEFINES = QT_CORE_LIB
-QT.core.enabled_features = properties easingcurve animation textcodec big_codecs codecs commandlineparser itemmodel proxymodel concatenatetablesproxymodel textdate datestring filesystemiterator filesystemwatcher gestures identityproxymodel islamiccivilcalendar jalalicalendar library mimetype processenvironment statemachine qeventtransition regularexpression settings sortfilterproxymodel std-atomic64 stringlistmodel temporaryfile timezone topleveldomain translation transposeproxymodel xmlstream xmlstreamreader xmlstreamwriter
+QT.core.enabled_features = properties easingcurve animation textcodec big_codecs binaryjson cborstreamreader cborstreamwriter codecs commandlineparser itemmodel proxymodel concatenatetablesproxymodel textdate datestring filesystemiterator filesystemwatcher gestures identityproxymodel islamiccivilcalendar jalalicalendar library mimetype processenvironment statemachine qeventtransition regularexpression settings sortfilterproxymodel std-atomic64 stringlistmodel temporaryfile timezone topleveldomain translation transposeproxymodel xmlstream xmlstreamreader xmlstreamwriter
 QT.core.disabled_features = cxx11_future process sharedmemory systemsemaphore
 QT_CONFIG += properties animation textcodec big_codecs clock-monotonic codecs itemmodel proxymodel concatenatetablesproxymodel textdate datestring doubleconversion filesystemiterator filesystemwatcher gestures identityproxymodel library mimetype statemachine regularexpression settings sortfilterproxymodel stringlistmodel temporaryfile translation transposeproxymodel xmlstream xmlstreamreader xmlstreamwriter
 QT_MODULES += core

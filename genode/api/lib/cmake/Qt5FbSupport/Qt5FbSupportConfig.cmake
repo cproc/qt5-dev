@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 FbSupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5FbSupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5FbSupport_VERSION instead.
-set(Qt5FbSupport_VERSION_STRING 5.14.2)
+set(Qt5FbSupport_VERSION_STRING 5.15.2)
 
 set(Qt5FbSupport_LIBRARIES Qt5::FbSupport)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::FbSupport)
 
     set(_Qt5FbSupport_OWN_INCLUDE_DIRS "${_qt5FbSupport_install_prefix}/include/" "${_qt5FbSupport_install_prefix}/include/QtFbSupport")
     set(Qt5FbSupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5FbSupport_install_prefix}/include/QtFbSupport/5.14.2"
-        "${_qt5FbSupport_install_prefix}/include/QtFbSupport/5.14.2/QtFbSupport"
+        "${_qt5FbSupport_install_prefix}/include/QtFbSupport/5.15.2"
+        "${_qt5FbSupport_install_prefix}/include/QtFbSupport/5.15.2/QtFbSupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::FbSupport)
     foreach(_module_dep ${_Qt5FbSupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5FbSupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5FbSupport_FIND_VERSION_EXACT}
                 ${_Qt5FbSupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5FbSupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::FbSupport)
     add_library(Qt5::FbSupport STATIC IMPORTED)
     set_property(TARGET Qt5::FbSupport PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::FbSupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5FbSupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::FbSupport PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::FbSupport)
 
     set_property(TARGET Qt5::FbSupport PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::FbSupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::FbSupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::FbSupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::FbSupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::FbSupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::FbSupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::FbSupport)
         set_property(TARGET Qt5::FbSupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::FbSupport ${_Qt5FbSupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::FbSupportPrivate)
+            add_library(Qt::FbSupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::FbSupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::FbSupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_FbSupport_target_properties(RELEASE "libQt5FbSupport.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::FbSupport)
 
 
 
+    _qt5_FbSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5FbSupportConfigVersion.cmake")
+endif()
 
-_qt5_FbSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5FbSupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::FbSupport AND NOT TARGET Qt::FbSupport)
+    add_library(Qt::FbSupport INTERFACE IMPORTED)
+    set_target_properties(Qt::FbSupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::FbSupport"
+    )
 endif()

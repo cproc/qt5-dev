@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 PlatformCompositorSupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5PlatformCompositorSupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5PlatformCompositorSupport_VERSION instead.
-set(Qt5PlatformCompositorSupport_VERSION_STRING 5.14.2)
+set(Qt5PlatformCompositorSupport_VERSION_STRING 5.15.2)
 
 set(Qt5PlatformCompositorSupport_LIBRARIES Qt5::PlatformCompositorSupport)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::PlatformCompositorSupport)
 
     set(_Qt5PlatformCompositorSupport_OWN_INCLUDE_DIRS "${_qt5PlatformCompositorSupport_install_prefix}/include/" "${_qt5PlatformCompositorSupport_install_prefix}/include/QtPlatformCompositorSupport")
     set(Qt5PlatformCompositorSupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5PlatformCompositorSupport_install_prefix}/include/QtPlatformCompositorSupport/5.14.2"
-        "${_qt5PlatformCompositorSupport_install_prefix}/include/QtPlatformCompositorSupport/5.14.2/QtPlatformCompositorSupport"
+        "${_qt5PlatformCompositorSupport_install_prefix}/include/QtPlatformCompositorSupport/5.15.2"
+        "${_qt5PlatformCompositorSupport_install_prefix}/include/QtPlatformCompositorSupport/5.15.2/QtPlatformCompositorSupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::PlatformCompositorSupport)
     foreach(_module_dep ${_Qt5PlatformCompositorSupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5PlatformCompositorSupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5PlatformCompositorSupport_FIND_VERSION_EXACT}
                 ${_Qt5PlatformCompositorSupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5PlatformCompositorSupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::PlatformCompositorSupport)
     add_library(Qt5::PlatformCompositorSupport STATIC IMPORTED)
     set_property(TARGET Qt5::PlatformCompositorSupport PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::PlatformCompositorSupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5PlatformCompositorSupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::PlatformCompositorSupport PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::PlatformCompositorSupport)
 
     set_property(TARGET Qt5::PlatformCompositorSupport PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::PlatformCompositorSupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::PlatformCompositorSupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::PlatformCompositorSupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::PlatformCompositorSupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::PlatformCompositorSupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::PlatformCompositorSupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::PlatformCompositorSupport)
         set_property(TARGET Qt5::PlatformCompositorSupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::PlatformCompositorSupport ${_Qt5PlatformCompositorSupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::PlatformCompositorSupportPrivate)
+            add_library(Qt::PlatformCompositorSupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::PlatformCompositorSupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::PlatformCompositorSupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_PlatformCompositorSupport_target_properties(RELEASE "libQt5PlatformCompositorSupport.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::PlatformCompositorSupport)
 
 
 
+    _qt5_PlatformCompositorSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5PlatformCompositorSupportConfigVersion.cmake")
+endif()
 
-_qt5_PlatformCompositorSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5PlatformCompositorSupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::PlatformCompositorSupport AND NOT TARGET Qt::PlatformCompositorSupport)
+    add_library(Qt::PlatformCompositorSupport INTERFACE IMPORTED)
+    set_target_properties(Qt::PlatformCompositorSupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::PlatformCompositorSupport"
+    )
 endif()

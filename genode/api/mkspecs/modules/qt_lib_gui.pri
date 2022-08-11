@@ -1,11 +1,11 @@
-QT.gui.VERSION = 5.14.2
+QT.gui.VERSION = 5.15.2
 QT.gui.name = QtGui
 QT.gui.module = Qt5Gui
 QT.gui.libs = $$QT_MODULE_LIB_BASE
 QT.gui.includes = $$QT_MODULE_INCLUDE_BASE $$QT_MODULE_INCLUDE_BASE/QtGui
 QT.gui.frameworks =
 QT.gui.bins = $$QT_MODULE_BIN_BASE
-QT.gui.plugin_types = platforms platforms/darwin xcbglintegrations platformthemes platforminputcontexts generic iconengines imageformats egldeviceintegrations
+QT.gui.plugin_types = accessiblebridge platforms platforms/darwin xcbglintegrations platformthemes platforminputcontexts generic iconengines imageformats egldeviceintegrations
 QT.gui.depends = core
 QT.gui.run_depends = core
 QT.gui.uses =

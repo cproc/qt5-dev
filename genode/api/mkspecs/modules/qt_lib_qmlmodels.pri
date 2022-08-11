@@ -1,4 +1,4 @@
-QT.qmlmodels.VERSION = 5.14.2
+QT.qmlmodels.VERSION = 5.15.2
 QT.qmlmodels.name = QtQmlModels
 QT.qmlmodels.module = Qt5QmlModels
 QT.qmlmodels.libs = $$QT_MODULE_LIB_BASE

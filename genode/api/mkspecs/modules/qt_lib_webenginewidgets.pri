@@ -1,4 +1,4 @@
-QT.webenginewidgets.VERSION = 5.14.2
+QT.webenginewidgets.VERSION = 5.15.2
 QT.webenginewidgets.name = QtWebEngineWidgets
 QT.webenginewidgets.module = Qt5WebEngineWidgets
 QT.webenginewidgets.libs = $$QT_MODULE_LIB_BASE

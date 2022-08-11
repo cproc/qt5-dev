@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 DeviceDiscoverySupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5DeviceDiscoverySupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5DeviceDiscoverySupport_VERSION instead.
-set(Qt5DeviceDiscoverySupport_VERSION_STRING 5.14.2)
+set(Qt5DeviceDiscoverySupport_VERSION_STRING 5.15.2)
 
 set(Qt5DeviceDiscoverySupport_LIBRARIES Qt5::DeviceDiscoverySupport)
 
@@ -173,8 +172,8 @@ if (NOT TARGET Qt5::DeviceDiscoverySupport)
 
     set(_Qt5DeviceDiscoverySupport_OWN_INCLUDE_DIRS "${_qt5DeviceDiscoverySupport_install_prefix}/include/" "${_qt5DeviceDiscoverySupport_install_prefix}/include/QtDeviceDiscoverySupport")
     set(Qt5DeviceDiscoverySupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5DeviceDiscoverySupport_install_prefix}/include/QtDeviceDiscoverySupport/5.14.2"
-        "${_qt5DeviceDiscoverySupport_install_prefix}/include/QtDeviceDiscoverySupport/5.14.2/QtDeviceDiscoverySupport"
+        "${_qt5DeviceDiscoverySupport_install_prefix}/include/QtDeviceDiscoverySupport/5.15.2"
+        "${_qt5DeviceDiscoverySupport_install_prefix}/include/QtDeviceDiscoverySupport/5.15.2/QtDeviceDiscoverySupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -218,7 +217,7 @@ if (NOT TARGET Qt5::DeviceDiscoverySupport)
     foreach(_module_dep ${_Qt5DeviceDiscoverySupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5DeviceDiscoverySupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5DeviceDiscoverySupport_FIND_VERSION_EXACT}
                 ${_Qt5DeviceDiscoverySupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5DeviceDiscoverySupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -273,6 +272,7 @@ if (NOT TARGET Qt5::DeviceDiscoverySupport)
     add_library(Qt5::DeviceDiscoverySupport STATIC IMPORTED)
     set_property(TARGET Qt5::DeviceDiscoverySupport PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES CXX)
 
+
     set_property(TARGET Qt5::DeviceDiscoverySupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5DeviceDiscoverySupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::DeviceDiscoverySupport PROPERTY
@@ -280,6 +280,20 @@ if (NOT TARGET Qt5::DeviceDiscoverySupport)
 
     set_property(TARGET Qt5::DeviceDiscoverySupport PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::DeviceDiscoverySupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::DeviceDiscoverySupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::DeviceDiscoverySupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::DeviceDiscoverySupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::DeviceDiscoverySupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::DeviceDiscoverySupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -304,6 +318,14 @@ if (NOT TARGET Qt5::DeviceDiscoverySupport)
         set_property(TARGET Qt5::DeviceDiscoverySupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::DeviceDiscoverySupport ${_Qt5DeviceDiscoverySupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::DeviceDiscoverySupportPrivate)
+            add_library(Qt::DeviceDiscoverySupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::DeviceDiscoverySupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::DeviceDiscoverySupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_DeviceDiscoverySupport_target_properties(RELEASE "libQt5DeviceDiscoverySupport.a" "" FALSE)
@@ -314,7 +336,13 @@ if (NOT TARGET Qt5::DeviceDiscoverySupport)
 
 
 
+    _qt5_DeviceDiscoverySupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5DeviceDiscoverySupportConfigVersion.cmake")
+endif()
 
-_qt5_DeviceDiscoverySupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5DeviceDiscoverySupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::DeviceDiscoverySupport AND NOT TARGET Qt::DeviceDiscoverySupport)
+    add_library(Qt::DeviceDiscoverySupport INTERFACE IMPORTED)
+    set_target_properties(Qt::DeviceDiscoverySupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::DeviceDiscoverySupport"
+    )
 endif()

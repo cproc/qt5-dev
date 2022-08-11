@@ -1,3 +1,6 @@
+if(NOT DEFINED QT_DEFAULT_MAJOR_VERSION)
+    set(QT_DEFAULT_MAJOR_VERSION 5)
+endif()
 
 if (NOT TARGET Qt5::qmake)
     add_executable(Qt5::qmake IMPORTED)
@@ -92,3 +95,15 @@ if (ANDROID_PLATFORM)
 endif()
 
 _qt5_Core_check_file_exists(${_Qt5CTestMacros})
+
+# Create versionless tool targets.
+foreach(__qt_tool qmake moc rcc)
+    if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::${__qt_tool}
+       AND TARGET Qt5::${__qt_tool})
+        add_executable(Qt::${__qt_tool} IMPORTED)
+        get_target_property(__qt_imported_location Qt5::${__qt_tool} IMPORTED_LOCATION)
+        set_target_properties(Qt::${__qt_tool}
+                              PROPERTIES IMPORTED_LOCATION "${__qt_imported_location}")
+    endif()
+endforeach()
+

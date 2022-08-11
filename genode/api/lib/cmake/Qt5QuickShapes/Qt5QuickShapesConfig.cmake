@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 QuickShapes module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5QuickShapes_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5QuickShapes_VERSION instead.
-set(Qt5QuickShapes_VERSION_STRING 5.14.2)
+set(Qt5QuickShapes_VERSION_STRING 5.15.2)
 
 set(Qt5QuickShapes_LIBRARIES Qt5::QuickShapes)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::QuickShapes)
 
     set(_Qt5QuickShapes_OWN_INCLUDE_DIRS "${_qt5QuickShapes_install_prefix}/include/" "${_qt5QuickShapes_install_prefix}/include/QtQuickShapes")
     set(Qt5QuickShapes_PRIVATE_INCLUDE_DIRS
-        "${_qt5QuickShapes_install_prefix}/include/QtQuickShapes/5.14.2"
-        "${_qt5QuickShapes_install_prefix}/include/QtQuickShapes/5.14.2/QtQuickShapes"
+        "${_qt5QuickShapes_install_prefix}/include/QtQuickShapes/5.15.2"
+        "${_qt5QuickShapes_install_prefix}/include/QtQuickShapes/5.15.2/QtQuickShapes"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::QuickShapes)
     foreach(_module_dep ${_Qt5QuickShapes_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5QuickShapes_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5QuickShapes_FIND_VERSION_EXACT}
                 ${_Qt5QuickShapes_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5QuickShapes_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::QuickShapes)
 
     add_library(Qt5::QuickShapes SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::QuickShapes PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5QuickShapes_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::QuickShapes PROPERTY
@@ -151,6 +151,20 @@ if (NOT TARGET Qt5::QuickShapes)
 
     set_property(TARGET Qt5::QuickShapes PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::QuickShapes PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::QuickShapes
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickShapes
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickShapes
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickShapes
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::QuickShapes PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::QuickShapes)
         set_property(TARGET Qt5::QuickShapesPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::QuickShapes ${_Qt5QuickShapes_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::QuickShapesPrivate)
+            add_library(Qt::QuickShapesPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::QuickShapesPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::QuickShapesPrivate"
+            )
+        endif()
     endif()
 
     _populate_QuickShapes_target_properties(RELEASE "libQt5QuickShapes.lib.so" "" FALSE)
@@ -185,7 +207,13 @@ if (NOT TARGET Qt5::QuickShapes)
 
 
 
+    _qt5_QuickShapes_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QuickShapesConfigVersion.cmake")
+endif()
 
-_qt5_QuickShapes_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QuickShapesConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::QuickShapes AND NOT TARGET Qt::QuickShapes)
+    add_library(Qt::QuickShapes INTERFACE IMPORTED)
+    set_target_properties(Qt::QuickShapes PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::QuickShapes"
+    )
 endif()

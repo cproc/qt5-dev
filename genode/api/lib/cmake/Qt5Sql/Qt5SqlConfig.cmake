@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Sql module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5Sql_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Sql_VERSION instead.
-set(Qt5Sql_VERSION_STRING 5.14.2)
+set(Qt5Sql_VERSION_STRING 5.15.2)
 
 set(Qt5Sql_LIBRARIES Qt5::Sql)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::Sql)
 
     set(_Qt5Sql_OWN_INCLUDE_DIRS "${_qt5Sql_install_prefix}/include/" "${_qt5Sql_install_prefix}/include/QtSql")
     set(Qt5Sql_PRIVATE_INCLUDE_DIRS
-        "${_qt5Sql_install_prefix}/include/QtSql/5.14.2"
-        "${_qt5Sql_install_prefix}/include/QtSql/5.14.2/QtSql"
+        "${_qt5Sql_install_prefix}/include/QtSql/5.15.2"
+        "${_qt5Sql_install_prefix}/include/QtSql/5.15.2/QtSql"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::Sql)
     foreach(_module_dep ${_Qt5Sql_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5Sql_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Sql_FIND_VERSION_EXACT}
                 ${_Qt5Sql_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Sql_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::Sql)
 
     add_library(Qt5::Sql SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::Sql PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Sql_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::Sql PROPERTY
@@ -151,6 +151,20 @@ if (NOT TARGET Qt5::Sql)
 
     set_property(TARGET Qt5::Sql PROPERTY INTERFACE_QT_ENABLED_FEATURES sqlmodel)
     set_property(TARGET Qt5::Sql PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Sql
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 sqlmodel)
+    set_property(TARGET Qt5::Sql
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::Sql
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::Sql
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::Sql PROPERTY INTERFACE_QT_PLUGIN_TYPES "sqldrivers")
 
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::Sql)
         set_property(TARGET Qt5::SqlPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Sql ${_Qt5Sql_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::SqlPrivate)
+            add_library(Qt::SqlPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::SqlPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::SqlPrivate"
+            )
+        endif()
     endif()
 
     _populate_Sql_target_properties(RELEASE "libQt5Sql.lib.so" "" FALSE)
@@ -182,8 +204,13 @@ if (NOT TARGET Qt5::Sql)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Sql_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5Sql_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Sql_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Sql_*.cmake")
+    endif()
 
     macro(_populate_Sql_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -205,8 +232,13 @@ if (NOT TARGET Qt5::Sql)
 
 
 
+    _qt5_Sql_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5SqlConfigVersion.cmake")
+endif()
 
-
-_qt5_Sql_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5SqlConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Sql AND NOT TARGET Qt::Sql)
+    add_library(Qt::Sql INTERFACE IMPORTED)
+    set_target_properties(Qt::Sql PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Sql"
+    )
 endif()

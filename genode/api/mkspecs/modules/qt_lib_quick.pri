@@ -1,4 +1,4 @@
-QT.quick.VERSION = 5.14.2
+QT.quick.VERSION = 5.15.2
 QT.quick.name = QtQuick
 QT.quick.module = Qt5Quick
 QT.quick.libs = $$QT_MODULE_LIB_BASE

@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 QuickWidgets module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5QuickWidgets_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5QuickWidgets_VERSION instead.
-set(Qt5QuickWidgets_VERSION_STRING 5.14.2)
+set(Qt5QuickWidgets_VERSION_STRING 5.15.2)
 
 set(Qt5QuickWidgets_LIBRARIES Qt5::QuickWidgets)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::QuickWidgets)
 
     set(_Qt5QuickWidgets_OWN_INCLUDE_DIRS "${_qt5QuickWidgets_install_prefix}/include/" "${_qt5QuickWidgets_install_prefix}/include/QtQuickWidgets")
     set(Qt5QuickWidgets_PRIVATE_INCLUDE_DIRS
-        "${_qt5QuickWidgets_install_prefix}/include/QtQuickWidgets/5.14.2"
-        "${_qt5QuickWidgets_install_prefix}/include/QtQuickWidgets/5.14.2/QtQuickWidgets"
+        "${_qt5QuickWidgets_install_prefix}/include/QtQuickWidgets/5.15.2"
+        "${_qt5QuickWidgets_install_prefix}/include/QtQuickWidgets/5.15.2/QtQuickWidgets"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::QuickWidgets)
     foreach(_module_dep ${_Qt5QuickWidgets_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5QuickWidgets_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5QuickWidgets_FIND_VERSION_EXACT}
                 ${_Qt5QuickWidgets_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5QuickWidgets_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::QuickWidgets)
 
     add_library(Qt5::QuickWidgets SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::QuickWidgets PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5QuickWidgets_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::QuickWidgets PROPERTY
@@ -151,6 +151,20 @@ if (NOT TARGET Qt5::QuickWidgets)
 
     set_property(TARGET Qt5::QuickWidgets PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::QuickWidgets PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::QuickWidgets
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickWidgets
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickWidgets
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickWidgets
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::QuickWidgets PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::QuickWidgets)
         set_property(TARGET Qt5::QuickWidgetsPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::QuickWidgets ${_Qt5QuickWidgets_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::QuickWidgetsPrivate)
+            add_library(Qt::QuickWidgetsPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::QuickWidgetsPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::QuickWidgetsPrivate"
+            )
+        endif()
     endif()
 
     _populate_QuickWidgets_target_properties(RELEASE "libQt5QuickWidgets.lib.so" "" FALSE)
@@ -182,8 +204,13 @@ if (NOT TARGET Qt5::QuickWidgets)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5QuickWidgets_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5QuickWidgets_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5QuickWidgets_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5QuickWidgets_*.cmake")
+    endif()
 
     macro(_populate_QuickWidgets_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -205,8 +232,13 @@ if (NOT TARGET Qt5::QuickWidgets)
 
 
 
+    _qt5_QuickWidgets_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QuickWidgetsConfigVersion.cmake")
+endif()
 
-
-_qt5_QuickWidgets_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QuickWidgetsConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::QuickWidgets AND NOT TARGET Qt::QuickWidgets)
+    add_library(Qt::QuickWidgets INTERFACE IMPORTED)
+    set_target_properties(Qt::QuickWidgets PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::QuickWidgets"
+    )
 endif()

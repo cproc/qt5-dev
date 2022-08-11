@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Concurrent module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5Concurrent_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Concurrent_VERSION instead.
-set(Qt5Concurrent_VERSION_STRING 5.14.2)
+set(Qt5Concurrent_VERSION_STRING 5.15.2)
 
 set(Qt5Concurrent_LIBRARIES Qt5::Concurrent)
 
@@ -96,7 +95,7 @@ if (NOT TARGET Qt5::Concurrent)
     foreach(_module_dep ${_Qt5Concurrent_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5Concurrent_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Concurrent_FIND_VERSION_EXACT}
                 ${_Qt5Concurrent_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Concurrent_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -141,6 +140,7 @@ if (NOT TARGET Qt5::Concurrent)
 
     add_library(Qt5::Concurrent SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::Concurrent PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Concurrent_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::Concurrent PROPERTY
@@ -148,6 +148,20 @@ if (NOT TARGET Qt5::Concurrent)
 
     set_property(TARGET Qt5::Concurrent PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::Concurrent PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Concurrent
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::Concurrent
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::Concurrent
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::Concurrent
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
 
     set_property(TARGET Qt5::Concurrent PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
@@ -172,6 +186,14 @@ if (NOT TARGET Qt5::Concurrent)
         set_property(TARGET Qt5::ConcurrentPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Concurrent ${_Qt5Concurrent_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::ConcurrentPrivate)
+            add_library(Qt::ConcurrentPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::ConcurrentPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::ConcurrentPrivate"
+            )
+        endif()
     endif()
 
     _populate_Concurrent_target_properties(RELEASE "libQt5Concurrent.lib.so" "" FALSE)
@@ -179,8 +201,13 @@ if (NOT TARGET Qt5::Concurrent)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Concurrent_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5Concurrent_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Concurrent_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Concurrent_*.cmake")
+    endif()
 
     macro(_populate_Concurrent_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -202,8 +229,13 @@ if (NOT TARGET Qt5::Concurrent)
 
 
 
+    _qt5_Concurrent_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5ConcurrentConfigVersion.cmake")
+endif()
 
-
-_qt5_Concurrent_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5ConcurrentConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Concurrent AND NOT TARGET Qt::Concurrent)
+    add_library(Qt::Concurrent INTERFACE IMPORTED)
+    set_target_properties(Qt::Concurrent PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Concurrent"
+    )
 endif()

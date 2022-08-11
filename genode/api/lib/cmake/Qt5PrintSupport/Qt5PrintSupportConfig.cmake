@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 PrintSupport module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5PrintSupport_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5PrintSupport_VERSION instead.
-set(Qt5PrintSupport_VERSION_STRING 5.14.2)
+set(Qt5PrintSupport_VERSION_STRING 5.15.2)
 
 set(Qt5PrintSupport_LIBRARIES Qt5::PrintSupport)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::PrintSupport)
 
     set(_Qt5PrintSupport_OWN_INCLUDE_DIRS "${_qt5PrintSupport_install_prefix}/include/" "${_qt5PrintSupport_install_prefix}/include/QtPrintSupport")
     set(Qt5PrintSupport_PRIVATE_INCLUDE_DIRS
-        "${_qt5PrintSupport_install_prefix}/include/QtPrintSupport/5.14.2"
-        "${_qt5PrintSupport_install_prefix}/include/QtPrintSupport/5.14.2/QtPrintSupport"
+        "${_qt5PrintSupport_install_prefix}/include/QtPrintSupport/5.15.2"
+        "${_qt5PrintSupport_install_prefix}/include/QtPrintSupport/5.15.2/QtPrintSupport"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::PrintSupport)
     foreach(_module_dep ${_Qt5PrintSupport_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.14.2 ${_Qt5PrintSupport_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5PrintSupport_FIND_VERSION_EXACT}
                 ${_Qt5PrintSupport_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5PrintSupport_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -144,6 +143,7 @@ if (NOT TARGET Qt5::PrintSupport)
 
     add_library(Qt5::PrintSupport SHARED IMPORTED)
 
+
     set_property(TARGET Qt5::PrintSupport PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5PrintSupport_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::PrintSupport PROPERTY
@@ -151,6 +151,20 @@ if (NOT TARGET Qt5::PrintSupport)
 
     set_property(TARGET Qt5::PrintSupport PROPERTY INTERFACE_QT_ENABLED_FEATURES printer;printdialog;printpreviewwidget;printpreviewdialog)
     set_property(TARGET Qt5::PrintSupport PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::PrintSupport
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 printer;printdialog;printpreviewwidget;printpreviewdialog)
+    set_property(TARGET Qt5::PrintSupport
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::PrintSupport
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::PrintSupport
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 cups;cupsjobwidget)
 
     set_property(TARGET Qt5::PrintSupport PROPERTY INTERFACE_QT_PLUGIN_TYPES "printsupport")
 
@@ -175,6 +189,14 @@ if (NOT TARGET Qt5::PrintSupport)
         set_property(TARGET Qt5::PrintSupportPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::PrintSupport ${_Qt5PrintSupport_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::PrintSupportPrivate)
+            add_library(Qt::PrintSupportPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::PrintSupportPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::PrintSupportPrivate"
+            )
+        endif()
     endif()
 
     _populate_PrintSupport_target_properties(RELEASE "libQt5PrintSupport.lib.so" "" FALSE)
@@ -182,8 +204,13 @@ if (NOT TARGET Qt5::PrintSupport)
 
 
 
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5PrintSupport_*Plugin.cmake")
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5PrintSupport_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5PrintSupport_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5PrintSupport_*.cmake")
+    endif()
 
     macro(_populate_PrintSupport_plugin_properties Plugin Configuration PLUGIN_LOCATION
           IsDebugAndRelease)
@@ -205,8 +232,13 @@ if (NOT TARGET Qt5::PrintSupport)
 
 
 
+    _qt5_PrintSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5PrintSupportConfigVersion.cmake")
+endif()
 
-
-_qt5_PrintSupport_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5PrintSupportConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::PrintSupport AND NOT TARGET Qt::PrintSupport)
+    add_library(Qt::PrintSupport INTERFACE IMPORTED)
+    set_target_properties(Qt::PrintSupport PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::PrintSupport"
+    )
 endif()

@@ -302,11 +302,11 @@ _ZTS21QQuickPlaceholderText R 24
 _ZTS22QQuickIconImagePrivate R 25
 _ZTS29QQuickImplicitSizeItemPrivate D 32
 _ZTV11QQuickColor D 120
-_ZTV15QQuickIconImage D 536
+_ZTV15QQuickIconImage D 544
 _ZTV15QQuickIconLabel D 448
 _ZTV15QQuickItemGroup D 600
 _ZTV16QQuickCheckLabel D 448
-_ZTV16QQuickColorImage D 536
+_ZTV16QQuickColorImage D 544
 _ZTV17QQuickClippedText D 448
 _ZTV17QQuickStylePlugin D 200
 _ZTV17QQuickTumblerView D 448

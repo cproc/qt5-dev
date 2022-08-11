@@ -1,4 +1,4 @@
-QT.qmlworkerscript.VERSION = 5.14.2
+QT.qmlworkerscript.VERSION = 5.15.2
 QT.qmlworkerscript.name = QtQmlWorkerScript
 QT.qmlworkerscript.module = Qt5QmlWorkerScript
 QT.qmlworkerscript.libs = $$QT_MODULE_LIB_BASE

@@ -10,6 +10,7 @@
 #define QT_FEATURE_dlopen 1
 #define QT_FEATURE_gc_binaries -1
 #define QT_FEATURE_gui 1
+#define QT_FEATURE_intelcet -1
 #define QT_FEATURE_libudev -1
 #define QT_FEATURE_network 1
 #define QT_FEATURE_posix_fallocate -1
