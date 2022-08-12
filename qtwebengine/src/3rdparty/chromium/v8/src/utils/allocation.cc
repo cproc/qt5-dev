@@ -164,6 +164,7 @@ void* GetRandomMmapAddr() {
 
 void* AllocatePages(v8::PageAllocator* page_allocator, void* hint, size_t size,
                     size_t alignment, PageAllocator::Permission access) {
+fprintf(stderr, "AllocatePages(): %zu, ret: %p\n", size, __builtin_return_address(0));
   DCHECK_NOT_NULL(page_allocator);
   DCHECK_EQ(hint, AlignedAddress(hint, alignment));
   DCHECK(IsAligned(size, page_allocator->AllocatePageSize()));
@@ -215,6 +216,7 @@ VirtualMemory::VirtualMemory() = default;
 VirtualMemory::VirtualMemory(v8::PageAllocator* page_allocator, size_t size,
                              void* hint, size_t alignment)
     : page_allocator_(page_allocator) {
+fprintf(stderr, "VirtualMemory(): %zu, ret: %p\n", size, __builtin_return_address(0));
   DCHECK_NOT_NULL(page_allocator);
   DCHECK(IsAligned(size, page_allocator_->CommitPageSize()));
   size_t page_size = page_allocator_->AllocatePageSize();

@@ -13,8 +13,10 @@ namespace v8 {
 namespace internal {
 
 IsolateAllocator::IsolateAllocator(IsolateAllocationMode mode) {
+fprintf(stderr, "*** IsolateAllocator::IsolateAllocator()\n");
 #if V8_TARGET_ARCH_64_BIT
   if (mode == IsolateAllocationMode::kInV8Heap) {
+fprintf(stderr, "*** IsolateAllocator::IsolateAllocator() check, ret: %p\n", __builtin_return_address(0));
     Address heap_reservation_address = InitReservation();
     CommitPagesForIsolate(heap_reservation_address);
     return;
@@ -64,6 +66,7 @@ Address IsolateAllocator::InitReservation() {
   // resevation address plus |kIsolateRootBiasPageSize| is 4Gb aligned.
   const size_t reservation_size =
       kPtrComprHeapReservationSize + kIsolateRootBiasPageSize;
+fprintf(stderr, "IsolateAllocator::InitReservation(): %llu\n", reservation_size);
   const size_t base_alignment = kPtrComprIsolateRootAlignment;
 
   const int kMaxAttempts = 4;

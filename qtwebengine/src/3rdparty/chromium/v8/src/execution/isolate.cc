@@ -2786,6 +2786,7 @@ std::atomic<size_t> Isolate::non_disposed_isolates_;
 
 // static
 Isolate* Isolate::New(IsolateAllocationMode mode) {
+fprintf(stderr, "*** Isolate::New(): ret: %p\n", __builtin_return_address(0));
   // IsolateAllocator allocates the memory for the Isolate object according to
   // the given allocation mode.
   std::unique_ptr<IsolateAllocator> isolate_allocator =

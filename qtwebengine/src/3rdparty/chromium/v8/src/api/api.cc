@@ -8258,6 +8258,7 @@ Isolate* Isolate::GetCurrent() {
 
 // static
 Isolate* Isolate::Allocate() {
+fprintf(stderr, "*** Isolate::Allocate(): ret: %p\n", __builtin_return_address(0));
   return reinterpret_cast<Isolate*>(i::Isolate::New());
 }
 
