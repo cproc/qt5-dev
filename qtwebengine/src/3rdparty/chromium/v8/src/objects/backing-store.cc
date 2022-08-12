@@ -289,6 +289,8 @@ void BackingStore::SetAllocatorFromIsolate(Isolate* isolate) {
 std::unique_ptr<BackingStore> BackingStore::TryAllocateWasmMemory(
     Isolate* isolate, size_t initial_pages, size_t maximum_pages,
     SharedFlag shared) {
+fprintf(stderr, "TryAllocateWasmMemory(): initial_pages: %zu, maximum_pages: %zu\n",
+        initial_pages, maximum_pages);
   // Cannot reserve 0 pages on some OSes.
   if (maximum_pages == 0) maximum_pages = 1;
 
@@ -316,11 +318,16 @@ std::unique_ptr<BackingStore> BackingStore::TryAllocateWasmMemory(
   // Compute size of reserved memory.
 
   size_t engine_max_pages = wasm::max_maximum_mem_pages();
+fprintf(stderr, "*** engine_max_pages: %zu\n", engine_max_pages);
   maximum_pages = std::min(engine_max_pages, maximum_pages);
+fprintf(stderr, "*** maximum_pages: %zu, kWasmPageSize: %zu\n",
+        maximum_pages, wasm::kWasmPageSize);
   CHECK_LE(maximum_pages,
            std::numeric_limits<size_t>::max() / wasm::kWasmPageSize);
   size_t byte_capacity = maximum_pages * wasm::kWasmPageSize;
+fprintf(stderr, "*** byte_capacity: %zu\n", byte_capacity);
   size_t reservation_size = GetReservationSize(guards, byte_capacity);
+fprintf(stderr, "*** TryAllocateWasmMemory(): %zu\n", reservation_size);
 
   //--------------------------------------------------------------------------
   // 1. Enforce maximum address space reservation per engine.
