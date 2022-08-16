@@ -849,11 +849,11 @@ bool QGenodePlatformWindow::windowEvent(QEvent *event)
 	return QPlatformWindow::windowEvent(event);
 }
 
-bool QGenodePlatformWindow::startSystemResize(const QPoint &pos, Qt::Corner corner)
+bool QGenodePlatformWindow::startSystemResize(Qt::Edges edges)
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::startSystemResize()";
-	return QPlatformWindow::startSystemResize(pos, corner);
+	return QPlatformWindow::startSystemResize(edges);
 }
 
 void QGenodePlatformWindow::setFrameStrutEventsEnabled(bool enabled)

@@ -286,12 +286,12 @@ void MadvFreeDiscardableMemoryPosix::SetKeepMemoryForTesting(bool keep_memory) {
 
 bool MadvFreeDiscardableMemoryPosix::IsResident() const {
   DFAKE_SCOPED_RECURSIVE_LOCK(thread_collision_warner_);
+#if 0
 #if defined(OS_MACOSX) || defined(OS_BSD)
   std::vector<char> vec(allocated_pages_);
 #else
   std::vector<unsigned char> vec(allocated_pages_);
 #endif
-
   int retval =
       mincore(data_, allocated_pages_ * base::GetPageSize(), vec.data());
   DPCHECK(retval == 0 || errno == EAGAIN);
@@ -300,6 +300,7 @@ bool MadvFreeDiscardableMemoryPosix::IsResident() const {
     if (!(vec[i] & 1))
       return false;
   }
+#endif
   return true;
 }
 

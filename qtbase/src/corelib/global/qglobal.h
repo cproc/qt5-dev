@@ -283,6 +283,7 @@ typedef double qreal;
 #endif
 
 #if defined(QT_NO_DEPRECATED)
+
 #  undef QT_DEPRECATED
 #  undef QT_DEPRECATED_X
 #  undef QT_DEPRECATED_VARIABLE

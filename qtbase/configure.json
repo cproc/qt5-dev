@@ -1547,7 +1547,7 @@ Configure with '-qreal float' to create a build that is binary-compatible with 5
                 {
                     "message": "Using C++ standard",
                     "type": "firstAvailableFeature",
-                    "args": "c++2a c++17 c++14 c++11"
+                    "args": "c++14 c++11"
                 },
                 {
                     "type": "feature",

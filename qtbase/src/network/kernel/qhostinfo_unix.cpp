@@ -133,7 +133,7 @@ LibResolv::LibResolv()
     }
 
     // res_ninit is required for localDomainName()
-    local_res_ninit = res_ninit_proto(resolveSymbol(lib, "__res_ninit"));
+    local_res_ninit = res_ninit_proto(resolveSymbol(lib, "__res_ninit_h"));
     if (!local_res_ninit)
         local_res_ninit = res_ninit_proto(resolveSymbol(lib, "res_ninit"));
     if (local_res_ninit) {

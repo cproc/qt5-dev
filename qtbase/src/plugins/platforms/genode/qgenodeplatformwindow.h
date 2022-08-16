@@ -185,7 +185,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 
 	    bool windowEvent(QEvent *event) override;
 
-	    bool startSystemResize(const QPoint &pos, Qt::Corner corner) override;
+	    bool startSystemResize(Qt::Edges edges) override;
 
 	    void setFrameStrutEventsEnabled(bool enabled) override;
 

@@ -29,9 +29,14 @@
 #include <zircon/types.h>
 #else
 #include <pthread.h>
-#if 0
+
+#if PERFETTO_BUILDFLAG(PERFETTO_OS_LINUX) 
+#if PERFETTO_BUILDFLAG(PERFETTO_OS_FREEBSD)
+#else
 #include <sys/syscall.h>
 #endif
+#endif
+
 #include <sys/types.h>
 #include <unistd.h>
 #endif

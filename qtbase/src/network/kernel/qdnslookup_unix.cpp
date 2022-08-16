@@ -125,7 +125,7 @@ static bool resolveLibraryInternal()
     if (!local_res_nclose)
         local_res_nclose = res_nclose_proto(resolveSymbol(lib, "res_nclose"));
 
-    local_res_ninit = res_ninit_proto(resolveSymbol(lib, "__res_ninit"));
+    local_res_ninit = res_ninit_proto(resolveSymbol(lib, "__res_ninit_d"));
     if (!local_res_ninit)
         local_res_ninit = res_ninit_proto(resolveSymbol(lib, "res_9_ninit"));
     if (!local_res_ninit)
