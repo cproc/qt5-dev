@@ -1,6 +1,6 @@
 host_build {
-    QT_ARCH = x86_64
-    QT_BUILDABI = x86_64-little_endian-lp64
+    QT_ARCH = arm64
+    QT_BUILDABI = arm64-little_endian-lp64
     QT_TARGET_ARCH = arm64
     QT_TARGET_BUILDABI = arm64-little_endian-lp64
 } else {

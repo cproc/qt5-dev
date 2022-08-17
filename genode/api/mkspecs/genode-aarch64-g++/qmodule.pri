@@ -1,5 +1,5 @@
 host_build {
-    QT_CPU_FEATURES.x86_64 = mmx sse sse2
+    QT_CPU_FEATURES.arm64 = cx16 neon
 } else {
     QT_CPU_FEATURES.arm64 = cx16 neon
 }
