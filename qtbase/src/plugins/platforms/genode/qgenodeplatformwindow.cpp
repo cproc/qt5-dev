@@ -53,10 +53,12 @@ QTouchDevice * QGenodePlatformWindow::_init_touch_device()
 void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &events)
 {
 	if (events.empty()) return;
-
+//qDebug() << "_process_touch_events()";
+//	QList<QWindowSystemInterface::TouchPoint> touch_points;
 	for (QList<Input::Event>::const_iterator i = events.begin(); i != events.end(); ++i) {
 
 		i->handle_touch([&] (Input::Touch_id id, int x, int y) {
+//qDebug() << "touch " << id.value << ", " << x/2 << ", " << y/2;
 			QList<QWindowSystemInterface::TouchPoint> touch_points;
 
 			if (id.value >= _touch_points.size()) {
@@ -80,9 +82,11 @@ void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &eve
 			otp = tp;
 			touch_points.push_back(tp);
 			QWindowSystemInterface::handleTouchEvent(0, _touch_device, touch_points);
+//qDebug() << tp;
 		});
 
 		i->handle_touch_release([&] (Input::Touch_id id) {
+//qDebug() << "release " << id.value;
 			QList<QWindowSystemInterface::TouchPoint> touch_points;
 
 			if (id.value >= _touch_points.size()) {
@@ -101,8 +105,12 @@ void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &eve
 			otp = tp;
 			touch_points.push_back(tp);
 			QWindowSystemInterface::handleTouchEvent(0, _touch_device, touch_points);
+
+//qDebug() << tp;
 		});
 	}
+
+//	QWindowSystemInterface::handleTouchEvent(0, _touch_device, touch_points);
 }
 
 

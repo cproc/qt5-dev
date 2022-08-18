@@ -46,6 +46,7 @@
 #include <QtQuick/private/qquickpointerhandler_p.h>
 #include <QtQuick/private/qquickwindow_p.h>
 #include <private/qdebug_p.h>
+#include <QDebug>
 
 QT_BEGIN_NAMESPACE
 
@@ -1392,6 +1393,7 @@ void QQuickSinglePointEvent::localize(QQuickItem *target)
 
 QQuickPointerEvent *QQuickPointerTouchEvent::reset(QEvent *event)
 {
+//qDebug() << "reset " << event;
     auto ev = static_cast<QTouchEvent*>(event);
     m_event = ev;
     if (!event)
@@ -1426,7 +1428,9 @@ QQuickPointerEvent *QQuickPointerTouchEvent::reset(QEvent *event)
     // The ID is all that we can rely on (release might remove the first point etc).
     for (int i = 0; i < newPointCount; ++i) {
         int pid = tps.at(i).id();
+//qDebug() << "i: " << i << ", pid: " << pid;
         if (auto point = pointById(pid)) {
+//qDebug() << "point: " << point << ", grabber: " << point->exclusiveGrabber();
             preserves[i].pointId = pid;
             preserves[i].pressTimestamp = point->m_pressTimestamp;
             preserves[i].scenePressPos = point->scenePressPosition();
@@ -1439,10 +1443,11 @@ QQuickPointerEvent *QQuickPointerTouchEvent::reset(QEvent *event)
     for (int i = 0; i < newPointCount; ++i) {
         auto point = m_touchPoints.at(i);
         point->reset(tps.at(i), ev->timestamp());
+//qDebug() << "i2: " << i << ", point reset: " << point;
         const auto &preserved = preserves.at(i);
         if (point->state() == QQuickEventPoint::Pressed) {
             if (preserved.grabber)
-                qWarning() << "TouchPointPressed without previous release event" << point;
+                qWarning() << "*** TouchPointPressed without previous release event" << point;
             point->setGrabberItem(nullptr);
             point->clearPassiveGrabbers();
         } else {
