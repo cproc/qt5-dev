@@ -10,7 +10,9 @@
 #include "media/capture/video/fake_video_capture_device_factory.h"
 #include "media/capture/video/file_video_capture_device_factory.h"
 
-#if (defined(OS_LINUX) && !defined(OS_CHROMEOS)) || defined(OS_BSD)
+#if defined(OS_GENODE)
+#include "media/capture/video/genode/video_capture_device_factory_genode.h"
+#elif defined(OS_LINUX) && !defined(OS_CHROMEOS)
 #include "media/capture/video/linux/video_capture_device_factory_linux.h"
 #elif defined(OS_CHROMEOS)
 #include "media/capture/video/chromeos/camera_app_device_bridge_impl.h"
@@ -88,7 +90,9 @@ CreateChromeOSVideoCaptureDeviceFactory(
 std::unique_ptr<VideoCaptureDeviceFactory>
 CreatePlatformSpecificVideoCaptureDeviceFactory(
     scoped_refptr<base::SingleThreadTaskRunner> ui_task_runner) {
-#if (defined(OS_LINUX) && !defined(OS_CHROMEOS)) || defined(OS_BSD) && 0
+#if defined(OS_GENODE)
+  return std::make_unique<VideoCaptureDeviceFactoryGenode>();
+#elif (defined(OS_LINUX) && !defined(OS_CHROMEOS)) || defined(OS_BSD) && 0
   return std::make_unique<VideoCaptureDeviceFactoryLinux>(ui_task_runner);
 #elif defined(OS_CHROMEOS)
   return CreateChromeOSVideoCaptureDeviceFactory(ui_task_runner, {});
