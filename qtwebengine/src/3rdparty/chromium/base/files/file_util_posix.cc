@@ -888,6 +888,7 @@ bool AllocateFileRegion(File* file, int64_t offset, size_t size) {
     return false;
   }
 
+#if 0
   // Realize the extent of the file so that it can't fail (and crash) later
   // when trying to write to a memory page that can't be created. This can
   // fail if the disk is full and the file is sparse.
@@ -936,7 +937,7 @@ bool AllocateFileRegion(File* file, int64_t offset, size_t size) {
       return false;  // Can't write? Not viable.
     }
   }
-
+#endif
   return true;
 }
 

@@ -42,7 +42,7 @@ __FBSDID("$FreeBSD: head/sys/netinet/sctp_crc32.c 352361 2019-09-15 18:29:45Z tu
 #include "opt_sctp.h"
 #endif
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) && 0
 #include <sys/gsb_crc32.h>
 #endif
 #ifdef SCTP
@@ -64,7 +64,7 @@ __FBSDID("$FreeBSD: head/sys/netinet/sctp_crc32.c 352361 2019-09-15 18:29:45Z tu
 #include <netinet/sctp_pcb.h>
 #endif
 
-#if !defined(__FreeBSD__)
+#if !defined(__FreeBSD__) || 1
 /**
  *
  * Routine Description:
@@ -803,7 +803,7 @@ sctp_calculate_cksum(struct mbuf *m, uint32_t offset)
 	return (base);
 }
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) && 0
 #ifdef SCTP
 /*
  * Compute and insert the SCTP checksum in network byte order for a given
