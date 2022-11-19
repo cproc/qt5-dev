@@ -14,18 +14,17 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#if defined(OS_SOLARIS)
-#include <sys/filio.h>
-#endif
-
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/threading/scoped_blocking_call.h"
 #include "build/build_config.h"
 
-#if !defined(OS_GENODE)
+#if defined(OS_GENODE)
 
 namespace base {
+
+#define READ_FD(handle) (handle >> 16)
+#define WRITE_FD(handle) (handle & ((1 << 16) - 1))
 
 namespace {
 // To avoid users sending negative message lengths to Send/Receive
@@ -41,13 +40,15 @@ size_t SendHelper(SyncSocket::Handle handle,
   DCHECK_LE(length, kMaxMessageLength);
   DCHECK_NE(handle, SyncSocket::kInvalidHandle);
   const char* charbuffer = static_cast<const char*>(buffer);
-  return WriteFileDescriptor(handle, charbuffer, length)
+  return WriteFileDescriptor(WRITE_FD(handle), charbuffer, length)
              ? static_cast<size_t>(length)
              : 0;
 }
 
 bool CloseHandle(SyncSocket::Handle handle) {
-  if (handle != SyncSocket::kInvalidHandle && close(handle) < 0) {
+  if (handle != SyncSocket::kInvalidHandle && 
+      ((close(READ_FD(handle)) < 0) ||
+       (close(WRITE_FD(handle)) < 0))) {
     DPLOG(ERROR) << "close";
     return false;
   }
@@ -71,33 +72,20 @@ bool SyncSocket::CreatePair(SyncSocket* socket_a, SyncSocket* socket_b) {
   DCHECK_EQ(socket_a->handle_, kInvalidHandle);
   DCHECK_EQ(socket_b->handle_, kInvalidHandle);
 
-#if defined(OS_MACOSX)
-  int nosigpipe = 1;
-#endif  // defined(OS_MACOSX)
+  int pipefds[2][2];
 
-  Handle handles[2] = { kInvalidHandle, kInvalidHandle };
-  if (socketpair(AF_UNIX, SOCK_STREAM, 0, handles) != 0) {
-    CloseHandle(handles[0]);
-    CloseHandle(handles[1]);
+  if (pipe(pipefds[0]) == -1)
+  	return false;
+
+  if (pipe(pipefds[1]) == -1) {
+    close(pipefds[0][0]);
+    close(pipefds[0][1]);
     return false;
   }
-
-#if defined(OS_MACOSX)
-  // On OSX an attempt to read or write to a closed socket may generate a
-  // SIGPIPE rather than returning -1.  setsockopt will shut this off.
-  if (0 != setsockopt(handles[0], SOL_SOCKET, SO_NOSIGPIPE,
-                      &nosigpipe, sizeof nosigpipe) ||
-      0 != setsockopt(handles[1], SOL_SOCKET, SO_NOSIGPIPE,
-                      &nosigpipe, sizeof nosigpipe)) {
-    CloseHandle(handles[0]);
-    CloseHandle(handles[1]);
-    return false;
-  }
-#endif
 
   // Copy the handles out for successful return.
-  socket_a->handle_ = handles[0];
-  socket_b->handle_ = handles[1];
+  socket_a->handle_ = (pipefds[0][0] << 16) | pipefds[1][1];
+  socket_b->handle_ = (pipefds[1][0] << 16) | pipefds[0][1];
 
   return true;
 }
@@ -132,7 +120,7 @@ size_t SyncSocket::Receive(void* buffer, size_t length) {
   DCHECK_LE(length, kMaxMessageLength);
   DCHECK_NE(handle_, kInvalidHandle);
   char* charbuffer = static_cast<char*>(buffer);
-  if (ReadFromFD(handle_, charbuffer, length))
+  if (ReadFromFD(READ_FD(handle_), charbuffer, length))
     return length;
   return 0;
 }
@@ -155,7 +143,7 @@ size_t SyncSocket::ReceiveWithTimeout(void* buffer,
   const TimeTicks finish_time = start_time + timeout;
 
   struct pollfd pollfd;
-  pollfd.fd = handle_;
+  pollfd.fd = READ_FD(handle_);
   pollfd.events = POLLIN;
   pollfd.revents = 0;
 
@@ -181,14 +169,23 @@ size_t SyncSocket::ReceiveWithTimeout(void* buffer,
     // No special handling is needed for error (POLLERR); we can let any of the
     // following operations fail and handle it there.
     DCHECK(pollfd.revents & (POLLIN | POLLHUP | POLLERR)) << pollfd.revents;
-    const size_t bytes_to_read = std::min(Peek(), length - bytes_read_total);
+    const size_t bytes_to_read = length - bytes_read_total;
 
-    // There may be zero bytes to read if the socket at the other end closed.
-    if (!bytes_to_read)
-      return bytes_read_total;
+    const int flags = fcntl(READ_FD(handle_), F_GETFL);
+    if (flags != -1 && (flags & O_NONBLOCK) == 0) {
+      // Set the socket to non-blocking mode for receiving if its original mode
+      // is blocking (since 'Peek()' is not supported).
+      fcntl(READ_FD(handle_), F_SETFL, flags | O_NONBLOCK);
+    }
 
     const size_t bytes_received =
         Receive(static_cast<char*>(buffer) + bytes_read_total, bytes_to_read);
+
+    if (flags != -1 && (flags & O_NONBLOCK) == 0) {
+      // Restore the original flags.
+      fcntl(READ_FD(handle_), F_SETFL, flags);
+    }
+
     bytes_read_total += bytes_received;
     if (bytes_received != bytes_to_read)
       return bytes_read_total;
@@ -200,7 +197,7 @@ size_t SyncSocket::ReceiveWithTimeout(void* buffer,
 size_t SyncSocket::Peek() {
   DCHECK_NE(handle_, kInvalidHandle);
   int number_chars = 0;
-  if (ioctl(handle_, FIONREAD, &number_chars) == -1) {
+  if (ioctl(READ_FD(handle_), FIONREAD, &number_chars) == -1) {
     // If there is an error in ioctl, signal that the channel would block.
     return 0;
   }
@@ -221,7 +218,7 @@ CancelableSyncSocket::CancelableSyncSocket(Handle handle)
 
 bool CancelableSyncSocket::Shutdown() {
   DCHECK_NE(handle_, kInvalidHandle);
-  return HANDLE_EINTR(shutdown(handle_, SHUT_RDWR)) >= 0;
+  return true;
 }
 
 size_t CancelableSyncSocket::Send(const void* buffer, size_t length) {
@@ -229,18 +226,18 @@ size_t CancelableSyncSocket::Send(const void* buffer, size_t length) {
   DCHECK_LE(length, kMaxMessageLength);
   DCHECK_NE(handle_, kInvalidHandle);
 
-  const int flags = fcntl(handle_, F_GETFL);
+  const int flags = fcntl(WRITE_FD(handle_), F_GETFL);
   if (flags != -1 && (flags & O_NONBLOCK) == 0) {
-    // Set the socket to non-blocking mode for sending if its original mode
+    // Set the fd to non-blocking mode for sending if its original mode
     // is blocking.
-    fcntl(handle_, F_SETFL, flags | O_NONBLOCK);
+    fcntl(WRITE_FD(handle_), F_SETFL, flags | O_NONBLOCK);
   }
 
   const size_t len = SendHelper(handle_, buffer, length);
 
   if (flags != -1 && (flags & O_NONBLOCK) == 0) {
     // Restore the original flags.
-    fcntl(handle_, F_SETFL, flags);
+    fcntl(WRITE_FD(handle_), F_SETFL, flags);
   }
 
   return len;
