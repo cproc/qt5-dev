@@ -48,7 +48,7 @@ class QGenodeScreen : public QPlatformScreen
 
 		QRect geometry() const { return _geometry; }
 		int depth() const { return 32; }
-		QImage::Format format() const { return QImage::Format_ARGB32; }
+		QImage::Format format() const { return QImage::Format_RGB32; }
 		QDpi logicalDpi() const { return QDpi(80, 80); };
 
 		QPlatformCursor *cursor() const
