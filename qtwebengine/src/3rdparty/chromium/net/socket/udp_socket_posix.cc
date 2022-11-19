@@ -863,7 +863,9 @@ int UDPSocketPosix::InternalRecvFromNonConnectedSocket(IOBuffer* buf,
   msg.msg_name = storage.addr;
   msg.msg_namelen = storage.addr_len;
 
-  bytes_transferred = HANDLE_EINTR(recvmsg(socket_, &msg, 0));
+  bytes_transferred = HANDLE_EINTR(recvfrom(socket_, buf->data(),
+                                   buf_len, 0,
+                                   storage.addr, &storage.addr_len));
   storage.addr_len = msg.msg_namelen;
   int result;
   if (bytes_transferred >= 0) {

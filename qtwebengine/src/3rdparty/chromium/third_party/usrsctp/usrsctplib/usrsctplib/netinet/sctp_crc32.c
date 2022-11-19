@@ -36,7 +36,11 @@
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD: head/sys/netinet/sctp_crc32.c 327200 2017-12-26 12:35:02Z tuexen $");
 
+#if defined(__Userspace_os_Genode)
+#define SCTP 1
+#else
 #include "opt_sctp.h"
+#endif
 
 #ifdef SCTP
 #include <netinet/sctp_os.h>
