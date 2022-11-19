@@ -52,8 +52,7 @@
 #elif defined(OS_FUCHSIA)
 #include "net/cert/cert_verify_proc_builtin.h"
 #else
-//#error Implement certificate verification.
-#include "net/cert/cert_verify_proc_builtin.h"
+#error Implement certificate verification.
 #endif
 
 namespace net {
@@ -483,8 +482,7 @@ scoped_refptr<CertVerifyProc> CertVerifyProc::CreateDefault() {
 #elif defined(OS_FUCHSIA)
   return CreateCertVerifyProcBuiltin();
 #else
-//#error Unsupported platform
-  return CreateCertVerifyProcBuiltin();
+#error Unsupported platform
 #endif
 }
 
@@ -636,12 +634,7 @@ int CertVerifyProc::Verify(X509Certificate* cert,
                                verify_result->is_issued_by_known_root);
   }
 
-#if 0
   return rv;
-#else
-  /* XXX: libnss needed */
-  return 0;
-#endif
 }
 
 // static
