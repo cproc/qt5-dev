@@ -1856,6 +1856,11 @@ bool RenderProcessHostImpl::Init() {
     // in-process-render-thread using ChannelMojo there.
     OnProcessLaunched();  // Fake a callback that the process is ready.
 
+#if defined(OS_GENODE)
+    /* the default 256K were not enough for booking.com */
+    options.stack_size = 1024*1024;
+#endif
+
     in_process_renderer_->StartWithOptions(options);
 
     g_in_process_thread = in_process_renderer_.get();
