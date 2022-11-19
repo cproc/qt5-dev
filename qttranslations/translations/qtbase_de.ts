@@ -377,8 +377,12 @@ Drücken Sie ESC, um abzubrechen</translation>
         <translation>Zeigt Versionsinformation an.</translation>
     </message>
     <message>
-        <source>Displays this help.</source>
-        <translation>Zeigt diese Hilfe an.</translation>
+        <source>Displays help on commandline options.</source>
+        <translation>Zeigt Hilfe zu den Kommandozeilenoptionen an.</translation>
+    </message>
+    <message>
+        <source>Displays help including Qt specific options.</source>
+        <translation>Zeigt Hilfe einschließlich Qt-spezifischer Optionen an.</translation>
     </message>
     <message>
         <source>Unknown option &apos;%1&apos;.</source>
@@ -794,6 +798,69 @@ Drücken Sie ESC, um abzubrechen</translation>
     <message>
         <source>Closes the dock widget</source>
         <translation>Schließt das Dock-Widget</translation>
+    </message>
+</context>
+<context>
+    <name>QDomParser</name>
+    <message>
+        <source>Error occurred while processing XML declaration</source>
+        <translation>Bei der Verarbeitung der XML-Deklaration trat ein Fehler auf</translation>
+    </message>
+    <message>
+        <source>Multiple DTD sections are not allowed</source>
+        <translation>Mehrfache DTD-Sektionen sind nicht zulässig</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing document type declaration</source>
+        <translation>Fehler bei der Verarbeitung der Dokumenttypdeklaration</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing comment</source>
+        <translation>Bei der Verarbeitung eines Kommentars ist ein Fehler aufgetreten</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing a processing instruction</source>
+        <translation>Bei der Verarbeitung einer Prozessing-Instruktion ist ein Fehler aufgetreten</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing a start element</source>
+        <translation>Bei der Verarbeitung eines öffnenden Elements ist ein Fehler aufgetreten</translation>
+    </message>
+    <message>
+        <source>Unexpected end element &apos;%1&apos;</source>
+        <translation>Unerwartetes schließendes Element &apos;%1&apos;</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing an end element</source>
+        <translation>Bei der Verarbeitung eines schließenden Elements ist ein Fehler aufgetreten</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing the element content</source>
+        <translation>Bei der Verarbeitung des Inhalts eines Elements ist ein Fehler aufgetreten</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing comments</source>
+        <translation>Bei der Verarbeitung von Kommentaren ist ein Fehler aufgetreten</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing an entity reference</source>
+        <translation>Bei der Verarbeitung einer Entity-Referenz ist ein Fehler aufgetreten</translation>
+    </message>
+    <message>
+        <source>Unexpected token</source>
+        <translation>Unerwartetes Token</translation>
+    </message>
+    <message>
+        <source>Tag mismatch</source>
+        <translation>Fehler bei der Schachtelung von Elementen</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing entity declaration</source>
+        <translation>Beim Verarbeiten einer Entity-Deklaration ist ein Fehler aufgetreten</translation>
+    </message>
+    <message>
+        <source>Error occurred while processing notation declaration</source>
+        <translation>Beim Verarbeiten einer Notations-Deklaration ist ein Fehler aufgetreten</translation>
     </message>
 </context>
 <context>
@@ -1650,6 +1717,74 @@ Möchten Sie die Datei trotzdem löschen?</translation>
         <comment>Translate this string to the string &apos;LTR&apos; in left-to-right languages or to &apos;RTL&apos; in right-to-left languages (such as Hebrew and Arabic) to get proper widget layout.</comment>
         <translation>LTR</translation>
     </message>
+    <message>
+        <source>QPA plugin. See QGuiApplication documentation for available options for each plugin.</source>
+        <translation>QPA-Plugin. Siehe auch Dokumentation zu QGuiApplication zu den verfügbaren Optionen der einzelnen Plugins.</translation>
+    </message>
+    <message>
+        <source>Path to the platform plugins.</source>
+        <translation>Pfad zu den Plattform-Plugins.</translation>
+    </message>
+    <message>
+        <source>Platform theme.</source>
+        <translation>Plattform-Theme.</translation>
+    </message>
+    <message>
+        <source>Additional plugins to load, can be specified multiple times.</source>
+        <translation>Zu ladende zusätzliche Plugins, kann mehrfach angegeben werden.</translation>
+    </message>
+    <message>
+        <source>Window geometry for the main window, using the X11-syntax, like 100x100+50+50.</source>
+        <translation>Fenstergeometrie für das Hauptfenster in X11-Syntax, wie zum Beispiel 100x100+50+50.</translation>
+    </message>
+    <message>
+        <source>Default window icon.</source>
+        <translation>Vorgabe-Window-Icon.</translation>
+    </message>
+    <message>
+        <source>Title of the first window.</source>
+        <translation>Titel des ersten Fensters.</translation>
+    </message>
+    <message>
+        <source>Sets the application&apos;s layout direction to Qt::RightToLeft (debugging helper).</source>
+        <translation>Setzt die Layout-Richtung der Anwendung zu Qt::RightToLeft (Debug-Hilfe).</translation>
+    </message>
+    <message>
+        <source>Restores the application from an earlier session.</source>
+        <translation>Stellt eine vorangegangene Sitzung wieder her.</translation>
+    </message>
+    <message>
+        <source>Display name, overrides $DISPLAY.</source>
+        <translation>Name des Displays, überschreibt $DISPLAY.</translation>
+    </message>
+    <message>
+        <source>Instance name according to ICCCM 4.1.2.5.</source>
+        <translation>Name der Instanz nach ICCCM 4.1.2.5.</translation>
+    </message>
+    <message>
+        <source>Disable mouse grabbing (useful in debuggers).</source>
+        <translation>Deaktiviere Mouse-Grabbing (Debug-Hilfe).</translation>
+    </message>
+    <message>
+        <source>Force mouse grabbing (even when running in a debugger).</source>
+        <translation>Erzwinge Mouse-Grabbing (auch bei Ausführung im Debugger).</translation>
+    </message>
+    <message>
+        <source>ID of the X11 Visual to use.</source>
+        <translation>ID des X11-Visuals.</translation>
+    </message>
+    <message>
+        <source>Alias for --windowgeometry.</source>
+        <translation>Alias für --windowgeometry.</translation>
+    </message>
+    <message>
+        <source>Alias for --windowicon.</source>
+        <translation>Alias für --windowicon.</translation>
+    </message>
+    <message>
+        <source>Alias for --windowtitle.</source>
+        <translation>Alias für --windowtitle.</translation>
+    </message>
 </context>
 <context>
     <name>QHostInfo</name>
@@ -1679,10 +1814,6 @@ Möchten Sie die Datei trotzdem löschen?</translation>
     <message>
         <source>Host not found</source>
         <translation>Host konnte nicht gefunden werden</translation>
-    </message>
-    <message>
-        <source>Unknown error (%1)</source>
-        <translation>Unbekannter Fehler (%1)</translation>
     </message>
 </context>
 <context>
@@ -2109,10 +2240,6 @@ Möchten Sie die Datei trotzdem löschen?</translation>
     <message>
         <source>Cannot unload library %1: %2</source>
         <translation>Die Bibliothek %1 kann nicht entladen werden: %2</translation>
-    </message>
-    <message>
-        <source>Cannot resolve symbol &quot;%1&quot; in %2: %3</source>
-        <translation>Das Symbol &quot;%1&quot; kann in %2 nicht aufgelöst werden: %3</translation>
     </message>
     <message>
         <source>&apos;%1&apos; is not a valid Mach-O binary (%2)</source>
@@ -3931,22 +4058,6 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>Graustufen</translation>
     </message>
     <message>
-        <source>Duplex Printing</source>
-        <translation>Duplexdruck</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>Kein</translation>
-    </message>
-    <message>
-        <source>Long side</source>
-        <translation>Lange Seite</translation>
-    </message>
-    <message>
-        <source>Short side</source>
-        <translation>Kurze Seite</translation>
-    </message>
-    <message>
         <source>Page Set:</source>
         <translation>Seiten-Satz:</translation>
     </message>
@@ -3957,6 +4068,22 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>Specify pages or ranges separated by commas. Ranges are specified by two numbers separated by a hyphen. E.g: 3,5-7,9 prints pages 3, 5, 6, 7 and 9.</source>
         <translation>Geben Sie die Seiten oder Bereiche durch Kommata getrennt ein. Bereiche werden durch zwei durch einen Bindestrich getrennte Zahlen festgelegt. Beispiel: 3,5-7,9 druckt die Seiten 3, 5, 6, 7 und 9.</translation>
+    </message>
+    <message>
+        <source>Double Sided Printing</source>
+        <translation>Beidseitiger Druck</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>Aus</translation>
+    </message>
+    <message>
+        <source>Long side binding</source>
+        <translation>Lange Seite</translation>
+    </message>
+    <message>
+        <source>Short side binding</source>
+        <translation>Kurze Seite</translation>
     </message>
 </context>
 <context>
@@ -4115,7 +4242,7 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     </message>
     <message>
         <source>unrecognized character follows \</source>
-        <translation>Nicht erkanntes Zeichen nach \</translation>
+        <translation>nicht erkanntes Zeichen nach \</translation>
     </message>
     <message>
         <source>numbers out of order in {} quantifier</source>
@@ -4128,10 +4255,6 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>missing terminating ] for character class</source>
         <translation>schließende eckige Klammer fehlt bei Zeichenklasse</translation>
-    </message>
-    <message>
-        <source>invalid escape sequence in character class</source>
-        <translation>ungültige Escape-Sequenz in Zeichenklasse</translation>
     </message>
     <message>
         <source>range out of order in character class</source>
@@ -4162,20 +4285,12 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>interner Fehler: Code-Überlauf</translation>
     </message>
     <message>
+        <source>missing closing parenthesis for condition</source>
+        <translation>die schließende Klammer der Bedingung fehlt</translation>
+    </message>
+    <message>
         <source>lookbehind assertion is not fixed length</source>
         <translation>lookbehind assertion hat keine feste Länge</translation>
-    </message>
-    <message>
-        <source>malformed number or name after (?(</source>
-        <translation>Name oder Nummer nach (?( ungültig</translation>
-    </message>
-    <message>
-        <source>conditional group contains more than two branches</source>
-        <translation>bedingte Gruppe enthält mehr als zwei Verzweigungen</translation>
-    </message>
-    <message>
-        <source>(?R or (?[+-]digits must be followed by )</source>
-        <translation>(?R oder (?[+-]Ziffern erfordert schließende Klammer</translation>
     </message>
     <message>
         <source>unknown POSIX class name</source>
@@ -4186,20 +4301,8 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>POSIX-Sortierfolgen werden nicht unterstützt</translation>
     </message>
     <message>
-        <source>invalid condition (?(0)</source>
-        <translation>ungültige Bedingung (?(0)</translation>
-    </message>
-    <message>
-        <source>PCRE does not support \L, \l, \N{name}, \U, or \u</source>
-        <translation>PCRE unterstützt \L, \l, \N{name}, \U, oder \u nicht</translation>
-    </message>
-    <message>
         <source>unrecognized character after (?P</source>
         <translation>Zeichen nicht erkannt nach (?P</translation>
-    </message>
-    <message>
-        <source>syntax error in subpattern name (missing terminator)</source>
-        <translation>Syntaxfehler in Name des Untermusters (fehlendes Trennzeichen)</translation>
     </message>
     <message>
         <source>malformed \P or \p sequence</source>
@@ -4218,32 +4321,12 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>interner Fehler: bereits überprüfte Referenz auf Untermuster nicht gefunden</translation>
     </message>
     <message>
-        <source>DEFINE group contains more than one branch</source>
-        <translation>DEFINE-Gruppe enthält mehr als eine Verzweigung</translation>
-    </message>
-    <message>
         <source>\g is not followed by a braced, angle-bracketed, or quoted name/number or by a plain number</source>
         <translation>auf \g folgt weder in Anführungszeichen, geschweifte oder eckige Klammern eingeschlossene Zahl oder Name noch eine einfache Zahl</translation>
     </message>
     <message>
-        <source>a numbered reference must not be zero</source>
-        <translation>eine nummerierte Referenz darf nicht Null sein</translation>
-    </message>
-    <message>
-        <source>an argument is not allowed for (*ACCEPT), (*FAIL), or (*COMMIT)</source>
-        <translation>Argumente für (*ACCEPT), (*FAIL), oder (*COMMIT) nicht zulässig</translation>
-    </message>
-    <message>
-        <source>number is too big</source>
-        <translation>zu große Zahl</translation>
-    </message>
-    <message>
         <source>subpattern name expected</source>
         <translation>Name des Untermusters erwartet</translation>
-    </message>
-    <message>
-        <source>digit expected after (?+</source>
-        <translation>Ziffer erwartet nach (?+</translation>
     </message>
     <message>
         <source>different names for subpatterns of the same number are not allowed</source>
@@ -4256,10 +4339,6 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>\k is not followed by a braced, angle-bracketed, or quoted name</source>
         <translation>auf \k folgt kein in Anführungszeichen, geschweifte oder eckige Klammern eingeschlossener Name</translation>
-    </message>
-    <message>
-        <source>internal error: unknown opcode in find_fixedlength()</source>
-        <translation>interner Fehler: Unbekannter Operationscode in find_fixedlength()</translation>
     </message>
     <message>
         <source>\N is not supported in a class</source>
@@ -4286,16 +4365,56 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>öffnende Klammer fehlt nach \o</translation>
     </message>
     <message>
+        <source>escape sequence is invalid in character class</source>
+        <translation>eine Escape-Sequence ist innerhalb einer Zeichenklasse nicht zulässig</translation>
+    </message>
+    <message>
         <source>parentheses are too deeply nested</source>
         <translation>Klammern zu tief geschachtelt</translation>
     </message>
     <message>
-        <source>invalid range in character class</source>
-        <translation>ungültiger Bereich in Zeichenklasse</translation>
+        <source>a relative value of zero is not allowed</source>
+        <translation>0 ist als relativer Wert nicht zulässig</translation>
     </message>
     <message>
-        <source>group name must start with a non-digit</source>
-        <translation>Gruppenname darf nicht mit einer Ziffer beginnen</translation>
+        <source>conditional subpattern contains more than two branches</source>
+        <translation>ein bedingtes Untermuster enthält mehr als zwei Zweige</translation>
+    </message>
+    <message>
+        <source>digit expected after (?+ or (?-</source>
+        <translation>auf (?+ beziehungsweise (?- muss eine Ziffer folgen</translation>
+    </message>
+    <message>
+        <source>lookbehind is too complicated</source>
+        <translation>lookbehind-Bedingung ist zu kompliziert</translation>
+    </message>
+    <message>
+        <source>\C is not allowed in a lookbehind assertion in UTF-16 mode</source>
+        <translation>\C ist in einer Lookbehind-Assert-Prüfung im UTF-16-Modus nicht zulässig</translation>
+    </message>
+    <message>
+        <source>PCRE2 does not support \F, \L, \l, \N{name}, \U, or \u</source>
+        <translation>PCRE2 unterstützt nicht \F, \L, \l, \N{Name}, \U oder \u</translation>
+    </message>
+    <message>
+        <source>syntax error in subpattern name (missing terminator?)</source>
+        <translation>Syntaxfehler im Namen des Untermusters (fehlendes Trennzeichen?)</translation>
+    </message>
+    <message>
+        <source>subpattern name must start with a non-digit</source>
+        <translation>der Name eines Untermusters darf nicht mit einer Ziffer beginnen</translation>
+    </message>
+    <message>
+        <source>subpattern name is too long (maximum 32 code units)</source>
+        <translation>Name des Untermusters ist zu lang (maximal 32 Code-Einheiten)</translation>
+    </message>
+    <message>
+        <source>too many named subpatterns (maximum 10000)</source>
+        <translation>zu viele benannte Untermuster (maximal 10000)</translation>
+    </message>
+    <message>
+        <source>invalid range in character class</source>
+        <translation>ungültiger Bereich in Zeichenklasse</translation>
     </message>
     <message>
         <source>quantifier does not follow a repeatable item</source>
@@ -4326,10 +4445,6 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>überzählige schließende Klammer</translation>
     </message>
     <message>
-        <source>letter or underscore expected after (?&lt; or (?&apos;</source>
-        <translation>auf (?&lt; oder (?&apos; muss ein Buchstabe oder Unterstrichzeichen folgen</translation>
-    </message>
-    <message>
         <source>assertion expected after (?( or (?(?C)</source>
         <translatorcomment>if /else</translatorcomment>
         <translation>auf (?( oder (?(?C) muss eine Bedingung folgen</translation>
@@ -4349,10 +4464,6 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>character code point value in \x{} or \o{} is too large</source>
         <translation>Zeichencode in \x{} oder \o{} ist zu groß</translation>
-    </message>
-    <message>
-        <source>\C is not allowed in a lookbehind assertion</source>
-        <translation>\C ist in einer Lookbehind-Bedingung nicht zulässig</translation>
     </message>
     <message>
         <source>number after (?C is greater than 255</source>
@@ -4375,24 +4486,36 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>diese Version von PCRE2 unterstützt \P, \p, oder \X nicht</translation>
     </message>
     <message>
-        <source>subpattern name is too long (maximum 10000 characters)</source>
-        <translation>Name des Untermusters ist zu lang (höchstens 10000 Zeichen)</translation>
-    </message>
-    <message>
-        <source>too many named subpatterns (maximum 256)</source>
-        <translation>zuviele benannte Untermuster (höchstens 256)</translation>
-    </message>
-    <message>
         <source>octal value is greater than \377 in 8-bit non-UTF-8 mode</source>
         <translation>oktaler Wert ist größer als \377 (nicht im UTF8-Modus)</translation>
+    </message>
+    <message>
+        <source>DEFINE subpattern contains more than one branch</source>
+        <translation>DEFINE-Untermuster enthält mehr als eine Verzweigung</translation>
     </message>
     <message>
         <source>internal error: unknown newline setting</source>
         <translation>interner Fehler: Unbekannte Zeilenende-Einstellung</translation>
     </message>
     <message>
+        <source>(?R (recursive pattern call) must be followed by a closing parenthesis</source>
+        <translation>auf (?R (Rekursiver Musteraufruf) muss eine schließende Klammer folgen</translation>
+    </message>
+    <message>
+        <source>obsolete error (should not occur)</source>
+        <translation>obsoleter Fehler (sollte nicht auftreten)</translation>
+    </message>
+    <message>
         <source>(*VERB) not recognized or malformed</source>
         <translation>(*VERB) nicht erkannt oder fehlerhaft</translation>
+    </message>
+    <message>
+        <source>subpattern number is too big</source>
+        <translation>Nummer des Untermusters ist zu groß</translation>
+    </message>
+    <message>
+        <source>internal error: parsed pattern overflow</source>
+        <translation>interner Fehler: Überlauf bei verarbeitetem Muster</translation>
     </message>
     <message>
         <source>\c must be followed by a printable ASCII character</source>
@@ -4401,10 +4524,6 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>\c must be followed by a letter or one of [\]^_?</source>
         <translation>auf \c muss ein Buchstabe oder eines der Zeichen [\]^_? folgen</translation>
-    </message>
-    <message>
-        <source>SPARE ERROR</source>
-        <translation>SPARE ERROR</translation>
     </message>
     <message>
         <source>using UTF is disabled by the application</source>
@@ -4419,12 +4538,20 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>Zeichencode in \u...-Sequenz ist zu groß</translation>
     </message>
     <message>
-        <source>digits missing in \x{} or \o{}</source>
-        <translation>fehlende Ziffern in \x{} oder \o{}</translation>
+        <source>internal error: unknown meta code in check_lookbehinds()</source>
+        <translation>interner Fehler: Unbekannter Meta-Code in check_lookbehinds()</translation>
     </message>
     <message>
-        <source>syntax error in (?(VERSION condition</source>
-        <translation>Syntaxfehler in (?(VERSION-Bedingung</translation>
+        <source>callout string is too long</source>
+        <translation>callout-Zeichenkette ist zu lang</translation>
+    </message>
+    <message>
+        <source>digits missing in \x{} or \o{} or \N{U+}</source>
+        <translation>bei \x{}, \o{} oder \N{U+} fehlen Ziffern</translation>
+    </message>
+    <message>
+        <source>syntax error or number too big in (?(VERSION condition</source>
+        <translation>Syntaxfehler oder Zahl zu groß in (?(VERSION-Bedingung</translation>
     </message>
     <message>
         <source>internal error: unknown opcode in auto_possessify()</source>
@@ -4461,6 +4588,46 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>pattern string is longer than the limit set by the application</source>
         <translation>Länge des Musters überschreitet das von der Anwendung gesetzte Limit</translation>
+    </message>
+    <message>
+        <source>internal error: unknown code in parsed pattern</source>
+        <translation>interner Fehler: Unbekannter Code bei verarbeitetem Muster</translation>
+    </message>
+    <message>
+        <source>internal error: bad code value in parsed_skip()</source>
+        <translation>interner Fehler: Ungültiger Code-Wert in parsed_skip()</translation>
+    </message>
+    <message>
+        <source>PCRE2_EXTRA_ALLOW_SURROGATE_ESCAPES is not allowed in UTF-16 mode</source>
+        <translation>PCRE2_EXTRA_ALLOW_SURROGATE_ESCAPES ist im UTF-16-Modus nicht zulässig</translation>
+    </message>
+    <message>
+        <source>invalid option bits with PCRE2_LITERAL</source>
+        <translation>ungültige Options-Bits bei PCRE2_LITERAL</translation>
+    </message>
+    <message>
+        <source>\N{U+dddd} is supported only in Unicode (UTF) mode</source>
+        <translation>\N{U+dddd} wird nur im Unicode (UTF)-Modus unterstützt</translation>
+    </message>
+    <message>
+        <source>invalid hyphen in option setting</source>
+        <translation>ungültiger Bindestrich beim Setzen der Option</translation>
+    </message>
+    <message>
+        <source>(*alpha_assertion) not recognized</source>
+        <translation>(*alpha_assertion) nicht erkannt</translation>
+    </message>
+    <message>
+        <source>script runs require Unicode support, which this version of PCRE2 does not have</source>
+        <translation>Skript-Ausführung erfordert Unicode-Unterstützung, die diese Version von PCRE2 nicht hat</translation>
+    </message>
+    <message>
+        <source>too many capturing groups (maximum 65535)</source>
+        <translation>zu viele Gruppen (maximal 65535)</translation>
+    </message>
+    <message>
+        <source>atomic assertion expected after (?( or (?(?C)</source>
+        <translation>nach (?( beziehungsweise (?(?C) wird eine atomare Assert-Prüfung erwartet</translation>
     </message>
     <message>
         <source>no match</source>
@@ -4671,8 +4838,32 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>geschachtelte Rekursion an gleicher Subjektposition</translation>
     </message>
     <message>
-        <source>recursion limit exceeded</source>
-        <translation>Rekursionslimit überschritten</translation>
+        <source>matching depth limit exceeded</source>
+        <translation>Limit der Match-Tiefe überschritten</translation>
+    </message>
+    <message>
+        <source>match with end before start or start moved backwards is not supported</source>
+        <translation>Match mit einer vor der Beginnmarkierung befindlichen Endemarkierung oder einer rückversetzten Beginnmarkierung wird nicht unterstützt</translation>
+    </message>
+    <message>
+        <source>bad serialized data</source>
+        <translation>ungültige serialisierte Daten</translation>
+    </message>
+    <message>
+        <source>heap limit exceeded</source>
+        <translation>Heap-Limit überschritten</translation>
+    </message>
+    <message>
+        <source>invalid syntax</source>
+        <translation>ungültige Syntax</translation>
+    </message>
+    <message>
+        <source>internal error - duplicate substitution match</source>
+        <translation>interner Fehler: Doppelte Entsprechung bei Substitution</translation>
+    </message>
+    <message>
+        <source>PCRE2_MATCH_INVALID_UTF is not supported for DFA matching</source>
+        <translation>PCRE2_MATCH_INVALID_UTF wird bei DFA-Matching nicht unterstützt</translation>
     </message>
     <message>
         <source>requested value is not available</source>
@@ -4699,12 +4890,8 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>ungültige Substitution in Ersetzungszeichenkette</translation>
     </message>
     <message>
-        <source>match with end before start is not supported</source>
-        <translation>ein Match mit einem sich vor dem Anfang befindenden Ende wird nicht unterstützt</translation>
-    </message>
-    <message>
         <source>too many replacements (more than INT_MAX)</source>
-        <translation>zuviele Ersetzungen (mehr als INT_MAX)</translation>
+        <translation>zu viele Ersetzungen (mehr als INT_MAX)</translation>
     </message>
 </context>
 <context>
@@ -4802,8 +4989,8 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>Dateiname bezeichnet ein Verzeichnis</translation>
     </message>
     <message>
-        <source>QSaveFile cannot open &apos;%1&apos; without direct write fallback enabled: path contains an Alternate Data Stream specifier</source>
-        <translation>QSaveFile kann &apos;%1&apos; ohne den Direct-Write-Fallback nicht öffnen; der Pfad enthält eine Alternate-Data-Stream-Angabe</translation>
+        <source>QSaveFile cannot open &apos;%1&apos; without direct write fallback enabled.</source>
+        <translation>QSaveFile kann &apos;%1&apos; ohne den Direct-Write-Fallback nicht öffnen.</translation>
     </message>
     <message>
         <source>Writing canceled by application</source>
@@ -5225,6 +5412,14 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>(F) starten</translation>
     </message>
     <message>
+        <source>Launch (G)</source>
+        <translation>(G) starten</translation>
+    </message>
+    <message>
+        <source>Launch (H)</source>
+        <translation>(H) starten</translation>
+    </message>
+    <message>
         <source>Monitor Brightness Up</source>
         <translation>Monitor heller</translation>
     </message>
@@ -5325,6 +5520,10 @@ Bitte deaktivieren Sie eine der beiden.</translation>
         <translation>Rechner</translation>
     </message>
     <message>
+        <source>Calendar</source>
+        <translation>Kalender</translation>
+    </message>
+    <message>
         <source>Clear</source>
         <translation>Löschen</translation>
     </message>
@@ -5335,6 +5534,10 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>Close</source>
         <translation>Schließen</translation>
+    </message>
+    <message>
+        <source>Adjust contrast</source>
+        <translation>Kontrasteinstellung</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -5387,6 +5590,10 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>Meeting</source>
         <translation>Meeting</translation>
+    </message>
+    <message>
+        <source>Memo</source>
+        <translation>Memo</translation>
     </message>
     <message>
         <source>Keyboard Menu</source>
@@ -5467,6 +5674,10 @@ Bitte deaktivieren Sie eine der beiden.</translation>
     <message>
         <source>Terminal</source>
         <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>To-do list</source>
+        <translation>To-do-Liste</translation>
     </message>
     <message>
         <source>Tools</source>
@@ -6363,6 +6574,21 @@ Role of an accessible object</extracomment>
         <translation>Ergänzender Inhalt</translation>
     </message>
     <message>
+        <source>terminal</source>
+        <extracomment>Role of an accessible object</extracomment>
+        <translation>Terminal</translation>
+    </message>
+    <message>
+        <source>desktop</source>
+        <extracomment>Role of an accessible object</extracomment>
+        <translation>Desktop</translation>
+    </message>
+    <message>
+        <source>notification</source>
+        <extracomment>Role of an accessible object</extracomment>
+        <translation>Benachrichtigung</translation>
+    </message>
+    <message>
         <source>unknown</source>
         <extracomment>Role of an accessible object</extracomment>
         <translation>unbekannt</translation>
@@ -6598,10 +6824,6 @@ Role of an accessible object</extracomment>
         <translation>SSL_CONF_CTX_new() schlug fehl</translation>
     </message>
     <message>
-        <source>OpenSSL version too old, need at least v1.0.2</source>
-        <translation>Die verwendete Version von OpenSSL ist zu alt, es muss v1.0.2 oder neuer sein</translation>
-    </message>
-    <message>
         <source>Error when setting the elliptic curves (%1)</source>
         <translation>Fehler beim Setzen der elliptischen Kurven (%1)</translation>
     </message>
@@ -6668,10 +6890,6 @@ Role of an accessible object</extracomment>
     <message>
         <source>Error during SSL handshake: %1</source>
         <translation>Im Ablauf des SSL-Protokolls ist ein Fehler aufgetreten: %1</translation>
-    </message>
-    <message>
-        <source>DTLS server requires a &apos;VerifyNone&apos; mode with your version of OpenSSL</source>
-        <translation>Der DTLS-Server verlangt für Ihre Version der OpenSSL-Bibliothek den &apos;VerifyNone&apos;-Modus</translation>
     </message>
     <message>
         <source>TLS initialization failed</source>
@@ -6890,6 +7108,10 @@ Role of an accessible object</extracomment>
     <message>
         <source>No common ancestor for targets and source of transition from state &apos;%1&apos;</source>
         <translation>Die Ziele und die Quelle des Übergangs vom Zustand &apos;%1&apos; haben keinen gemeinsamen Ursprung</translation>
+    </message>
+    <message>
+        <source>Child mode of state machine &apos;%1&apos; is not &apos;ExclusiveStates&apos;.</source>
+        <translation>Der Child-Modus der Zustandsmaschine &apos;%1&apos; ist nicht &apos;ExclusiveStates&apos;.</translation>
     </message>
     <message>
         <source>Unknown error</source>
@@ -7435,8 +7657,12 @@ Die minimal erforderliche Version von Direct2D ist %1 Die auf diesem System inst
         <translation>Es wurden Zeichendaten erwartet.</translation>
     </message>
     <message>
-        <source>Recursive entity detected.</source>
-        <translation>Es wurde eine rekursive Entity festgestellt.</translation>
+        <source>Self-referencing entity detected.</source>
+        <translation>Es wurde eine selbstreferenzierende Entity festgestellt.</translation>
+    </message>
+    <message>
+        <source>Entity expands to more characters than the entity expansion limit.</source>
+        <translation>Die Expansion einer Entity überschreitet das Entity-Expansions-Limit.</translation>
     </message>
     <message>
         <source>Start tag expected.</source>

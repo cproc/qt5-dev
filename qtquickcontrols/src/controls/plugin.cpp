@@ -196,7 +196,7 @@ void QtQuickControls1Plugin::registerTypes(const char *uri)
     qmlRegisterSingletonType<QQuickControlSettings1>(private_uri, 1, 0, "Settings", QQuickControlsPrivate1::registerSettingsModule);
 
     qmlRegisterUncreatableType<QQuickControlsPrivate1>(private_uri, 1, 0, "Controls", QLatin1String("Controls is an abstract type."));
-    qmlRegisterType<QQuickControlsPrivate1Attached>();
+    qmlRegisterAnonymousType<QQuickControlsPrivate1Attached>(private_uri, 1);
 
     qmlRegisterType<QQuickTreeModelAdaptor1>(private_uri, 1, 0, "TreeModelAdaptor");
     qmlRegisterType<QQuickScenePosListener1>(private_uri, 1, 0, "ScenePosListener");
@@ -239,30 +239,38 @@ void QtQuickControls1Plugin::initializeEngine(QQmlEngine *engine, const char *ur
 
 QString QtQuickControls1Plugin::fileLocation() const
 {
-#ifndef QT_STATIC
+#ifdef Q_OS_ANDROID
+    return "qrc:/android_rcc_bundle/qml/QtQuick/Controls";
+#else
+# ifndef QT_STATIC
     if (isLoadedFromResource())
         return "qrc:/QtQuick/Controls";
     return baseUrl().toString();
-#else
+# else
     return "qrc:/qt-project.org/imports/QtQuick/Controls";
+# endif
 #endif
 }
 
 bool QtQuickControls1Plugin::isLoadedFromResource() const
 {
-#ifdef QT_STATIC
+#ifdef Q_OS_ANDROID
+    return true;
+#else
+# ifdef QT_STATIC
     // When static it is included automatically
     // for us.
     return false;
-#endif
-#if defined(ALWAYS_LOAD_FROM_RESOURCES)
+# endif
+# if defined(ALWAYS_LOAD_FROM_RESOURCES)
     return true;
-#else
+# else
     // If one file is missing, it will load all the files from the resource
     QFile file(baseUrl().toLocalFile() + "/ApplicationWindow.qml");
     if (!file.exists())
         return true;
     return false;
+# endif
 #endif
 }
 

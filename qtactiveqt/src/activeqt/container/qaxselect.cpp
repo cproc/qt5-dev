@@ -57,7 +57,7 @@
 #include <QtCore/qitemselectionmodel.h>
 #include <QtCore/qsysinfo.h>
 #include <QtCore/qtextstream.h>
-#include <QtWidgets/qdesktopwidget.h>
+#include <QtGui/qscreen.h>
 #include <QtWidgets/qpushbutton.h>
 
 #include <qt_windows.h>
@@ -171,7 +171,7 @@ QString Control::toolTip() const
         str << "<tr><th>"
             << (type == InProcessControl ? QAxSelect::tr("DLL:") : QAxSelect::tr("Binary:"))
             << "</th><td";
-        if (!QFileInfo(dll).exists())
+        if (!QFileInfo::exists(dll))
             str << " style=\"color:red\"";
         str << '>' << nonbreakingSpace(dll) << "</td></tr>";
     }
@@ -187,10 +187,10 @@ inline bool operator==(const Control &c1, const Control &c2) { return !c1.compar
 static LONG RegistryQueryValue(HKEY hKey, LPCWSTR lpSubKey, LPBYTE lpData, LPDWORD lpcbData)
 {
     LONG ret = ERROR_FILE_NOT_FOUND;
-    HKEY hSubKey = NULL;
+    HKEY hSubKey = nullptr;
     RegOpenKeyEx(hKey, lpSubKey, 0, KEY_READ, &hSubKey);
     if (hSubKey) {
-        ret = RegQueryValueEx(hSubKey, 0, 0, 0, lpData, lpcbData);
+        ret = RegQueryValueEx(hSubKey, nullptr, nullptr, nullptr, lpData, lpcbData);
         RegCloseKey(hSubKey);
     }
     return ret;
@@ -198,19 +198,19 @@ static LONG RegistryQueryValue(HKEY hKey, LPCWSTR lpSubKey, LPBYTE lpData, LPDWO
 
 static bool querySubKeyValue(HKEY hKey, const QString &subKeyName,  LPBYTE lpData, LPDWORD lpcbData)
 {
-    HKEY hSubKey = NULL;
+    HKEY hSubKey = nullptr;
     const LONG openResult = RegOpenKeyEx(hKey,  reinterpret_cast<const wchar_t *>(subKeyName.utf16()),
                                          0, KEY_READ, &hSubKey);
     if (openResult != ERROR_SUCCESS)
         return false;
-    const bool result = RegQueryValueEx(hSubKey, 0, 0, 0, lpData, lpcbData) == ERROR_SUCCESS;
+    const bool result = RegQueryValueEx(hSubKey, nullptr, nullptr, nullptr, lpData, lpcbData) == ERROR_SUCCESS;
     RegCloseKey(hSubKey);
     return result;
 }
 
-static QList<Control> readControls(const wchar_t *rootKey, unsigned wordSize)
+static QVector<Control> readControls(const wchar_t *rootKey, unsigned wordSize)
 {
-    QList<Control> controls;
+    QVector<Control> controls;
     HKEY classesKey;
     RegOpenKeyEx(HKEY_CLASSES_ROOT, rootKey, 0, KEY_READ, &classesKey);
     if (!classesKey) {
@@ -225,7 +225,7 @@ static QList<Control> readControls(const wchar_t *rootKey, unsigned wordSize)
     FILETIME ft;
     do {
         szBuffer = sizeof(buffer) / sizeof(wchar_t);
-        result = RegEnumKeyEx(classesKey, index, buffer, &szBuffer, 0, 0, 0, &ft);
+        result = RegEnumKeyEx(classesKey, index, buffer, &szBuffer, nullptr, nullptr, nullptr, &ft);
         szBuffer = sizeof(buffer) / sizeof(wchar_t);
         if (result == ERROR_SUCCESS) {
             HKEY subKey;
@@ -268,7 +268,7 @@ static QList<Control> readControls(const wchar_t *rootKey, unsigned wordSize)
 class ControlList : public QAbstractListModel
 {
 public:
-    ControlList(QObject *parent=0)
+    ControlList(QObject *parent=nullptr)
     : QAbstractListModel(parent)
     {
         m_controls = readControls(L"CLSID", unsigned(QSysInfo::WordSize));
@@ -282,7 +282,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override ;
 
 private:
-    QList<Control> m_controls;
+    QVector<Control> m_controls;
 };
 
 QVariant ControlList::data(const QModelIndex &index, int role) const
@@ -362,7 +362,7 @@ QAxSelect::QAxSelect(QWidget *parent, Qt::WindowFlags flags)
     d->selectUi.setupUi(this);
     d->setOkButtonEnabled(false);
 
-    const QRect availableGeometry = QApplication::desktop()->availableGeometry(this);
+    const QRect availableGeometry = screen()->availableGeometry();
     resize(availableGeometry.width() / 4, availableGeometry.height() * 2 / 3);
 
 #ifndef QT_NO_CURSOR
@@ -415,13 +415,15 @@ QString QAxSelect::clsid() const
 */
 QAxSelect::SandboxingLevel QAxSelect::sandboxingLevel() const
 {
-    int idx = d->selectUi.SandboxingCombo->currentIndex();
-    if (idx == 1)
+    switch (d->selectUi.SandboxingCombo->currentIndex()) {
+    case 1:
         return SandboxingProcess;
-    else if (idx == 2)
+    case 2:
         return SandboxingLowIntegrity;
-    else
-        return SandboxingNone;
+    default:
+        break;
+    }
+    return SandboxingNone;
 }
 
 void QAxSelect::onActiveXListCurrentChanged(const QModelIndex &index)

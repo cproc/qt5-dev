@@ -30,6 +30,7 @@ class OssAudioOutputStream : public AudioOutputStream {
   void Stop() override;
   void SetVolume(double volume) override;
   void GetVolume(double* volume) override;
+  void Flush() override;
 
  private:
   enum StreamState {

@@ -39,6 +39,7 @@
 
 #include "qtiffhandler_p.h"
 #include <qvariant.h>
+#include <qcolorspace.h>
 #include <qdebug.h>
 #include <qimage.h>
 #include <qglobal.h>
@@ -204,9 +205,14 @@ bool QTiffHandlerPrivate::canRead(QIODevice *device)
 
     // current implementation uses TIFFClientOpen which needs to be
     // able to seek, so sequential devices are not supported
-    QByteArray header = device->peek(4);
-    return header == QByteArray::fromRawData("\x49\x49\x2A\x00", 4)
-           || header == QByteArray::fromRawData("\x4D\x4D\x00\x2A", 4);
+    char h[4];
+    if (device->peek(h, 4) != 4)
+        return false;
+    if ((h[0] == 0x49 && h[1] == 0x49) && (h[2] == 0x2a || h[2] == 0x2b) && h[3] == 0)
+        return true; // Little endian, classic or bigtiff
+    if ((h[0] == 0x4d && h[1] == 0x4d) && h[2] == 0 && (h[3] == 0x2a || h[3] == 0x2b))
+        return true; // Big endian, classic or bigtiff
+    return false;
 }
 
 bool QTiffHandlerPrivate::openForRead(QIODevice *device)
@@ -277,7 +283,7 @@ bool QTiffHandlerPrivate::readHeaders(QIODevice *device)
     else if ((grayscale || photometric == PHOTOMETRIC_PALETTE) && bitPerSample == 8 && samplesPerPixel == 1)
         format = QImage::Format_Indexed8;
     else if (samplesPerPixel < 4)
-        if (bitPerSample > 8 && photometric == PHOTOMETRIC_RGB)
+        if (bitPerSample == 16 && photometric == PHOTOMETRIC_RGB)
             format = QImage::Format_RGBX64;
         else
             format = QImage::Format_RGB32;
@@ -293,7 +299,7 @@ bool QTiffHandlerPrivate::readHeaders(QIODevice *device)
         if (!gotField || !count || extrasamples[0] == EXTRASAMPLE_UNSPECIFIED)
             premultiplied = false;
 
-        if (bitPerSample > 8 && photometric == PHOTOMETRIC_RGB) {
+        if (bitPerSample == 16 && photometric == PHOTOMETRIC_RGB) {
             // We read 64-bit raw, so unassoc remains unpremultiplied.
             if (gotField && count && extrasamples[0] == EXTRASAMPLE_UNASSALPHA)
                 premultiplied = false;
@@ -393,9 +399,10 @@ bool QTiffHandler::read(QImage *image)
                 }
 
                 for (int i = 0; i<tableSize ;++i) {
-                    const int red = redTable[i] / 257;
-                    const int green = greenTable[i] / 257;
-                    const int blue = blueTable[i] / 257;
+                    // emulate libtiff behavior for 16->8 bit color map conversion: just ignore the lower 8 bits
+                    const int red = redTable[i] >> 8;
+                    const int green = greenTable[i] >> 8;
+                    const int blue = blueTable[i] >> 8;
                     qtColorTable[i] = qRgb(red, green, blue);
                 }
             }
@@ -486,6 +493,15 @@ bool QTiffHandler::read(QImage *image)
             break;
         }
     }
+
+    uint32 count;
+    void *profile;
+    if (TIFFGetField(tiff, TIFFTAG_ICCPROFILE, &count, &profile)) {
+        QByteArray iccProfile(reinterpret_cast<const char *>(profile), count);
+        image->setColorSpace(QColorSpace::fromIccProfile(iccProfile));
+    }
+    // We do not handle colorimetric metadat not on ICC profile form, it seems to be a lot
+    // less common, and would need additional API in QColorSpace.
 
     return true;
 }
@@ -591,7 +607,14 @@ bool QTiffHandler::write(const QImage &image)
         TIFFClose(tiff);
         return false;
     }
-
+    // set color space
+    if (image.colorSpace().isValid()) {
+        QByteArray iccProfile = image.colorSpace().iccProfile();
+        if (!TIFFSetField(tiff, TIFFTAG_ICCPROFILE, iccProfile.size(), reinterpret_cast<const void *>(iccProfile.constData()))) {
+            TIFFClose(tiff);
+            return false;
+        }
+    }
     // configure image depth
     const QImage::Format format = image.format();
     if (format == QImage::Format_Mono || format == QImage::Format_MonoLSB) {
@@ -792,13 +815,6 @@ bool QTiffHandler::write(const QImage &image)
 
     return true;
 }
-
-#if QT_DEPRECATED_SINCE(5, 13)
-QByteArray QTiffHandler::name() const
-{
-    return "tiff";
-}
-#endif
 
 QVariant QTiffHandler::option(ImageOption option) const
 {

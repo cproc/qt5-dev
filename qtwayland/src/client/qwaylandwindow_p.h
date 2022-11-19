@@ -58,10 +58,12 @@
 #include <QtGui/QIcon>
 #include <QtCore/QVariant>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QElapsedTimer>
 
 #include <qpa/qplatformwindow.h>
 
 #include <QtWaylandClient/private/qwayland-wayland.h>
+#include <QtWaylandClient/private/qwaylanddisplay_p.h>
 #include <QtWaylandClient/qtwaylandclientglobal.h>
 
 struct wl_egl_window;
@@ -81,17 +83,19 @@ class QWaylandInputDevice;
 class QWaylandScreen;
 class QWaylandShmBackingStore;
 class QWaylandPointerEvent;
+class QWaylandSurface;
 
-class Q_WAYLAND_CLIENT_EXPORT QWaylandWindow : public QObject, public QPlatformWindow, public QtWayland::wl_surface
+class Q_WAYLAND_CLIENT_EXPORT QWaylandWindow : public QObject, public QPlatformWindow
 {
     Q_OBJECT
 public:
     enum WindowType {
         Shm,
-        Egl
+        Egl,
+        Vulkan
     };
 
-    QWaylandWindow(QWindow *window);
+    QWaylandWindow(QWindow *window, QWaylandDisplay *display);
     ~QWaylandWindow() override;
 
     virtual WindowType windowType() const = 0;
@@ -110,12 +114,10 @@ public:
 
     void applyConfigureWhenPossible(); //rename to possible?
 
-    using QtWayland::wl_surface::attach;
     void attach(QWaylandBuffer *buffer, int x, int y);
     void attachOffset(QWaylandBuffer *buffer);
     QPoint attachOffset() const;
 
-    using QtWayland::wl_surface::damage;
     void damage(const QRect &rect);
 
     void safeCommit(QWaylandBuffer *buffer, const QRegion &damage);
@@ -129,7 +131,10 @@ public:
     QMargins frameMargins() const override;
     QSize surfaceSize() const;
     QRect windowContentGeometry() const;
+    QPointF mapFromWlSurface(const QPointF &surfacePosition) const;
 
+    QWaylandSurface *waylandSurface() const { return mSurface.data(); }
+    ::wl_surface *wlSurface();
     static QWaylandWindow *fromWlSurface(::wl_surface *surface);
 
     QWaylandDisplay *display() const { return mDisplay; }
@@ -159,7 +164,6 @@ public:
     QWaylandAbstractDecoration *decoration() const;
 
     void handleMouse(QWaylandInputDevice *inputDevice, const QWaylandPointerEvent &e);
-    void handleMouseLeave(QWaylandInputDevice *inputDevice);
 
     bool touchDragDecoration(QWaylandInputDevice *inputDevice, const QPointF &local, const QPointF &global,
                              Qt::TouchPointState state, Qt::KeyboardModifiers mods);
@@ -194,7 +198,8 @@ public:
     void propagateSizeHints() override;
     void addAttachOffset(const QPoint point);
 
-    bool startSystemMove(const QPoint &pos) override;
+    bool startSystemResize(Qt::Edges edges) override;
+    bool startSystemMove() override;
 
     void timerEvent(QTimerEvent *event) override;
     void requestUpdate() override;
@@ -209,11 +214,8 @@ signals:
     void wlSurfaceDestroyed();
 
 protected:
-    void surface_enter(struct ::wl_output *output) override;
-    void surface_leave(struct ::wl_output *output) override;
-
-    QVector<QWaylandScreen *> mScreens; //As seen by wl_surface.enter/leave events. Chronological order.
     QWaylandDisplay *mDisplay = nullptr;
+    QScopedPointer<QWaylandSurface> mSurface;
     QWaylandShellSurface *mShellSurface = nullptr;
     QWaylandSubSurface *mSubSurfaceWindow = nullptr;
     QVector<QWaylandSubSurface *> mChildren;
@@ -225,38 +227,39 @@ protected:
     WId mWindowId;
     bool mWaitingForFrameCallback = false;
     bool mFrameCallbackTimedOut = false; // Whether the frame callback has timed out
-    QAtomicInt mFrameCallbackTimerId = -1; // Started on commit, reset on frame callback
+    bool mWaitingForUpdateDelivery = false;
+    int mFrameCallbackCheckIntervalTimerId = -1;
+    QElapsedTimer mFrameCallbackElapsedTimer;
     struct ::wl_callback *mFrameCallback = nullptr;
-    struct ::wl_event_queue *mFrameQueue = nullptr;
+    QWaylandDisplay::FrameQueue mFrameQueue;
     QWaitCondition mFrameSyncWait;
 
     // True when we have called deliverRequestUpdate, but the client has not yet attached a new buffer
     bool mWaitingForUpdate = false;
-    int mFallbackUpdateTimerId = -1; // Started when waiting for app to commit
 
     QMutex mResizeLock;
     bool mWaitingToApplyConfigure = false;
     bool mCanResize = true;
     bool mResizeDirty = false;
     bool mResizeAfterSwap;
+    int mFrameCallbackTimeout = 100;
     QVariantMap m_properties;
 
     bool mSentInitialResize = false;
     QPoint mOffset;
     int mScale = 1;
+    QPlatformScreen *mLastReportedScreen = nullptr;
 
     QIcon mWindowIcon;
 
     Qt::WindowFlags mFlags;
     QRegion mMask;
+    QRegion mOpaqueArea;
     Qt::WindowStates mLastReportedWindowStates = Qt::WindowNoState;
 
     QWaylandShmBackingStore *mBackingStore = nullptr;
     QWaylandBuffer *mQueuedBuffer = nullptr;
     QRegion mQueuedBufferDamage;
-
-private slots:
-    void handleScreenRemoved(QScreen *qScreen);
 
 private:
     void setGeometry_helper(const QRect &rect);
@@ -264,21 +267,24 @@ private:
     void initializeWlSurface();
     bool shouldCreateShellSurface() const;
     bool shouldCreateSubSurface() const;
-    void reset(bool sendDestroyEvent = true);
+    void reset();
     void sendExposeEvent(const QRect &rect);
     static void closePopups(QWaylandWindow *parent);
-    QWaylandScreen *calculateScreenFromSurfaceEvents() const;
+    QPlatformScreen *calculateScreenFromSurfaceEvents() const;
+    void setOpaqueArea(const QRegion &opaqueArea);
+    bool isOpaque() const;
 
     void handleMouseEventWithDecoration(QWaylandInputDevice *inputDevice, const QWaylandPointerEvent &e);
-    void handleScreenChanged();
+    void handleScreensChanged();
+    void sendRecursiveExposeEvent();
 
     bool mInResizeFromApplyConfigure = false;
+    bool lastVisible = false;
     QRect mLastExposeGeometry;
 
     static const wl_callback_listener callbackListener;
     void handleFrameCallback();
 
-    static QMutex mFrameSyncMutex;
     static QWaylandWindow *mMouseGrab;
 
     QReadWriteLock mSurfaceLock;

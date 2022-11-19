@@ -101,6 +101,37 @@
     </message>
 </context>
 <context>
+    <name>QQuickPdfDocument</name>
+    <message>
+        <source>no error</source>
+        <translation>kein Fehler</translation>
+    </message>
+    <message>
+        <source>data not yet available</source>
+        <translation>Daten stehen noch nicht bereit</translation>
+    </message>
+    <message>
+        <source>file not found</source>
+        <translation>Datei nicht gefunden</translation>
+    </message>
+    <message>
+        <source>invalid file format</source>
+        <translation>ungültiges Dateiformat</translation>
+    </message>
+    <message>
+        <source>incorrect password</source>
+        <translation>ungültiges Passwort</translation>
+    </message>
+    <message>
+        <source>unsupported security scheme</source>
+        <translation>nicht unterstütztes Sicherheitsverfahren</translation>
+    </message>
+    <message>
+        <source>unknown error</source>
+        <translation>unbekannter Fehler</translation>
+    </message>
+</context>
+<context>
     <name>QQuickWebEngineView</name>
     <message>
         <source>Stop</source>
@@ -266,62 +297,15 @@
         <translation>&amp;Liste einfügen</translation>
     </message>
     <message>
-        <source>&amp;Back</source>
-        <translation>&amp;Zurück</translation>
-    </message>
-    <message>
-        <source>&amp;Forward</source>
-        <translation>&amp;Vorwärts</translation>
-    </message>
-    <message>
-        <source>&amp;Reload</source>
-        <translation>&amp;Neu laden</translation>
-    </message>
-    <message>
         <source>Select folder to upload</source>
         <translation>Verzeichnis zum Hochladen</translation>
     </message>
 </context>
 <context>
-    <name>QtWebEngineCore</name>
-    <message>
-        <source>Javascript Alert - %1</source>
-        <translation>Javascript-Warnung - %1</translation>
-    </message>
-    <message>
-        <source>Javascript Confirm - %1</source>
-        <translation>Javascript-Bestätigung - %1</translation>
-    </message>
-    <message>
-        <source>Javascript Prompt - %1</source>
-        <translation>Javascript-Abfrage - %1</translation>
-    </message>
-    <message>
-        <source>Are you sure you want to leave this page?</source>
-        <translation>Möchten Sie diese Seite wirklich verlassen?</translation>
-    </message>
-    <message>
-        <source>Changes that you made may not be saved.</source>
-        <translation>Ihre ausstehenden Änderungen werden eventuell nicht gesichert.</translation>
-    </message>
-</context>
-<context>
     <name>QtWebEnginePlugin</name>
-    <message>
-        <source>Cannot create a separate instance of WebEngineDownloadItem</source>
-        <translation>Es kann keine separate Instanz der Klasse WebEngineDownloadItem erstellt werden</translation>
-    </message>
     <message>
         <source>Cannot create separate instance of WebEngineNewViewRequest</source>
         <translation>Es kann keine separate Instanz der Klasse WebEngineNewViewRequest erstellt werden</translation>
-    </message>
-    <message>
-        <source>Cannot create a separate instance of NavigationHistory</source>
-        <translation>Es kann keine separate Instanz der Klasse NavigationHistory erstellt werden</translation>
-    </message>
-    <message>
-        <source>Cannot create a separate instance of FullScreenRequest</source>
-        <translation>Es kann keine separate Instanz der Klasse FullScreenRequest erstellt werden</translation>
     </message>
     <message>
         <source>Cannot create separate instance of %1</source>
@@ -444,6 +428,26 @@
 </context>
 <context>
     <name>UIDelegatesManager</name>
+    <message>
+        <source>Javascript Alert - %1</source>
+        <translation>Javascript-Warnung - %1</translation>
+    </message>
+    <message>
+        <source>Javascript Confirm - %1</source>
+        <translation>Javascript-Bestätigung - %1</translation>
+    </message>
+    <message>
+        <source>Javascript Prompt - %1</source>
+        <translation>Javascript-Abfrage - %1</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to leave this page?</source>
+        <translation>Möchten Sie diese Seite wirklich verlassen?</translation>
+    </message>
+    <message>
+        <source>Changes that you made may not be saved.</source>
+        <translation>Ihre ausstehenden Änderungen werden eventuell nicht gesichert.</translation>
+    </message>
     <message>
         <source>Connect to proxy &quot;%1&quot; using:</source>
         <translation>Verbinde zu Proxy &quot;%1&quot; unter Verwendung von:</translation>

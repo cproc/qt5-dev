@@ -47,7 +47,7 @@
 
 #include <QtCore/QDebug>
 
-#include <QTime>
+#include <QElapsedTimer>
 #include <QCoreApplication>
 
 QT_BEGIN_NAMESPACE
@@ -176,6 +176,13 @@ quint16 qNfcChecksum(const char *data, uint len)
 */
 
 /*!
+    \class QNearFieldTarget::RequestId
+    \inmodule QtHfc
+    \inheaderfile QNearFieldTarget
+    \brief A request id handle.
+*/
+
+/*!
     Constructs a new invalid request id handle.
 */
 QNearFieldTarget::RequestId::RequestId()
@@ -219,7 +226,7 @@ bool QNearFieldTarget::RequestId::isValid() const
 int QNearFieldTarget::RequestId::refCount() const
 {
     if (d)
-        return d->ref.load();
+        return d->ref.loadRelaxed();
 
     return 0;
 }
@@ -462,7 +469,7 @@ bool QNearFieldTarget::waitForRequestCompleted(const RequestId &id, int msecs)
 {
     Q_D(QNearFieldTarget);
 
-    QTime timer;
+    QElapsedTimer timer;
     timer.start();
 
     do {
@@ -497,13 +504,12 @@ void QNearFieldTarget::setResponseForRequest(const QNearFieldTarget::RequestId &
 {
     Q_D(QNearFieldTarget);
 
-    QMutableMapIterator<RequestId, QVariant> i(d->m_decodedResponses);
-    while (i.hasNext()) {
-        i.next();
-
+    for (auto i = d->m_decodedResponses.begin(), end = d->m_decodedResponses.end(); i != end; /* erasing */) {
         // no more external references
         if (i.key().refCount() == 1)
-            i.remove();
+            i = d->m_decodedResponses.erase(i);
+        else
+            ++i;
     }
 
     d->m_decodedResponses.insert(id, response);
@@ -538,6 +544,7 @@ bool QNearFieldTarget::handleResponse(const QNearFieldTarget::RequestId &id,
 void QNearFieldTarget::reportError(QNearFieldTarget::Error error,
                                    const QNearFieldTarget::RequestId &id)
 {
+    setResponseForRequest(id, QVariant(), false);
     QMetaObject::invokeMethod(this, [this, error, id]() {
         Q_EMIT this->error(error, id);
     }, Qt::QueuedConnection);

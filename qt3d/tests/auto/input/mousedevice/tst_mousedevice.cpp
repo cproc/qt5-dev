@@ -31,7 +31,6 @@
 #include <Qt3DInput/qmousedevice.h>
 #include <Qt3DInput/private/qmousedevice_p.h>
 #include <Qt3DInput/private/mousedevice_p.h>
-#include <Qt3DCore/qpropertyupdatedchange.h>
 #include "qbackendnodetester.h"
 
 class tst_MouseDevice : public Qt3DCore::QBackendNodeTester
@@ -59,6 +58,7 @@ private Q_SLOTS:
         QCOMPARE(backendMouseDevice.previousPos(), QPointF());
         QCOMPARE(backendMouseDevice.wasPressed(), false);
         QCOMPARE(backendMouseDevice.sensitivity(), 0.1f);
+        QCOMPARE(backendMouseDevice.updateAxesContinuously(), false);
     }
 
     void checkInitializeFromPeer()
@@ -70,7 +70,7 @@ private Q_SLOTS:
         {
             // WHEN
             Qt3DInput::Input::MouseDevice backendMouseDevice;
-            simulateInitialization(&mouseDevice, &backendMouseDevice);
+            simulateInitializationSync(&mouseDevice, &backendMouseDevice);
 
             // THEN
             QCOMPARE(backendMouseDevice.isEnabled(), true);
@@ -86,12 +86,13 @@ private Q_SLOTS:
             QCOMPARE(backendMouseDevice.previousPos(), QPointF());
             QCOMPARE(backendMouseDevice.wasPressed(), false);
             QCOMPARE(backendMouseDevice.sensitivity(), 0.8f);
+            QCOMPARE(backendMouseDevice.updateAxesContinuously(), false);
         }
         {
             // WHEN
             Qt3DInput::Input::MouseDevice backendMouseDevice;
             mouseDevice.setEnabled(false);
-            simulateInitialization(&mouseDevice, &backendMouseDevice);
+            simulateInitializationSync(&mouseDevice, &backendMouseDevice);
 
             // THEN
             QCOMPARE(backendMouseDevice.peerId(), mouseDevice.id());
@@ -126,6 +127,7 @@ private Q_SLOTS:
         QCOMPARE(backendMouseDevice.previousPos(), QPointF(400.0f, 400.0f));
         QCOMPARE(backendMouseDevice.wasPressed(), true);
         QCOMPARE(backendMouseDevice.sensitivity(), 0.1f);
+        QCOMPARE(backendMouseDevice.updateAxesContinuously(), false);
 
         // WHEN
         eventList = QList<QT_PREPEND_NAMESPACE(QMouseEvent)>() << QT_PREPEND_NAMESPACE(QMouseEvent)(QMouseEvent::MouseMove,
@@ -148,12 +150,13 @@ private Q_SLOTS:
         QCOMPARE(backendMouseDevice.previousPos(), QPointF(600.0f, 600.0f));
         QCOMPARE(backendMouseDevice.wasPressed(), true);
         QCOMPARE(backendMouseDevice.sensitivity(), 0.1f);
+        QCOMPARE(backendMouseDevice.updateAxesContinuously(), false);
 
         // WHEN
         eventList = QList<QT_PREPEND_NAMESPACE(QMouseEvent)>() << QT_PREPEND_NAMESPACE(QMouseEvent)(QMouseEvent::MouseButtonRelease,
-                                                                                                    QPointF(600.0f, 600.0f),
-                                                                                                    QPointF(600.0f, 600.0f),
-                                                                                                    QPointF(600.0f, 600.0f),
+                                                                                                    QPointF(800.0f, 800.0f),
+                                                                                                    QPointF(800.0f, 800.0f),
+                                                                                                    QPointF(800.0f, 800.0f),
                                                                                                     Qt::LeftButton,
                                                                                                     Qt::NoButton,
                                                                                                     Qt::NoModifier);
@@ -167,9 +170,61 @@ private Q_SLOTS:
         QCOMPARE(backendMouseDevice.mouseState().leftPressed, false);
         QCOMPARE(backendMouseDevice.mouseState().rightPressed, false);
         QCOMPARE(backendMouseDevice.mouseState().centerPressed, false);
-        QCOMPARE(backendMouseDevice.previousPos(), QPointF(600.0f, 600.0f));
+        QCOMPARE(backendMouseDevice.previousPos(), QPointF(800.0f, 800.0f));
         QCOMPARE(backendMouseDevice.wasPressed(), false);
         QCOMPARE(backendMouseDevice.sensitivity(), 0.1f);
+        QCOMPARE(backendMouseDevice.updateAxesContinuously(), false);
+
+        // WHEN
+        eventList = QList<QT_PREPEND_NAMESPACE(QMouseEvent)>() << QT_PREPEND_NAMESPACE(QMouseEvent)(QMouseEvent::MouseMove,
+                                                                                                    QPointF(900.0f, 900.0f),
+                                                                                                    QPointF(900.0f, 900.0f),
+                                                                                                    QPointF(900.0f, 900.0f),
+                                                                                                    Qt::NoButton,
+                                                                                                    Qt::NoButton,
+                                                                                                    Qt::NoModifier);
+
+        // THEN -> no axes update
+        backendMouseDevice.updateMouseEvents(eventList);
+        QCOMPARE(backendMouseDevice.mouseState().xAxis, 0.0f);
+        QCOMPARE(backendMouseDevice.mouseState().yAxis, 0.0f);
+        QCOMPARE(backendMouseDevice.mouseState().wXAxis, 0.0f);
+        QCOMPARE(backendMouseDevice.mouseState().wYAxis, 0.0f);
+        QCOMPARE(backendMouseDevice.mouseState().leftPressed, false);
+        QCOMPARE(backendMouseDevice.mouseState().rightPressed, false);
+        QCOMPARE(backendMouseDevice.mouseState().centerPressed, false);
+        QCOMPARE(backendMouseDevice.previousPos(), QPointF(900.0f, 900.0f));
+        QCOMPARE(backendMouseDevice.wasPressed(), false);
+        QCOMPARE(backendMouseDevice.sensitivity(), 0.1f);
+        QCOMPARE(backendMouseDevice.updateAxesContinuously(), false);
+
+
+        // WHEN
+        eventList = QList<QT_PREPEND_NAMESPACE(QMouseEvent)>() << QT_PREPEND_NAMESPACE(QMouseEvent)(QMouseEvent::MouseMove,
+                                                                                                    QPointF(1000.0f, 1000.0f),
+                                                                                                    QPointF(1000.0f, 1000.0f),
+                                                                                                    QPointF(1000.0f, 1000.0f),
+                                                                                                    Qt::NoButton,
+                                                                                                    Qt::NoButton,
+                                                                                                    Qt::NoModifier);
+
+        Qt3DInput::QMouseDevice mouseDevice;
+        mouseDevice.setUpdateAxesContinuously(true);
+        backendMouseDevice.syncFromFrontEnd(&mouseDevice, false);
+        backendMouseDevice.updateMouseEvents(eventList);
+
+        // THEN
+        QCOMPARE(backendMouseDevice.mouseState().xAxis, (1000.0f - 900.0f) * 0.1f);
+        QCOMPARE(backendMouseDevice.mouseState().yAxis, (900.0f - 1000.0f) * 0.1f);
+        QCOMPARE(backendMouseDevice.mouseState().wXAxis, 0.0f);
+        QCOMPARE(backendMouseDevice.mouseState().wYAxis, 0.0f);
+        QCOMPARE(backendMouseDevice.mouseState().leftPressed,false);
+        QCOMPARE(backendMouseDevice.mouseState().rightPressed, false);
+        QCOMPARE(backendMouseDevice.mouseState().centerPressed, false);
+        QCOMPARE(backendMouseDevice.previousPos(), QPointF(1000.0f, 1000.0f));
+        QCOMPARE(backendMouseDevice.wasPressed(), false);
+        QCOMPARE(backendMouseDevice.sensitivity(), 0.1f);
+        QCOMPARE(backendMouseDevice.updateAxesContinuously(), true);
     }
 
     void checkMouseWheelState()
@@ -220,15 +275,15 @@ private Q_SLOTS:
     void checkSceneChangeEvents()
     {
         // GIVEN
+        Qt3DInput::QMouseDevice mouseDevice;
         Qt3DInput::Input::MouseDevice backendMouseDevice;
+        simulateInitializationSync(&mouseDevice, &backendMouseDevice);
 
         {
             // WHEN
             const bool newValue = false;
-            const auto change = Qt3DCore::QPropertyUpdatedChangePtr::create(Qt3DCore::QNodeId());
-            change->setPropertyName("enabled");
-            change->setValue(newValue);
-            backendMouseDevice.sceneChangeEvent(change);
+            mouseDevice.setEnabled(newValue);
+            backendMouseDevice.syncFromFrontEnd(&mouseDevice, false);
 
             // THEN
             QCOMPARE(backendMouseDevice.isEnabled(), newValue);
@@ -236,13 +291,20 @@ private Q_SLOTS:
         {
             // WHEN
             const float newValue = 99.0f;
-            const auto change = Qt3DCore::QPropertyUpdatedChangePtr::create(Qt3DCore::QNodeId());
-            change->setPropertyName("sensitivity");
-            change->setValue(QVariant::fromValue(newValue));
-            backendMouseDevice.sceneChangeEvent(change);
+            mouseDevice.setSensitivity(newValue);
+            backendMouseDevice.syncFromFrontEnd(&mouseDevice, false);
 
             // THEN
             QCOMPARE(backendMouseDevice.sensitivity(), newValue);
+        }
+        {
+            // WHEN
+            const bool newValue = true;
+            mouseDevice.setUpdateAxesContinuously(newValue);
+            backendMouseDevice.syncFromFrontEnd(&mouseDevice, false);
+
+            // THEN
+            QCOMPARE(backendMouseDevice.updateAxesContinuously(), newValue);
         }
     }
 

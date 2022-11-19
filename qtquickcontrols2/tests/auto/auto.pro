@@ -14,6 +14,7 @@ SUBDIRS += \
     qquickapplicationwindow \
     qquickcolor \
     qquickdrawer \
+    qquickheaderview \
     qquickiconimage \
     qquickiconlabel \
     qquickimaginestyle \
@@ -29,4 +30,5 @@ SUBDIRS += \
     qquickuniversalstyleconf \
     revisions \
     sanity \
-    snippets
+    snippets \
+    translation

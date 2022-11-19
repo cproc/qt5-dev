@@ -1,12 +1,10 @@
 TARGET = Qt3DInput
 
 DEFINES += QT3DINPUT_LIBRARY
+DEFINES += BUILD_QT3D_MODULE
 
 MODULE = 3dinput
 MODULE_PLUGIN_TYPES = 3dinputdevices
-
-# Qt3D is free of Q_FOREACH - make sure it stays that way:
-DEFINES += QT_NO_FOREACH
 
 QT += core-private 3dcore-private
 

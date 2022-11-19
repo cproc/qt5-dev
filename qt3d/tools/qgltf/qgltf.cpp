@@ -83,14 +83,10 @@ private:
 class AssimpIOSystem : public Assimp::IOSystem
 {
 public:
-    AssimpIOSystem();
     bool Exists(const char *pFile) const override;
     char getOsSeparator() const override;
     Assimp::IOStream *Open(const char *pFile, const char *pMode) override;
     void Close(Assimp::IOStream *pFile) override;
-
-private:
-    QHash<QByteArray, QIODevice::OpenMode> m_openModeMap;
 };
 
 AssimpIOStream::AssimpIOStream(QIODevice *device) :
@@ -151,18 +147,29 @@ void AssimpIOStream::Flush()
     // we don't write via assimp
 }
 
-AssimpIOSystem::AssimpIOSystem()
+static QIODevice::OpenMode openModeFromText(const char *name) noexcept
 {
-    m_openModeMap[QByteArrayLiteral("r")] = QIODevice::ReadOnly;
-    m_openModeMap[QByteArrayLiteral("r+")] = QIODevice::ReadWrite;
-    m_openModeMap[QByteArrayLiteral("w")] = QIODevice::WriteOnly | QIODevice::Truncate;
-    m_openModeMap[QByteArrayLiteral("w+")] = QIODevice::ReadWrite | QIODevice::Truncate;
-    m_openModeMap[QByteArrayLiteral("a")] = QIODevice::WriteOnly | QIODevice::Append;
-    m_openModeMap[QByteArrayLiteral("a+")] = QIODevice::ReadWrite | QIODevice::Append;
-    m_openModeMap[QByteArrayLiteral("wb")] = QIODevice::WriteOnly;
-    m_openModeMap[QByteArrayLiteral("wt")] = QIODevice::WriteOnly | QIODevice::Text;
-    m_openModeMap[QByteArrayLiteral("rb")] = QIODevice::ReadOnly;
-    m_openModeMap[QByteArrayLiteral("rt")] = QIODevice::ReadOnly | QIODevice::Text;
+    static const struct OpenModeMapping {
+        char name[2];
+        int mode;
+    } openModeMapping[] = {
+        { { 'r',   0 },  QIODevice::ReadOnly  },
+        { { 'r', '+' },  QIODevice::ReadWrite },
+        { { 'w',   0 },  QIODevice::WriteOnly | QIODevice::Truncate },
+        { { 'w', '+' },  QIODevice::ReadWrite | QIODevice::Truncate },
+        { { 'a',   0 },  QIODevice::WriteOnly | QIODevice::Append },
+        { { 'a', '+' },  QIODevice::ReadWrite | QIODevice::Append },
+        { { 'w', 'b' },  QIODevice::WriteOnly },
+        { { 'w', 't' },  QIODevice::WriteOnly | QIODevice::Text },
+        { { 'r', 'b' },  QIODevice::ReadOnly  },
+        { { 'r', 't' },  QIODevice::ReadOnly  | QIODevice::Text },
+    };
+
+    for (auto e : openModeMapping) {
+        if (qstrncmp(e.name, name, sizeof(OpenModeMapping::name)) == 0)
+            return static_cast<QIODevice::OpenMode>(e.mode);
+    }
+    return QIODevice::NotOpen;
 }
 
 bool AssimpIOSystem::Exists(const char *pFile) const
@@ -178,13 +185,13 @@ char AssimpIOSystem::getOsSeparator() const
 Assimp::IOStream *AssimpIOSystem::Open(const char *pFile, const char *pMode)
 {
     const QString fileName(QString::fromUtf8(pFile));
-    const QByteArray cleanedMode(QByteArray(pMode).trimmed());
+    const QLatin1String cleanedMode = QLatin1String{pMode}.trimmed();
 
-    const QIODevice::OpenMode openMode = m_openModeMap.value(cleanedMode, QIODevice::NotOpen);
-
-    QScopedPointer<QFile> file(new QFile(fileName));
-    if (file->open(openMode))
-        return new AssimpIOStream(file.take());
+    if (const QIODevice::OpenMode openMode = openModeFromText(cleanedMode.data())) {
+        QScopedPointer<QFile> file(new QFile(fileName));
+        if (file->open(openMode))
+            return new AssimpIOStream(file.take());
+    }
 
     return nullptr;
 }
@@ -209,7 +216,9 @@ static inline QVector<float> ai2qt(const aiMatrix4x4 &matrix)
 
 struct Options {
     QString outDir;
+#ifndef QT_BOOTSTRAPPED
     bool genBin;
+#endif
     bool compact;
     bool compress;
     bool genTangents;
@@ -1838,7 +1847,7 @@ void GltfExporter::exportMaterials(QJsonObject &materials, QHash<QString, QStrin
             if (vals.contains(it.key()))
                 continue;
             // alpha is supported for the diffuse color. < 1 will enable blending.
-            const bool alpha = it.key() == QStringLiteral("diffuse");
+            const bool alpha = it.key() == QByteArrayLiteral("diffuse");
             if (alpha && it.value()[3] < 1.0f)
                 opaque = false;
             vals[it.key()] = col2jsvec(it.value(), alpha);
@@ -2443,23 +2452,34 @@ void GltfExporter::save(const QString &inputFilename)
 
     QString gltfName = opts.outDir + basename + QStringLiteral(".qgltf");
     f.setFileName(gltfName);
+
+#ifndef QT_BOOTSTRAPPED
     if (opts.showLog)
         qDebug().noquote() << (opts.genBin ? "Writing (binary JSON)" : "Writing") << gltfName;
 
-    if (opts.genBin) {
-        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            m_files.insert(QFileInfo(f.fileName()).fileName());
-            QByteArray json = m_doc.toBinaryData();
-            f.write(json);
-            f.close();
-        }
-    } else {
-        if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-            m_files.insert(QFileInfo(f.fileName()).fileName());
-            QByteArray json = m_doc.toJson(opts.compact ? QJsonDocument::Compact : QJsonDocument::Indented);
-            f.write(json);
-            f.close();
-        }
+    const QIODevice::OpenMode openMode = opts.genBin
+            ? (QIODevice::WriteOnly | QIODevice::Truncate)
+            : (QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_DEPRECATED
+    const QByteArray json = opts.genBin
+            ? m_doc.toBinaryData()
+            : m_doc.toJson(opts.compact ? QJsonDocument::Compact : QJsonDocument::Indented);
+QT_WARNING_POP
+#else
+    if (opts.showLog)
+        qDebug().noquote() << "Writing" << gltfName;
+
+    const QIODevice::OpenMode openMode
+            = QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text;
+    const QByteArray json
+            = m_doc.toJson(opts.compact ? QJsonDocument::Compact : QJsonDocument::Indented);
+#endif
+
+    if (f.open(openMode)) {
+        m_files.insert(QFileInfo(f.fileName()).fileName());
+        f.write(json);
+        f.close();
     }
 
     QString qrcName = opts.outDir + basename + QStringLiteral(".qrc");
@@ -2502,8 +2522,10 @@ int main(int argc, char **argv)
     cmdLine.setApplicationDescription(QString::fromUtf8(description));
     QCommandLineOption outDirOpt(QStringLiteral("d"), QStringLiteral("Place all output data into <dir>"), QStringLiteral("dir"));
     cmdLine.addOption(outDirOpt);
+#ifndef QT_BOOTSTRAPPED
     QCommandLineOption binOpt(QStringLiteral("b"), QStringLiteral("Store binary JSON data in the .qgltf file"));
     cmdLine.addOption(binOpt);
+#endif
     QCommandLineOption compactOpt(QStringLiteral("m"), QStringLiteral("Store compact JSON in the .qgltf file"));
     cmdLine.addOption(compactOpt);
     QCommandLineOption compOpt(QStringLiteral("c"), QStringLiteral("qCompress() vertex/index data in the .bin file"));
@@ -2526,7 +2548,9 @@ int main(int argc, char **argv)
     cmdLine.addOption(silentOpt);
     cmdLine.process(app);
     opts.outDir = cmdLine.value(outDirOpt);
+#ifndef QT_BOOTSTRAPPED
     opts.genBin = cmdLine.isSet(binOpt);
+#endif
     opts.compact = cmdLine.isSet(compactOpt);
     opts.compress = cmdLine.isSet(compOpt);
     opts.genTangents = cmdLine.isSet(tangentOpt);

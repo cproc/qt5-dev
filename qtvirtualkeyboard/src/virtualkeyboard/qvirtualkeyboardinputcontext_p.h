@@ -50,6 +50,13 @@
 QT_BEGIN_NAMESPACE
 
 namespace QtVirtualKeyboard {
+
+// Boolean variable QT_VIRTUALKEYBOARD_FORCE_EVENTS_WITHOUT_FOCUS will enable virtual keyboard
+// to send key events without having any text input in focus when an environment
+// variable QT_VIRTUALKEYBOARD_FORCE_EVENTS_WITHOUT_FOCUS is set. This will also enable virtual
+// keyboard shift key usage in the same no focus situation.
+extern const bool QT_VIRTUALKEYBOARD_FORCE_EVENTS_WITHOUT_FOCUS;
+
 class PlatformInputContext;
 class ShiftHandler;
 }
@@ -104,6 +111,7 @@ public:
     // Helper functions
     Q_INVOKABLE bool fileExists(const QUrl &fileUrl);
     Q_INVOKABLE bool hasEnterKeyAction(QObject *item) const;
+    Q_INVOKABLE void registerInputPanel(QObject *inputPanel);
 
 Q_SIGNALS:
     void focusChanged();
@@ -144,6 +152,7 @@ private:
     QtVirtualKeyboard::PlatformInputContext *platformInputContext;
     QVirtualKeyboardInputEngine *inputEngine;
     QtVirtualKeyboard::ShiftHandler *_shiftHandler;
+    QPointer<QObject> inputPanel;
     QRectF keyboardRect;
     QRectF previewRect;
     bool _previewVisible;

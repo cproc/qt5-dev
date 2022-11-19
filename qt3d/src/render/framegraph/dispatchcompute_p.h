@@ -60,7 +60,7 @@ namespace Qt3DRender {
 
 namespace Render {
 
-class DispatchCompute : public FrameGraphNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT DispatchCompute : public FrameGraphNode
 {
 public:
     DispatchCompute();
@@ -68,13 +68,13 @@ public:
 
     void cleanup();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
     inline int x() const Q_DECL_NOTHROW { return m_workGroups[0]; }
     inline int y() const Q_DECL_NOTHROW { return m_workGroups[1]; }
     inline int z() const Q_DECL_NOTHROW { return m_workGroups[2]; }
 
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
+
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
 
     int m_workGroups[3];
 };

@@ -3,10 +3,10 @@ host_build {
 } else {
     QT_CPU_FEATURES.arm = 
 }
-QT.global_private.enabled_features = alloca gui network reduce_exports sql testlib widgets xml
-QT.global_private.disabled_features = sse2 alloca_h alloca_malloc_h android-style-assets avx2 private_tests dbus dbus-linked gc_binaries libudev posix_fallocate reduce_relocations release_tools stack-protector-strong system-zlib zstd
+QT.global_private.enabled_features = alloca dlopen gui network reduce_exports sql testlib widgets xml
+QT.global_private.disabled_features = sse2 alloca_h alloca_malloc_h android-style-assets avx2 private_tests dbus dbus-linked gc_binaries intelcet libudev posix_fallocate reduce_relocations release_tools relocatable stack-protector-strong system-zlib zstd
+QMAKE_LIBS_LIBDL = 
 QT_COORD_TYPE = double
 CONFIG -= precompile_header
 CONFIG += cross_compile compile_examples force_debug_info largefile nostrip
 QT_BUILD_PARTS += libs examples
-QT_HOST_CFLAGS_DBUS += 

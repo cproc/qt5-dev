@@ -28,6 +28,8 @@
 ****************************************************************************/
 
 import QtQuick 2.7
+// Deliberately imported after QtQuick to avoid missing restoreMode property in Binding. Fix in Qt 6.
+import QtQml 2.14
 import QtQuick.VirtualKeyboard 2.2
 import QtQuick.VirtualKeyboard.Settings 2.2
 
@@ -88,7 +90,7 @@ Item {
                     selectionColor: keyboard.style.fullScreenInputSelectionColor
                     selectedTextColor: keyboard.style.fullScreenInputSelectedTextColor
                     echoMode: (InputContext.inputMethodHints & Qt.ImhHiddenText) ? TextInput.Password : TextInput.Normal
-                    selectByMouse: true
+                    selectByMouse: !!InputContext.inputItem && !!InputContext.inputItem.selectByMouse
                     onCursorPositionChanged: {
                         cursorSyncTimer.restart()
                         blinkStatus = true
@@ -134,5 +136,6 @@ Item {
         property: "inputItem"
         value: shadowInput
         when: VirtualKeyboardSettings.fullScreenMode
+        restoreMode: Binding.RestoreBinding
     }
 }

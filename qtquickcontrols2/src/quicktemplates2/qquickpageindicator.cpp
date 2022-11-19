@@ -45,7 +45,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \qmltype PageIndicator
     \inherits Control
-    \instantiates QQuickPageIndicator
+//!     \instantiates QQuickPageIndicator
     \inqmlmodule QtQuick.Controls
     \since 5.7
     \ingroup qtquickcontrols2-indicators
@@ -276,11 +276,17 @@ void QQuickPageIndicator::setInteractive(bool interactive)
     d->interactive = interactive;
     if (interactive) {
         setAcceptedMouseButtons(Qt::LeftButton);
+#if QT_CONFIG(quicktemplates2_multitouch)
+        setAcceptTouchEvents(true);
+#endif
 #if QT_CONFIG(cursor)
         setCursor(Qt::ArrowCursor);
 #endif
     } else {
         setAcceptedMouseButtons(Qt::NoButton);
+#if QT_CONFIG(quicktemplates2_multitouch)
+        setAcceptTouchEvents(true);
+#endif
 #if QT_CONFIG(cursor)
         unsetCursor();
 #endif

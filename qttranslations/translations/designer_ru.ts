@@ -23,6 +23,10 @@
         <source>&lt;img src=&quot;:/qt-project.org/shared/images/wrap.png&quot;&gt;&amp;nbsp;Search wrapped</source>
         <translation>&lt;img src=&quot;:/qt-project.org/shared/images/wrap.png&quot;&gt;&amp;nbsp;Поиск с начала</translation>
     </message>
+    <message>
+        <source>&amp;Find in Text...</source>
+        <translation>&amp;Найти в тексте...</translation>
+    </message>
 </context>
 <context>
     <name>AbstractItemEditor</name>
@@ -645,8 +649,8 @@
         <translation>Преобразованные виджеты</translation>
     </message>
     <message>
-        <source>Unable to launch %1.</source>
-        <translation>Невозможно запустить %1.</translation>
+        <source>Unable to launch %1: %2</source>
+        <translation>Невозможно запустить %1: %2</translation>
     </message>
     <message>
         <source>%1 timed out.</source>
@@ -969,6 +973,14 @@
     <message>
         <source>ID-based</source>
         <translation>На основе ID</translation>
+    </message>
+    <message>
+        <source>Connections</source>
+        <translation>Соединения</translation>
+    </message>
+    <message>
+        <source>Connect slots by name</source>
+        <translation>Соединять слоты по имени</translation>
     </message>
 </context>
 <context>
@@ -1381,6 +1393,14 @@ This indicates an inconsistency in the ui-file.</source>
         <translation>CTRL+SHIFT+S</translation>
     </message>
     <message>
+        <source>View &amp;C++ Code...</source>
+        <translation>Показать код &amp;C++...</translation>
+    </message>
+    <message>
+        <source>View &amp;Python Code...</source>
+        <translation>Показать код &amp;Python...</translation>
+    </message>
+    <message>
         <source>CTRL+R</source>
         <translation>CTRL+R</translation>
     </message>
@@ -1415,12 +1435,6 @@ This indicates an inconsistency in the ui-file.</source>
     <message>
         <source>Designer UI files (*.%1);;All Files (*)</source>
         <translation>UI файлы Qt Designer (*.%1);;Все файлы (*)</translation>
-    </message>
-    <message>
-        <source>%1 already exists.
-Do you want to replace it?</source>
-        <translation>%1 уже существует.
-Хотите заменить его?</translation>
     </message>
     <message>
         <source>Additional Fonts...</source>
@@ -1473,8 +1487,18 @@ Do you want to update the file location or generate a new form?</source>
         <translation>Выбрать новый файл</translation>
     </message>
     <message>
+        <source>Save Form</source>
+        <translation>Сохранение формы</translation>
+    </message>
+    <message>
         <source>Could not write file</source>
         <translation>Невозможно записать файл</translation>
+    </message>
+    <message>
+        <source>It was not possible to write the file %1 to disk.
+Reason: %2</source>
+        <translation>Невозможно записать файл %1 на диск.
+Причина: %2</translation>
     </message>
     <message>
         <source>&amp;Close Preview</source>
@@ -1517,10 +1541,6 @@ Do you want to update the file location or generate a new form?</source>
         <translation>&amp;Печать...</translation>
     </message>
     <message>
-        <source>View &amp;Code...</source>
-        <translation>Показать &amp;код...</translation>
-    </message>
-    <message>
         <source>ALT+CTRL+S</source>
         <translation>ALT+CTRL+S</translation>
     </message>
@@ -1543,14 +1563,6 @@ Would you like to retry or select a different file?</source>
         <translation>Файл %1 не может быть открыт.
 Причина: %2
 Вы хотите повторить или выбрать другой файл?</translation>
-    </message>
-    <message>
-        <source>It was not possible to write the entire file %1 to disk.
-Reason:%2
-Would you like to retry?</source>
-        <translation>Не удалось полностью записать файл %1 на диск.
-Причина: %2
-Желаете повторить?</translation>
     </message>
     <message>
         <source>Assistant</source>
@@ -3466,10 +3478,6 @@ Do you want overwrite the template?</source>
         <translation>Копировать всё</translation>
     </message>
     <message>
-        <source>&amp;Find in Text...</source>
-        <translation>&amp;Найти в тексте...</translation>
-    </message>
-    <message>
         <source>A temporary form file could not be created in %1.</source>
         <translation>Не удалось создать временный файл формы в %1.</translation>
     </message>
@@ -3478,16 +3486,12 @@ Do you want overwrite the template?</source>
         <translation>Не удалось записать временный файл формы %1.</translation>
     </message>
     <message>
-        <source>%1 - [Code]</source>
-        <translation>%1 - [код]</translation>
-    </message>
-    <message>
         <source>Save Code</source>
         <translation>Сохранить код</translation>
     </message>
     <message>
-        <source>Header Files (*.%1)</source>
-        <translation>Заголовочные файлы (*.%1)</translation>
+        <source>%1 - [%2 Code]</source>
+        <translation>%1 - [Код %2]</translation>
     </message>
     <message>
         <source>The file %1 could not be opened: %2</source>
@@ -4531,12 +4535,12 @@ Please select another name.</source>
 <context>
     <name>qdesigner_internal::ObjectInspector</name>
     <message>
-        <source>Change Current Page</source>
-        <translation>Смена текущей страницы</translation>
+        <source>Filter</source>
+        <translation>Фильтр</translation>
     </message>
     <message>
-        <source>&amp;Find in Text...</source>
-        <translation>&amp;Найти в тексте...</translation>
+        <source>Change Current Page</source>
+        <translation>Смена текущей страницы</translation>
     </message>
 </context>
 <context>
@@ -4603,6 +4607,66 @@ Please select another name.</source>
     <message>
         <source>Active</source>
         <translation>Активная</translation>
+    </message>
+    <message>
+        <source>Save...</source>
+        <translation>Сохранить...</translation>
+    </message>
+    <message>
+        <source>Load...</source>
+        <translation>Загрузить...</translation>
+    </message>
+    <message>
+        <source>Lighter</source>
+        <translation>Осветлить</translation>
+    </message>
+    <message>
+        <source>Darker</source>
+        <translation>Затемнить</translation>
+    </message>
+    <message>
+        <source>Copy color %1</source>
+        <translation>Скопировать цвет %1</translation>
+    </message>
+    <message>
+        <source>QPalette UI file (*.xml)</source>
+        <translation>Файл QPalette UI (*.xml)</translation>
+    </message>
+    <message>
+        <source>Cannot open %1 for writing: %2</source>
+        <translation>Не удалось открыть %1 для записи: %2</translation>
+    </message>
+    <message>
+        <source>Cannot write %1: %2</source>
+        <translation>Не удалось записать %1: %2</translation>
+    </message>
+    <message>
+        <source>Cannot read palette from %1:%2:%3</source>
+        <translation>Не удалось прочитать палитру из файла %1: %2: %3</translation>
+    </message>
+    <message>
+        <source>Cannot open %1 for reading: %2</source>
+        <translation>Не удалось открыть %1 для чтения: %2</translation>
+    </message>
+    <message>
+        <source>Invalid element &quot;%1&quot;, expected &quot;palette&quot;.</source>
+        <translation>Неверный элемент «%1», ожидался «palette».</translation>
+    </message>
+    <message>
+        <source>Save Palette</source>
+        <translation>Сохранение палитры</translation>
+    </message>
+    <message>
+        <source>Error Writing Palette</source>
+        <translation>Ошибка записи палитры</translation>
+    </message>
+    <message>
+        <source>Load Palette</source>
+        <translation>Загрузка палитры</translation>
+    </message>
+    <message>
+        <source>Error Reading Palette</source>
+        <translation>Ошибка чтения палитры</translation>
     </message>
 </context>
 <context>
@@ -4816,24 +4880,9 @@ ate the goose who was loose.</source>
         <translation>PushButton</translation>
     </message>
     <message>
-        <source>ButtonGroup2</source>
-        <extracomment>Palette Editor Preview Widget</extracomment>
-        <translation>ButtonGroup2</translation>
-    </message>
-    <message>
         <source>CheckBox1</source>
         <extracomment>Palette Editor Preview Widget</extracomment>
         <translation>CheckBox1</translation>
-    </message>
-    <message>
-        <source>CheckBox2</source>
-        <extracomment>Palette Editor Preview Widget</extracomment>
-        <translation>CheckBox2</translation>
-    </message>
-    <message>
-        <source>ButtonGroup</source>
-        <extracomment>Palette Editor Preview Widget</extracomment>
-        <translation>ButtonGroup</translation>
     </message>
     <message>
         <source>RadioButton1</source>
@@ -4849,6 +4898,99 @@ ate the goose who was loose.</source>
         <source>RadioButton3</source>
         <extracomment>Palette Editor Preview Widget</extracomment>
         <translation>RadioButton3</translation>
+    </message>
+    <message>
+        <source>Buttons</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Кнопки</translation>
+    </message>
+    <message>
+        <source>Tristate CheckBox</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>CheckBox с тремя состояниями</translation>
+    </message>
+    <message>
+        <source>ToggleButton</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>ToggleButton</translation>
+    </message>
+    <message>
+        <source>ToolButton</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>ToolButton</translation>
+    </message>
+    <message>
+        <source>Menu</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Меню</translation>
+    </message>
+    <message>
+        <source>Item Views</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Обзоры элементов</translation>
+    </message>
+    <message>
+        <source>Column 1</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Столбец 1</translation>
+    </message>
+    <message>
+        <source>Top Level 1</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Верхний уровень 1</translation>
+    </message>
+    <message>
+        <source>Nested Item 1</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Вложенный элемент 1</translation>
+    </message>
+    <message>
+        <source>Nested Item 2</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Вложенный элемент 2</translation>
+    </message>
+    <message>
+        <source>Nested Item 3</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Вложенный элемент 3</translation>
+    </message>
+    <message>
+        <source>Simple Input Widgets</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Примитивный виджет ввода</translation>
+    </message>
+    <message>
+        <source>Item1</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Элемент 1</translation>
+    </message>
+    <message>
+        <source>Item2</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Элемент 2</translation>
+    </message>
+    <message>
+        <source>Display Widgets</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>Виджеты отображения</translation>
+    </message>
+    <message>
+        <source>QLabel</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>QLabel</translation>
+    </message>
+    <message>
+        <source>QLabel with frame</source>
+        <extracomment>Palette Editor Preview Widget</extracomment>
+        <translation>QLabel с рамкой</translation>
+    </message>
+    <message>
+        <source>Option 1</source>
+        <translation>Опция 1</translation>
+    </message>
+    <message>
+        <source>Checkable</source>
+        <translation>Триггерное</translation>
     </message>
 </context>
 <context>
@@ -5056,6 +5198,10 @@ Class: %2</source>
     <message>
         <source>Add Tool Bar</source>
         <translation>Добавить панель инструментов</translation>
+    </message>
+    <message>
+        <source>Add Tool Bar to Other Area</source>
+        <translation>Добавить панель в другую область</translation>
     </message>
     <message>
         <source>Create Status Bar</source>

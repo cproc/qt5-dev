@@ -102,7 +102,9 @@ void QSerialPortPrivate::setError(const QSerialPortErrorInfo &errorInfo)
     error = errorInfo.errorCode;
     q->setErrorString(errorInfo.errorString);
     emit q->errorOccurred(error);
+#if QT_DEPRECATED_SINCE(5, 8)
     emit q->error(error);
+#endif
 }
 
 /*!
@@ -185,6 +187,12 @@ void QSerialPortPrivate::setError(const QSerialPortErrorInfo &errorInfo)
     If an error occurs at any point in time, QSerialPort will emit the
     errorOccurred() signal. You can also call error() to find the type of
     error that occurred last.
+
+    \note Not all error conditions are handled in a platform independent way in
+    QSerialport, as for example the Framing, Parity, and Break condition errors.
+    These kind of errors need to be handled by the application code, probably
+    using OS system specific ioctls on the device descriptor and/or parsing the
+    stream's byte-stuffing.
 
     Programming with a blocking serial port is radically different from
     programming with a non-blocking serial port. A blocking serial port
@@ -347,6 +355,7 @@ void QSerialPortPrivate::setError(const QSerialPortErrorInfo &errorInfo)
     QSerialPort::requestToSend
 */
 
+#if QT_DEPRECATED_SINCE(5, 2)
 /*!
     \enum QSerialPort::DataErrorPolicy
     \obsolete
@@ -362,6 +371,7 @@ void QSerialPortPrivate::setError(const QSerialPortErrorInfo &errorInfo)
 
     \sa QSerialPort::dataErrorPolicy
 */
+#endif
 
 /*!
     \enum QSerialPort::SerialPortError
@@ -1162,12 +1172,14 @@ void QSerialPort::clearError()
     d->setError(QSerialPortErrorInfo(QSerialPort::NoError));
 }
 
+#if QT_DEPRECATED_SINCE(5, 8)
 /*!
     \fn void QSerialPort::error(SerialPortError error)
     \obsolete
 
     Use errorOccurred() instead.
 */
+#endif
 
 /*!
     \fn void QSerialPort::errorOccurred(SerialPortError error)

@@ -52,6 +52,7 @@
 //
 
 #include <Qt3DCore/qnodecreatedchange.h>
+#include <Qt3DCore/qaspectengine.h>
 #include <QtCore/QObject>
 #include <QtCore/QScopedPointer>
 #include <QtCore/QSemaphore>
@@ -72,16 +73,22 @@ class QScheduler;
 class QChangeArbiter;
 class QAbstractAspect;
 class QAbstractAspectJobManager;
-class QSceneObserverInterface;
+class QAspectEngine;
 class QServiceLocator;
+class NodePostConstructorInit;
+struct NodeTreeChange;
+#if QT_CONFIG(animation)
+class RequestFrameAnimation;
+#endif
 
 class Q_3DCORE_PRIVATE_EXPORT QAspectManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit QAspectManager(QObject *parent = 0);
+    explicit QAspectManager(QAspectEngine *parent = nullptr);
     ~QAspectManager();
 
+    void setRunMode(QAspectEngine::RunMode mode);
     void enterSimulationLoop();
     void exitSimulationLoop();
 
@@ -90,34 +97,51 @@ public:
 public Q_SLOTS:
     void initialize();
     void shutdown();
+    void processFrame();
 
-    void setRootEntity(Qt3DCore::QEntity *root, const QVector<Qt3DCore::QNodeCreatedChangeBasePtr> &changes);
+    void setRootEntity(Qt3DCore::QEntity *root, const QVector<QNode *> &nodes);
+    void addNodes(const QVector<QNode *> &nodes);
+    void removeNodes(const QVector<QNode *> &nodes);
     void registerAspect(Qt3DCore::QAbstractAspect *aspect);
     void unregisterAspect(Qt3DCore::QAbstractAspect *aspect);
-
-    void exec();
-    void quit();
 
 public:
     const QVector<QAbstractAspect *> &aspects() const;
     QAbstractAspectJobManager *jobManager() const;
     QChangeArbiter *changeArbiter() const;
     QServiceLocator *serviceLocator() const;
+    void setPostConstructorInit(NodePostConstructorInit *postConstructorInit);
+
+    QNode *lookupNode(QNodeId id) const;
+    QVector<QNode *> lookupNodes(const QVector<QNodeId> &ids) const;
+
+    int jobsInLastFrame() const { return m_jobsInLastFrame; }
+    void dumpJobsOnNextFrame();
 
 private:
+#if !QT_CONFIG(animation)
+    bool event(QEvent *event) override;
+#endif
+    void requestNextFrame();
+
+    QAspectEngine *m_engine;
     QVector<QAbstractAspect *> m_aspects;
     QEntity *m_root;
     QVariantMap m_data;
     QScheduler *m_scheduler;
     QAbstractAspectJobManager *m_jobManager;
     QChangeArbiter *m_changeArbiter;
-    QAtomicInt m_runSimulationLoop;
-    QAtomicInt m_runMainLoop;
     QScopedPointer<QServiceLocator> m_serviceLocator;
-    QSemaphore m_waitForEndOfSimulationLoop;
-    QSemaphore m_waitForStartOfSimulationLoop;
-    QSemaphore m_waitForEndOfExecLoop;
-    QSemaphore m_waitForQuit;
+    bool m_simulationLoopRunning;
+    QAspectEngine::RunMode m_driveMode;
+    QVector<NodeTreeChange> m_nodeTreeChanges;
+    NodePostConstructorInit* m_postConstructorInit;
+
+#if QT_CONFIG(animation)
+    RequestFrameAnimation *m_simulationAnimation;
+#endif
+    int m_jobsInLastFrame;
+    bool m_dumpJobs;
 };
 
 } // namespace Qt3DCore

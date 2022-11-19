@@ -74,6 +74,7 @@ public:
     void resizeHandle(QQuickItem *handleItem);
     void resizeHandles();
     void updateHandleVisibilities();
+    void updateHoveredHandle(QQuickItem *hoveredItem);
     void setResizing(bool resizing);
 
     bool isHorizontal() const;
@@ -111,6 +112,7 @@ public:
     QVector<QQuickItem*> m_handleItems;
     int m_hoveredHandleIndex = -1;
     int m_pressedHandleIndex = -1;
+    int m_nextVisibleIndexAfterPressedHandle = -1;
     QPointF m_pressPos;
     QPointF m_mousePos;
     QPointF m_handlePosBeforePress;

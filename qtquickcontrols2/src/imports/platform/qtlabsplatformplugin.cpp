@@ -83,7 +83,7 @@ void QtLabsPlatformPlugin::registerTypes(const char *uri)
     qmlRegisterUncreatableType<QQuickPlatformDialog>(uri, 1, 0, "Dialog", QQuickPlatformDialog::tr("Dialog is an abstract base class"));
     qmlRegisterType<QQuickPlatformColorDialog>(uri, 1, 0, "ColorDialog");
     qmlRegisterType<QQuickPlatformFileDialog>(uri, 1, 0, "FileDialog");
-    qmlRegisterType<QQuickPlatformFileNameFilter>();
+    qmlRegisterAnonymousType<QQuickPlatformFileNameFilter>(uri, 1);
     qmlRegisterType<QQuickPlatformFolderDialog>(uri, 1, 0, "FolderDialog");
     qmlRegisterType<QQuickPlatformFontDialog>(uri, 1, 0, "FontDialog");
     qmlRegisterType<QQuickPlatformMessageDialog>(uri, 1, 0, "MessageDialog");
@@ -91,6 +91,7 @@ void QtLabsPlatformPlugin::registerTypes(const char *uri)
     qmlRegisterType<QQuickPlatformMenu>(uri, 1, 0, "Menu");
     qmlRegisterType<QQuickPlatformMenuBar>(uri, 1, 0, "MenuBar");
     qmlRegisterType<QQuickPlatformMenuItem>(uri, 1, 0, "MenuItem");
+    qmlRegisterType<QQuickPlatformMenuItem, 1>(uri, 1, 1, "MenuItem");
     qmlRegisterType<QQuickPlatformMenuItemGroup>(uri, 1, 0, "MenuItemGroup");
     qmlRegisterType<QQuickPlatformMenuSeparator>(uri, 1, 0, "MenuSeparator");
     qRegisterMetaType<QPlatformMenu::MenuType>();
@@ -107,7 +108,7 @@ void QtLabsPlatformPlugin::registerTypes(const char *uri)
     qRegisterMetaType<QPlatformSystemTrayIcon::MessageIcon>();
 #endif
 
-    qmlRegisterType<QQuickPlatformIcon>();
+    qmlRegisterAnonymousType<QQuickPlatformIcon>(uri, 1);
     qRegisterMetaType<QQuickPlatformIcon>();
 }
 

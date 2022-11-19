@@ -84,6 +84,7 @@
 #include <Qt3DRender/qclipplane.h>
 #include <Qt3DRender/qcolormask.h>
 #include <Qt3DRender/qcullface.h>
+#include <Qt3DRender/qdepthrange.h>
 #include <Qt3DRender/qdepthtest.h>
 #include <Qt3DRender/qdithering.h>
 #include <Qt3DRender/qfrontface.h>
@@ -1587,7 +1588,10 @@ bool GLTFExporter::saveScene()
     if (m_gltfOpts.binaryJson) {
         if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             m_exportedFiles.insert(QFileInfo(f.fileName()).fileName());
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_DEPRECATED
             QByteArray json = m_doc.toBinaryData();
+QT_WARNING_POP
             f.write(json);
             f.close();
         } else {
@@ -1679,7 +1683,6 @@ void GLTFExporter::exportMaterials(QJsonObject &materials)
 {
     QHash<QString, bool> imageHasAlpha;
 
-    QHashIterator<QMaterial *, MaterialInfo> matIt(m_materialInfo);
     for (auto matIt = m_materialInfo.constBegin(); matIt != m_materialInfo.constEnd(); ++matIt) {
         const QMaterial *material = matIt.key();
         const MaterialInfo &matInfo = matIt.value();
@@ -1938,6 +1941,11 @@ void GLTFExporter::exportRenderStates(QJsonObject &jsonObj, const QRenderPass *p
             auto s = qobject_cast<QCullFace *>(state);
             arr << s->mode();
             funcObj["cullFace"] = arr;
+        } else if (qobject_cast<QDepthRange *>(state)) {
+            auto s = qobject_cast<QDepthRange *>(state);
+            arr << s->nearValue();
+            arr << s->farValue();
+            funcObj["depthRange"] = arr;
         } else if (qobject_cast<QDepthTest *>(state)) {
             auto s = qobject_cast<QDepthTest *>(state);
             arr << s->depthFunction();

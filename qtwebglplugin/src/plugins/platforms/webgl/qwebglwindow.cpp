@@ -40,6 +40,7 @@
 #include <QtGui/qpa/qwindowsysteminterface.h>
 #include <QtGui/qpa/qplatformintegration.h>
 #include <QtGui/qopenglcontext.h>
+#include <QtGui/qoffscreensurface.h>
 
 #include "qwebglwindow.h"
 
@@ -57,9 +58,6 @@ QWebGLWindow::QWebGLWindow(QWindow *w) :
     QPlatformWindow(w),
     d_ptr(new QWebGLWindowPrivate(this))
 {
-    Q_D(QWebGLWindow);
-    d->raster = false;
-    d->flags = 0;
 }
 
 QWebGLWindow::~QWebGLWindow()
@@ -117,7 +115,7 @@ void QWebGLWindow::destroy()
 
     qt_window_private(window())->updateRequestPending = false;
 
-    d->flags = 0;
+    d->flags = QWebGLWindowPrivate::Flags{};
 
     auto integrationPrivate = QWebGLIntegrationPrivate::instance();
     auto clientData = integrationPrivate->findClientData(surface()->surfaceHandle());
@@ -168,6 +166,21 @@ WId QWebGLWindow::winId() const
 {
     Q_D(const QWebGLWindow);
     return d->id;
+}
+
+QWebGLOffscreenSurface::QWebGLOffscreenSurface(QOffscreenSurface *offscreenSurface)
+    : QPlatformOffscreenSurface(offscreenSurface)
+{
+}
+
+QSurfaceFormat QWebGLOffscreenSurface::format() const
+{
+    return offscreenSurface()->format();
+}
+
+bool QWebGLOffscreenSurface::isValid() const
+{
+    return true;
 }
 
 QT_END_NAMESPACE

@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Core module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5Core_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Core_VERSION instead.
-set(Qt5Core_VERSION_STRING 5.13.2)
+set(Qt5Core_VERSION_STRING 5.15.2)
 
 set(Qt5Core_LIBRARIES Qt5::Core)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::Core)
 
     set(_Qt5Core_OWN_INCLUDE_DIRS "${_qt5Core_install_prefix}/include/" "${_qt5Core_install_prefix}/include/QtCore")
     set(Qt5Core_PRIVATE_INCLUDE_DIRS
-        "${_qt5Core_install_prefix}/include/QtCore/5.13.2"
-        "${_qt5Core_install_prefix}/include/QtCore/5.13.2/QtCore"
+        "${_qt5Core_install_prefix}/include/QtCore/5.15.2"
+        "${_qt5Core_install_prefix}/include/QtCore/5.15.2/QtCore"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::Core)
     foreach(_module_dep ${_Qt5Core_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5Core_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Core_FIND_VERSION_EXACT}
                 ${_Qt5Core_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Core_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -123,18 +122,51 @@ if (NOT TARGET Qt5::Core)
     list(REMOVE_DUPLICATES Qt5Core_COMPILE_DEFINITIONS)
     list(REMOVE_DUPLICATES Qt5Core_EXECUTABLE_COMPILE_FLAGS)
 
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::Core)
+        return()
+    endif()
+
     set(_Qt5Core_LIB_DEPENDENCIES "")
 
 
     add_library(Qt5::Core SHARED IMPORTED)
+
 
     set_property(TARGET Qt5::Core PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Core_OWN_INCLUDE_DIRS})
     set_property(TARGET Qt5::Core PROPERTY
       INTERFACE_COMPILE_DEFINITIONS QT_CORE_LIB)
 
-    set_property(TARGET Qt5::Core PROPERTY INTERFACE_QT_ENABLED_FEATURES properties;animation;textcodec;big_codecs;codecs;commandlineparser;itemmodel;proxymodel;concatenatetablesproxymodel;textdate;datestring;filesystemiterator;filesystemwatcher;gestures;identityproxymodel;library;mimetype;processenvironment;statemachine;qeventtransition;regularexpression;settings;sortfilterproxymodel;std-atomic64;stringlistmodel;temporaryfile;timezone;topleveldomain;translation;transposeproxymodel;xmlstream;xmlstreamreader;xmlstreamwriter)
+    set_property(TARGET Qt5::Core PROPERTY INTERFACE_QT_ENABLED_FEATURES properties;easingcurve;animation;textcodec;big_codecs;binaryjson;cborstreamreader;cborstreamwriter;codecs;commandlineparser;itemmodel;proxymodel;concatenatetablesproxymodel;textdate;datestring;filesystemiterator;filesystemwatcher;gestures;identityproxymodel;islamiccivilcalendar;jalalicalendar;library;mimetype;processenvironment;statemachine;qeventtransition;regularexpression;settings;sortfilterproxymodel;std-atomic64;stringlistmodel;temporaryfile;timezone;topleveldomain;translation;transposeproxymodel;xmlstream;xmlstreamreader;xmlstreamwriter)
     set_property(TARGET Qt5::Core PROPERTY INTERFACE_QT_DISABLED_FEATURES cxx11_future;process;sharedmemory;systemsemaphore)
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Core
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 properties;easingcurve;animation;textcodec;big_codecs;binaryjson;cborstreamreader;cborstreamwriter;codecs;commandlineparser;itemmodel;proxymodel;concatenatetablesproxymodel;textdate;datestring;filesystemiterator;filesystemwatcher;gestures;identityproxymodel;islamiccivilcalendar;jalalicalendar;library;mimetype;processenvironment;statemachine;qeventtransition;regularexpression;settings;sortfilterproxymodel;std-atomic64;stringlistmodel;temporaryfile;timezone;topleveldomain;translation;transposeproxymodel;xmlstream;xmlstreamreader;xmlstreamwriter)
+    set_property(TARGET Qt5::Core
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 cxx11_future;process;sharedmemory;systemsemaphore)
+    set_property(TARGET Qt5::Core
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 clock-gettime;datetimeparser;doubleconversion;getentropy;hijricalendar;mimetype-database;poll_ppoll;sha3-fast)
+    set_property(TARGET Qt5::Core
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 etw;futimens;futimes;getauxval;glib;glibc;posix-libiconv;gnu-libiconv;icu;iconv;inotify;journald;linkat;lttng;poll_poll;poll_pollts;poll_select;system-pcre2;renameat2;slog2;statx;syslog;system-doubleconversion)
+
+    set_property(TARGET Qt5::Core PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
     set(_Qt5Core_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5Core_PRIVATE_DIR ${Qt5Core_OWN_PRIVATE_INCLUDE_DIRS})
@@ -157,6 +189,14 @@ if (NOT TARGET Qt5::Core)
         set_property(TARGET Qt5::CorePrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Core ${_Qt5Core_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::CorePrivate)
+            add_library(Qt::CorePrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::CorePrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::CorePrivate"
+            )
+        endif()
     endif()
 
     _populate_Core_target_properties(RELEASE "libQt5Core.lib.so" "" FALSE)
@@ -164,10 +204,16 @@ if (NOT TARGET Qt5::Core)
 
 
 
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5Core_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Core_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Core_*.cmake")
+    endif()
 
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Core_*Plugin.cmake")
-
-    macro(_populate_Core_plugin_properties Plugin Configuration PLUGIN_LOCATION)
+    macro(_populate_Core_plugin_properties Plugin Configuration PLUGIN_LOCATION
+          IsDebugAndRelease)
         set_property(TARGET Qt5::${Plugin} APPEND PROPERTY IMPORTED_CONFIGURATIONS ${Configuration})
 
         set(imported_location "${_qt5Core_install_prefix}/plugins/${PLUGIN_LOCATION}")
@@ -175,6 +221,7 @@ if (NOT TARGET Qt5::Core)
         set_target_properties(Qt5::${Plugin} PROPERTIES
             "IMPORTED_LOCATION_${Configuration}" ${imported_location}
         )
+
     endmacro()
 
     if (pluginTargets)
@@ -183,12 +230,17 @@ if (NOT TARGET Qt5::Core)
         endforeach()
     endif()
 
-
-
     include("${CMAKE_CURRENT_LIST_DIR}/Qt5CoreConfigExtras.cmake")
 
     include("${CMAKE_CURRENT_LIST_DIR}/Qt5CoreMacros.cmake")
 
-_qt5_Core_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5CoreConfigVersion.cmake")
+    _qt5_Core_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5CoreConfigVersion.cmake")
+endif()
 
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Core AND NOT TARGET Qt::Core)
+    add_library(Qt::Core INTERFACE IMPORTED)
+    set_target_properties(Qt::Core PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Core"
+    )
 endif()

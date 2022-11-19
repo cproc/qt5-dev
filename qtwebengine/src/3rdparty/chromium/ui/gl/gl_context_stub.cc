@@ -23,6 +23,7 @@ bool GLContextStub::Initialize(GLSurface* compatible_surface,
 }
 
 bool GLContextStub::MakeCurrent(GLSurface* surface) {
+  DCHECK(surface);
   BindGLApi();
   SetCurrent(surface);
   InitializeDynamicBindings();
@@ -73,6 +74,10 @@ bool GLContextStub::HasRobustness() {
   return HasExtension("GL_ARB_robustness") ||
          HasExtension("GL_KHR_robustness") || HasExtension("GL_EXT_robustness");
 }
+
+#if defined(OS_MACOSX)
+void GLContextStub::FlushForDriverCrashWorkaround() {}
+#endif
 
 GLContextStub::~GLContextStub() {}
 

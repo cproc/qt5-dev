@@ -67,13 +67,13 @@ namespace Render {
 
 class LevelOfDetailManager;
 
-class Q_AUTOTEST_EXPORT LevelOfDetail : public BackendNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT LevelOfDetail : public BackendNode
 {
 public:
     LevelOfDetail();
     ~LevelOfDetail();
     void cleanup();
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) final;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
     Qt3DCore::QNodeId camera() const { return m_camera; }
     int currentIndex() const { return m_currentIndex; }
@@ -86,7 +86,6 @@ public:
     void setCurrentIndex(int currentIndex);
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
     Qt3DCore::QNodeId m_camera;
     int m_currentIndex;
     QLevelOfDetail::ThresholdType m_thresholdType;

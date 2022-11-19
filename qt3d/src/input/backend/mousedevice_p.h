@@ -107,18 +107,18 @@ public:
     QPointF previousPos() const;
     bool wasPressed() const;
     float sensitivity() const;
+    bool updateAxesContinuously() const;
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     InputHandler *m_inputHandler;
 
     MouseState m_mouseState;
     QPointF m_previousPos;
     bool m_wasPressed;
     float m_sensitivity;
+    bool m_updateAxesContinuously;
 };
 
 class MouseDeviceFunctor : public Qt3DCore::QBackendNodeMapper

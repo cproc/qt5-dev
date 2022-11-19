@@ -62,12 +62,12 @@ namespace Render {
 
 class AbstractRenderer;
 
-class Q_AUTOTEST_EXPORT RenderSettings : public BackendNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RenderSettings : public BackendNode
 {
 public:
     RenderSettings();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
     Qt3DCore::QNodeId activeFrameGraphID() const { return m_activeFrameGraph; }
     QRenderSettings::RenderPolicy renderPolicy() const { return m_renderPolicy; }
@@ -75,19 +75,19 @@ public:
     QPickingSettings::PickResultMode pickResultMode() const { return m_pickResultMode; }
     QPickingSettings::FaceOrientationPickingMode faceOrientationPickingMode() const { return m_faceOrientationPickingMode; }
     float pickWorldSpaceTolerance() const { return m_pickWorldSpaceTolerance; }
+    QString capabilities() const { return m_capabilities; }
 
     // For unit test purposes
     void setActiveFrameGraphId(Qt3DCore::QNodeId frameGraphNodeId) { m_activeFrameGraph = frameGraphNodeId; }
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     QRenderSettings::RenderPolicy m_renderPolicy;
     QPickingSettings::PickMethod m_pickMethod;
     QPickingSettings::PickResultMode m_pickResultMode;
     QPickingSettings::FaceOrientationPickingMode m_faceOrientationPickingMode;
     float m_pickWorldSpaceTolerance;
     Qt3DCore::QNodeId m_activeFrameGraph;
+    QString m_capabilities;
 };
 
 class RenderSettingsFunctor : public Qt3DCore::QBackendNodeMapper

@@ -26,7 +26,7 @@
 ****************************************************************************/
 
 /*!
-    \qmlmodule QtQuick.Templates 2.5
+    \qmlmodule QtQuick.Templates 2.\QtMinorVersion
     \title Qt Quick Templates 2 QML Types
     \ingroup qmlmodules
     \brief Provides QML types for templates (Qt Quick Templates).
@@ -37,9 +37,9 @@
     The QML types can be imported using the following import statement in your
     \c .qml file:
 
-    \badcode
-    import QtQuick.Templates 2.12 as T
-    \endcode
+    \qml \QtMinorVersion
+    import QtQuick.Templates 2.\1 as T
+    \endqml
 
     For the sake of clarity, there is a one-to-one mapping between the types
     provided by the \c QtQuick.Templates and \c QtQuick.Controls imports. For

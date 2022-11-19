@@ -39,7 +39,6 @@
 
 #include "abstractpickingjob_p.h"
 #include <Qt3DRender/qgeometryrenderer.h>
-#include <Qt3DRender/private/renderer_p.h>
 #include <Qt3DRender/private/nodemanagers_p.h>
 #include <Qt3DRender/private/entity_p.h>
 #include <Qt3DRender/private/objectpicker_p.h>
@@ -58,11 +57,24 @@ namespace Qt3DRender {
 namespace Render {
 
 AbstractPickingJob::AbstractPickingJob()
-    : m_manager(nullptr)
+    : Qt3DCore::QAspectJob()
+    , m_manager(nullptr)
     , m_node(nullptr)
     , m_frameGraphRoot(nullptr)
     , m_renderSettings(nullptr)
+    , m_oneEnabledAtLeast(false)
 {
+}
+
+AbstractPickingJob::AbstractPickingJob(Qt3DCore::QAspectJobPrivate &dd)
+    : Qt3DCore::QAspectJob(dd)
+    , m_manager(nullptr)
+    , m_node(nullptr)
+    , m_frameGraphRoot(nullptr)
+    , m_renderSettings(nullptr)
+    , m_oneEnabledAtLeast(false)
+{
+
 }
 
 void AbstractPickingJob::setRoot(Entity *root)

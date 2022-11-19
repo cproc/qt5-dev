@@ -12,7 +12,7 @@ isEmpty(NINJA_LFLAGS): error("Missing linker flags from QtWebEngineCore linking 
 isEmpty(NINJA_ARCHIVES): error("Missing archive files from QtWebEngineCore linking pri")
 isEmpty(NINJA_LIBS): error("Missing library files from QtWebEngineCore linking pri")
 OBJECTS = $$eval($$list($$NINJA_OBJECTS))
-unix {
+linux {
     LIBS_PRIVATE = -Wl,--start-group $$NINJA_ARCHIVES -Wl,--end-group
 } else {
     LIBS_PRIVATE = $$NINJA_ARCHIVES
@@ -30,8 +30,12 @@ win32: QMAKE_CXXFLAGS_WARN_ON = -wd4577
 # Issue with some template compliation, smb smart should look at it
 win32: DEFINES += NOMINMAX
 
+# To avoid conflict between windows.h and BoringSSL headers
+win32: DEFINES += WIN32_LEAN_AND_MEAN
+
 CHROMIUM_SRC_DIR = $$QTWEBENGINE_ROOT/$$getChromiumSrcDir()
 INCLUDEPATH += $$CHROMIUM_SRC_DIR \
+               $$CHROMIUM_SRC_DIR/third_party/boringssl/src/include \
                $$OUT_PWD/../../core/$$getConfigDir()/gen
 
 SOURCES += \

@@ -22,11 +22,14 @@ using testing::Return;
 class GLContextVirtualTest : public GpuServiceTest {
  public:
   GLContextVirtualTest()
-      : decoder_(new MockGLES2Decoder(&command_buffer_service_, &outputter_)) {}
+      : decoder_(new MockGLES2Decoder(&client_,
+                                      &command_buffer_service_,
+                                      &outputter_)) {}
   ~GLContextVirtualTest() override = default;
 
  protected:
   FakeCommandBufferServiceBase command_buffer_service_;
+  FakeDecoderClient client_;
   TraceOutputter outputter_;
   std::unique_ptr<MockGLES2Decoder> decoder_;
 };
@@ -46,7 +49,7 @@ TEST_F(GLContextVirtualTest, Reinitialize) {
   {
     auto base_context = base::MakeRefCounted<gl::GLContextStub>();
     gl::GLShareGroup* share_group = base_context->share_group();
-    share_group->SetSharedContext(GetGLSurface(), base_context.get());
+    share_group->SetSharedContext(base_context.get());
     auto context = base::MakeRefCounted<GLContextVirtual>(
         share_group, base_context.get(), decoder_->AsWeakPtr());
     EXPECT_TRUE(context->Initialize(GetGLSurface(), gl::GLContextAttribs()));
@@ -55,7 +58,7 @@ TEST_F(GLContextVirtualTest, Reinitialize) {
   {
     auto base_context = base::MakeRefCounted<gl::GLContextStub>();
     gl::GLShareGroup* share_group = base_context->share_group();
-    share_group->SetSharedContext(GetGLSurface(), base_context.get());
+    share_group->SetSharedContext(base_context.get());
     auto context = base::MakeRefCounted<GLContextVirtual>(
         share_group, base_context.get(), decoder_->AsWeakPtr());
     EXPECT_TRUE(context->Initialize(GetGLSurface(), gl::GLContextAttribs()));
@@ -74,7 +77,7 @@ TEST_F(GLContextVirtualTest, CheckStickyGraphicsResetStatus) {
   base_context->SetExtensionsString(gl_extensions);
 
   gl::GLShareGroup* share_group = base_context->share_group();
-  share_group->SetSharedContext(GetGLSurface(), base_context.get());
+  share_group->SetSharedContext(base_context.get());
   auto context = base::MakeRefCounted<GLContextVirtual>(
       share_group, base_context.get(), decoder_->AsWeakPtr());
   EXPECT_TRUE(context->Initialize(GetGLSurface(), gl::GLContextAttribs()));

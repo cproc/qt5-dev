@@ -76,6 +76,9 @@ public:
                 accept = fallbackInputMethod->keyEvent(key, text, modifiers);
             }
             emit q->virtualKeyClicked(key, text, modifiers, isAutoRepeat);
+        } else if (QT_VIRTUALKEYBOARD_FORCE_EVENTS_WITHOUT_FOCUS) {
+            accept = fallbackInputMethod->keyEvent(key, text, modifiers);
+            emit q->virtualKeyClicked(key, text, modifiers, isAutoRepeat);
         } else {
             qWarning() << "input method is not set";
         }
@@ -478,7 +481,7 @@ QList<int> QVirtualKeyboardInputEngine::patternRecognitionModes() const
 }
 
 /*!
-    \qmlmethod QVirtualKeyboardTrace InputEngine::traceBegin(int traceId, int patternRecognitionMode, var traceCaptureDeviceInfo, var traceScreenInfo)
+    \qmlmethod Trace InputEngine::traceBegin(int traceId, int patternRecognitionMode, var traceCaptureDeviceInfo, var traceScreenInfo)
     \since QtQuick.VirtualKeyboard 2.0
 
     Starts a trace interaction with the input engine.
@@ -816,7 +819,7 @@ void QVirtualKeyboardInputEngine::timerEvent(QTimerEvent *timerEvent)
 */
 
 /*!
-    \qmlproperty QVirtualKeyboardSelectionListModel InputEngine::wordCandidateListModel
+    \qmlproperty SelectionListModel InputEngine::wordCandidateListModel
 
     Use this property to access the list model for the word candidate
     list.

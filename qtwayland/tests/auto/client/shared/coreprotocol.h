@@ -38,6 +38,7 @@ namespace MockCompositor {
 class WlCompositor;
 class Output;
 class Pointer;
+class Touch;
 class Keyboard;
 class CursorRole;
 class ShmPool;
@@ -138,6 +139,21 @@ protected:
     void surface_frame(Resource *resource, uint32_t callback) override;
 };
 
+class Region : public QtWaylandServer::wl_region
+{
+public:
+    explicit Region(wl_client *client, int id, int version)
+        : QtWaylandServer::wl_region(client, id, version)
+    {
+    }
+
+    void region_destroy_resource(Resource *resource) override
+    {
+        Q_UNUSED(resource);
+        delete this;
+    }
+};
+
 class WlCompositor : public Global, public QtWaylandServer::wl_compositor
 {
     Q_OBJECT
@@ -161,6 +177,21 @@ protected:
         m_surfaces.append(surface);
         emit surfaceCreated(surface);
     }
+
+    void compositor_create_region(Resource *resource, uint32_t id) override
+    {
+        new Region(resource->client(), id, resource->version());
+    }
+};
+
+class Subsurface : public QObject, public QtWaylandServer::wl_subsurface
+{
+    Q_OBJECT
+public:
+    explicit Subsurface(wl_client *client, int id, int version)
+        : QtWaylandServer::wl_subsurface(client, id, version)
+    {
+    }
 };
 
 class SubCompositor : public Global, public QtWaylandServer::wl_subcompositor
@@ -170,7 +201,20 @@ public:
     explicit SubCompositor(CoreCompositor *compositor, int version = 1)
         : QtWaylandServer::wl_subcompositor(compositor->m_display, version)
     {}
-    // TODO
+    QVector<Subsurface *> m_subsurfaces;
+
+signals:
+    void subsurfaceCreated(Subsurface *subsurface);
+
+protected:
+    void subcompositor_get_subsurface(Resource *resource, uint32_t id, ::wl_resource *surface, ::wl_resource *parent) override
+    {
+        QTRY_VERIFY(parent);
+        QTRY_VERIFY(surface);
+        auto *subsurface = new Subsurface(resource->client(), id, resource->version());
+        m_subsurfaces.append(subsurface); // TODO: clean up?
+        emit subsurfaceCreated(subsurface);
+    }
 };
 
 struct OutputMode {
@@ -221,6 +265,7 @@ public:
     void sendScale(int factor);
     void sendScale(Resource *resource); // Sends current scale to only one client
 
+    void sendDone(wl_client *client);
     void sendDone();
 
     int scale() const { return m_data.scale; }
@@ -236,7 +281,7 @@ class Seat : public Global, public QtWaylandServer::wl_seat
 {
     Q_OBJECT
 public:
-    explicit Seat(CoreCompositor *compositor, uint capabilities, int version = 4);
+    explicit Seat(CoreCompositor *compositor, uint capabilities = Seat::capability_pointer | Seat::capability_keyboard | Seat::capability_touch, int version = 5);
     ~Seat() override;
     void send_capabilities(Resource *resource, uint capabilities) = delete; // Use wrapper instead
     void send_capabilities(uint capabilities) = delete; // Use wrapper instead
@@ -246,6 +291,9 @@ public:
 
     Pointer* m_pointer = nullptr;
     QVector<Pointer *> m_oldPointers;
+
+    Touch* m_touch = nullptr;
+    QVector<Touch *> m_oldTouchs;
 
     Keyboard* m_keyboard = nullptr;
     QVector<Keyboard *> m_oldKeyboards;
@@ -259,8 +307,8 @@ protected:
     }
 
     void seat_get_pointer(Resource *resource, uint32_t id) override;
+    void seat_get_touch(Resource *resource, uint32_t id) override;
     void seat_get_keyboard(Resource *resource, uint32_t id) override;
-//    void seat_get_touch(Resource *resource, uint32_t id) override;
 
 //    void seat_release(Resource *resource) override;
 };
@@ -279,6 +327,10 @@ public:
     void sendMotion(wl_client *client, const QPointF &position);
     uint sendButton(wl_client *client, uint button, uint state);
     void sendAxis(wl_client *client, axis axis, qreal value);
+    void sendAxisDiscrete(wl_client *client, axis axis, int discrete);
+    void sendAxisSource(wl_client *client, axis_source source);
+    void sendAxisStop(wl_client *client, axis axis);
+    void sendFrame(wl_client *client);
 
     Seat *m_seat = nullptr;
     QVector<uint> m_enterSerials;
@@ -303,6 +355,19 @@ public:
     Surface *m_surface = nullptr;
 };
 
+class Touch : public QObject, public QtWaylandServer::wl_touch
+{
+    Q_OBJECT
+public:
+    explicit Touch(Seat *seat) : m_seat(seat) {}
+    uint sendDown(Surface *surface, const QPointF &position, int id);
+    uint sendUp(wl_client *client, int id);
+    void sendMotion(wl_client *client, const QPointF &position, int id);
+    void sendFrame(wl_client *client);
+
+    Seat *m_seat = nullptr;
+};
+
 class Keyboard : public QObject, public QtWaylandServer::wl_keyboard
 {
     Q_OBJECT
@@ -313,6 +378,7 @@ public:
     uint sendLeave(Surface *surface);
     uint sendKey(wl_client *client, uint key, uint state);
     Seat *m_seat = nullptr;
+    Surface *m_enteredSurface = nullptr;
 };
 
 class Shm : public Global, public QtWaylandServer::wl_shm

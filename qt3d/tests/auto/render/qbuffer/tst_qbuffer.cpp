@@ -26,6 +26,10 @@
 **
 ****************************************************************************/
 
+// TODO Remove in Qt6
+#include <QtCore/qcompilerdetection.h>
+QT_WARNING_DISABLE_DEPRECATED
+
 #include <QtTest/QTest>
 #include <Qt3DCore/private/qnode_p.h>
 #include <Qt3DCore/private/qscene_p.h>
@@ -130,27 +134,23 @@ private Q_SLOTS:
 
         // WHEN
         buffer->setUsage(Qt3DRender::QBuffer::DynamicCopy);
-        QCoreApplication::processEvents();
 
         // THEN
-        QCOMPARE(arbiter.events.size(), 1);
-        auto change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-        QCOMPARE(change->propertyName(), "usage");
-        QCOMPARE(change->value().value<int>(), static_cast<int>(Qt3DRender::QBuffer::DynamicCopy));
+        QCOMPARE(arbiter.events.size(), 0);
+        QCOMPARE(arbiter.dirtyNodes.size(), 1);
+        QCOMPARE(arbiter.dirtyNodes.front(), buffer.data());
 
-        arbiter.events.clear();
+        arbiter.dirtyNodes.clear();
 
         // WHEN
         buffer->setData(QByteArrayLiteral("Z28"));
-        QCoreApplication::processEvents();
 
         // THEN
-        QCOMPARE(arbiter.events.size(), 1);
-        change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-        QCOMPARE(change->propertyName(), "data");
-        QCOMPARE(change->value().value<QByteArray>(), QByteArrayLiteral("Z28"));
+        QCOMPARE(arbiter.events.size(), 0);
+        QCOMPARE(arbiter.dirtyNodes.size(), 1);
+        QCOMPARE(arbiter.dirtyNodes.front(), buffer.data());
 
-        arbiter.events.clear();
+        arbiter.dirtyNodes.clear();
 
         // WHEN
         Qt3DRender::QBufferDataGeneratorPtr functor(new TestFunctor(355));
@@ -158,37 +158,75 @@ private Q_SLOTS:
         QCoreApplication::processEvents();
 
         // THEN
-        QCOMPARE(arbiter.events.size(), 1);
-        change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-        QCOMPARE(change->propertyName(), "dataGenerator");
-        QCOMPARE(change->value().value<Qt3DRender::QBufferDataGeneratorPtr>(), functor);
+        QCOMPARE(arbiter.dirtyNodes.size(), 1);
+        QCOMPARE(arbiter.dirtyNodes.front(), buffer.data());
 
-        arbiter.events.clear();
+        arbiter.dirtyNodes.clear();
 
         // WHEN
         buffer->setSyncData(true);
-        QCoreApplication::processEvents();
 
         // THEN
-        QCOMPARE(arbiter.events.size(), 1);
-        change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-        QCOMPARE(change->propertyName(), "syncData");
-        QCOMPARE(change->value().toBool(), true);
+        QCOMPARE(arbiter.events.size(), 0);
+        QCOMPARE(arbiter.dirtyNodes.size(), 1);
+        QCOMPARE(arbiter.dirtyNodes.front(), buffer.data());
 
-        arbiter.events.clear();
+        arbiter.dirtyNodes.clear();
 
         // WHEN
         buffer->updateData(1, QByteArrayLiteral("L1"));
         QCoreApplication::processEvents();
 
         // THEN
-        QCOMPARE(arbiter.events.size(), 1);
-        QCOMPARE(buffer->data(), QByteArrayLiteral("ZL1"));
-        change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-        QCOMPARE(change->propertyName(), "updateData");
-        Qt3DRender::QBufferUpdate updateData = change->value().value<Qt3DRender::QBufferUpdate>();
-        QCOMPARE(updateData.offset, 1);
-        QCOMPARE(updateData.data, QByteArrayLiteral("L1"));
+        QCOMPARE(arbiter.dirtyNodes.size(), 1);
+        QCOMPARE(arbiter.dirtyNodes.front(), buffer.data());
+    }
+
+    void checkAccumulatesBufferUpdates()
+    {
+        // GIVEN
+        TestArbiter arbiter;
+        QScopedPointer<Qt3DRender::QBuffer> buffer(new Qt3DRender::QBuffer);
+        arbiter.setArbiterOnNode(buffer.data());
+
+        QByteArray initData(6, '\0');
+        buffer->setData(initData);
+
+        // THEN
+        QCOMPARE(buffer->data(), initData);
+        QCOMPARE(buffer->property(Qt3DRender::QBufferPrivate::UpdateDataPropertyName), QVariant());
+
+        // WHEN
+        const QByteArray uData("012");
+        buffer->updateData(0, uData);
+
+        // THEN
+        {
+            const QVariant v = buffer->property(Qt3DRender::QBufferPrivate::UpdateDataPropertyName);
+            QVERIFY(v.isValid());
+            const QVariantList l = v.toList();
+            QCOMPARE(l.size(), 1);
+            const Qt3DRender::QBufferUpdate update = l.first().value<Qt3DRender::QBufferUpdate>();
+            QCOMPARE(update.offset, 0);
+            QCOMPARE(update.data, uData);
+            QCOMPARE(buffer->data().mid(0, 3), uData);
+        }
+
+        // WHEN
+        const QByteArray uData2("345");
+        buffer->updateData(3, uData2);
+
+        // THEN
+        {
+            const QVariant v = buffer->property(Qt3DRender::QBufferPrivate::UpdateDataPropertyName);
+            QVERIFY(v.isValid());
+            const QVariantList l = v.toList();
+            QCOMPARE(l.size(), 2);
+            const Qt3DRender::QBufferUpdate update = l.last().value<Qt3DRender::QBufferUpdate>();
+            QCOMPARE(update.offset, 3);
+            QCOMPARE(update.data, uData2);
+            QCOMPARE(buffer->data(), QByteArray("012345"));
+        }
     }
 };
 

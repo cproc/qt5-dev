@@ -70,6 +70,8 @@ struct Q_3DRENDERSHARED_PRIVATE_EXPORT GraphicsApiFilterData
     QStringList m_extensions;
     QString m_vendor;
 
+    QString toString() const;
+
     bool operator ==(const GraphicsApiFilterData &other) const;
     bool operator !=(const GraphicsApiFilterData &other) const;
     bool operator <(const GraphicsApiFilterData &other) const;
@@ -84,6 +86,7 @@ public:
     }
 
     static QGraphicsApiFilterPrivate *get(QGraphicsApiFilter *q);
+    static const QGraphicsApiFilterPrivate *get(const QGraphicsApiFilter *q);
 
     Q_DECLARE_PUBLIC(QGraphicsApiFilter)
     GraphicsApiFilterData m_data;

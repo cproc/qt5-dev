@@ -32,7 +32,7 @@
 #include <QTextCodec>
 #include <QFileInfo>
 #include <QRegularExpression>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QDir>
 #include <QtAlgorithms>
@@ -496,7 +496,7 @@ bool HunspellBuildSuggestionsTask::spellCheck(const QString &word)
 {
     if (!hunspell)
         return false;
-    if (word.contains(QRegularExpression(QLatin1Literal("[0-9]"))))
+    if (word.contains(QRegularExpression(QLatin1String("[0-9]"))))
         return true;
     return Hunspell_spell(hunspell, textCodec->fromUnicode(word).constData()) != 0;
 }
@@ -738,7 +738,7 @@ void HunspellWorker::waitForAllTasks()
 
 void HunspellWorker::run()
 {
-    QTime perf;
+    QElapsedTimer perf;
     while (!abort) {
         idleSema.release();
         taskSema.acquire();

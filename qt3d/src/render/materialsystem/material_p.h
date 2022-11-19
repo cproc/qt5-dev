@@ -54,7 +54,6 @@
 #include <QVariant>
 
 #include <Qt3DRender/private/backendnode_p.h>
-#include <Qt3DRender/private/shaderparameterpack_p.h>
 #include <Qt3DRender/private/parameterpack_p.h>
 
 QT_BEGIN_NAMESPACE
@@ -72,21 +71,19 @@ class Technique;
 class Effect;
 class MaterialManager;
 
-class Q_AUTOTEST_EXPORT Material : public BackendNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT Material : public BackendNode
 {
 public:
     Material();
     ~Material();
     void cleanup();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
     QVector<Qt3DCore::QNodeId> parameters() const;
     Qt3DCore::QNodeId effect() const;
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     ParameterPack m_parameterPack;
     Qt3DCore::QNodeId m_effectUuid;
 };

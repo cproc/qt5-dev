@@ -6,6 +6,7 @@
 
 #include "base/logging.h"
 #include "build/build_config.h"
+#include "content/public/common/content_client.h"
 #include "content/public/gpu/content_gpu_client.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "content/public/utility/content_utility_client.h"
@@ -26,29 +27,13 @@ int ContentMainDelegate::RunProcess(
   return -1;
 }
 
-#if defined(OS_MACOSX)
-
-bool ContentMainDelegate::ProcessRegistersWithSystemProcess(
-    const std::string& process_type) {
-  return false;
-}
-
-bool ContentMainDelegate::ShouldSendMachPort(const std::string& process_type) {
-  return true;
-}
-
-bool ContentMainDelegate::DelaySandboxInitialization(
-    const std::string& process_type) {
-  return false;
-}
-
-#elif defined(OS_LINUX)
+#if defined(OS_LINUX) || defined(OS_BSD)
 
 void ContentMainDelegate::ZygoteStarting(
     std::vector<std::unique_ptr<service_manager::ZygoteForkDelegate>>*
         delegates) {}
 
-#endif  // defined(OS_LINUX)
+#endif  // defined(OS_LINUX) || defined(OS_BSD)
 
 int ContentMainDelegate::TerminateForFatalInitializationError() {
   CHECK(false);
@@ -64,11 +49,15 @@ void ContentMainDelegate::AdjustServiceProcessCommandLine(
     base::CommandLine* command_line) {}
 
 void ContentMainDelegate::OnServiceManagerInitialized(
-    const base::Closure& quit_closure,
+    base::OnceClosure quit_closure,
     service_manager::BackgroundServiceManager* service_manager) {}
 
 bool ContentMainDelegate::ShouldCreateFeatureList() {
   return true;
+}
+
+ContentClient* ContentMainDelegate::CreateContentClient() {
+  return new ContentClient();
 }
 
 ContentBrowserClient* ContentMainDelegate::CreateContentBrowserClient() {

@@ -64,7 +64,7 @@ namespace Qt3DRender {
 
 namespace Render {
 
-class Q_AUTOTEST_EXPORT RayCaster : public BackendNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RayCaster : public BackendNode
 {
 public:
     RayCaster();
@@ -80,13 +80,10 @@ public:
     Qt3DCore::QNodeIdVector layerIds() const;
     QAbstractRayCaster::FilterMode filterMode() const;
 
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
     void cleanup();
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) final;
-
-    void dispatchHits(const QAbstractRayCaster::Hits &hits);
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
     void notifyJob();
 
     QAbstractRayCasterPrivate::RayCasterType m_type = QAbstractRayCasterPrivate::WorldSpaceRayCaster;

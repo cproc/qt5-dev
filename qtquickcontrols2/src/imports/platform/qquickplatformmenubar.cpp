@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \qmltype MenuBar
     \inherits QtObject
-    \instantiates QQuickPlatformMenuBar
+//!     \instantiates QQuickPlatformMenuBar
     \inqmlmodule Qt.labs.platform
     \since 5.8
     \brief A native menubar.
@@ -205,6 +205,7 @@ void QQuickPlatformMenuBar::insertMenu(int index, QQuickPlatformMenu *menu)
     menu->setMenuBar(this);
     if (m_handle)
         m_handle->insertMenu(menu->create(), before ? before->handle() : nullptr);
+    menu->sync();
     emit menusChanged();
 }
 

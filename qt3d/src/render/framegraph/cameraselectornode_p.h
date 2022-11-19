@@ -64,17 +64,16 @@ namespace Render {
 
 class Renderer;
 
-class CameraSelector : public FrameGraphNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT CameraSelector : public FrameGraphNode
 {
 public:
     CameraSelector();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
     Qt3DCore::QNodeId cameraUuid() const;
 
-private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
+private:
     Qt3DCore::QNodeId m_cameraUuid;
 };
 

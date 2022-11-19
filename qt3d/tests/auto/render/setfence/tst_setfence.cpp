@@ -37,7 +37,9 @@
 **
 ****************************************************************************/
 
-
+// TODO Remove in Qt6
+#include <QtCore/qcompilerdetection.h>
+QT_WARNING_DISABLE_DEPRECATED
 
 #include <QtTest/QTest>
 #include <Qt3DRender/qsetfence.h>
@@ -68,26 +70,32 @@ private Q_SLOTS:
     void checkInitializeFromPeer()
     {
         // GIVEN
+        TestRenderer renderer;
         Qt3DRender::QSetFence setFence;
 
         {
             // WHEN
             Qt3DRender::Render::SetFence backendSetFence;
-            simulateInitialization(&setFence, &backendSetFence);
+            backendSetFence.setRenderer(&renderer);
+            simulateInitializationSync(&setFence, &backendSetFence);
 
             // THEN
             QCOMPARE(backendSetFence.isEnabled(), true);
             QCOMPARE(backendSetFence.peerId(), setFence.id());
+            QVERIFY(renderer.dirtyBits() & Qt3DRender::Render::AbstractRenderer::FrameGraphDirty);
         }
+        renderer.clearDirtyBits(Qt3DRender::Render::AbstractRenderer::AllDirty);
         {
             // WHEN
             Qt3DRender::Render::SetFence backendSetFence;
             setFence.setEnabled(false);
-            simulateInitialization(&setFence, &backendSetFence);
+            backendSetFence.setRenderer(&renderer);
+            simulateInitializationSync(&setFence, &backendSetFence);
 
             // THEN
             QCOMPARE(backendSetFence.peerId(), setFence.id());
             QCOMPARE(backendSetFence.isEnabled(), false);
+            QVERIFY(renderer.dirtyBits() & Qt3DRender::Render::AbstractRenderer::FrameGraphDirty);
         }
     }
 
@@ -95,16 +103,16 @@ private Q_SLOTS:
     {
         // GIVEN
         Qt3DRender::Render::SetFence backendSetFence;
+        Qt3DRender::QSetFence setFence;
         TestRenderer renderer;
         backendSetFence.setRenderer(&renderer);
+        simulateInitializationSync(&setFence, &backendSetFence);
 
         {
              // WHEN
              const bool newValue = false;
-             const auto change = Qt3DCore::QPropertyUpdatedChangePtr::create(Qt3DCore::QNodeId());
-             change->setPropertyName("enabled");
-             change->setValue(newValue);
-             backendSetFence.sceneChangeEvent(change);
+             setFence.setEnabled(newValue);
+             backendSetFence.syncFromFrontEnd(&setFence, false);
 
              // THEN
             QCOMPARE(backendSetFence.isEnabled(), newValue);

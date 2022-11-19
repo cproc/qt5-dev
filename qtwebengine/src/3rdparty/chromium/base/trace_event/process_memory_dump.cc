@@ -12,7 +12,8 @@
 #include "base/memory/shared_memory_tracker.h"
 #include "base/process/process_metrics.h"
 #include "base/strings/stringprintf.h"
-#include "base/trace_event/memory_infra_background_whitelist.h"
+#include "base/trace_event/memory_infra_background_allowlist.h"
+#include "base/trace_event/trace_event_impl.h"
 #include "base/trace_event/traced_value.h"
 #include "base/unguessable_token.h"
 #include "build/build_config.h"
@@ -82,6 +83,7 @@ size_t ProcessMemoryDump::CountResidentBytes(void* start_address,
 
   size_t offset = 0;
   size_t total_resident_pages = 0;
+#if 0
   bool failure = false;
 
   // An array as large as number of pages in memory segment needs to be passed
@@ -156,6 +158,7 @@ size_t ProcessMemoryDump::CountResidentBytes(void* start_address,
     total_resident_pages = 0;
     LOG(ERROR) << "CountResidentBytes failed. The resident size is invalid";
   }
+#endif
   return total_resident_pages;
 }
 
@@ -255,7 +258,7 @@ MemoryAllocatorDump* ProcessMemoryDump::AddAllocatorDumpInternal(
   // In background mode return the black hole dump, if invalid dump name is
   // given.
   if (dump_args_.level_of_detail == MemoryDumpLevelOfDetail::BACKGROUND &&
-      !IsMemoryAllocatorDumpNameWhitelisted(mad->absolute_name())) {
+      !IsMemoryAllocatorDumpNameInAllowlist(mad->absolute_name())) {
     return GetBlackHoleMad();
   }
 

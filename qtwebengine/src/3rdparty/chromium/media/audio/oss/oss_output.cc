@@ -102,6 +102,8 @@ void OssAudioOutputStream::GetVolume(double* v) {
   pthread_mutex_unlock(&mutex);
 }
 
+void OssAudioOutputStream::Flush() {}
+
 void OssAudioOutputStream::ThreadLoop(void) {
   int avail, count, result;
 

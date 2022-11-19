@@ -8,3 +8,8 @@ contains(QT_CONFIG, private_tests) {
         qfirstpersoncameracontroller \
         qorbitcameracontroller
 }
+
+qtHaveModule(quick) {
+    SUBDIRS += \
+        qtext2dentity
+}

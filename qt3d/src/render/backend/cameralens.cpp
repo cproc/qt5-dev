@@ -39,17 +39,19 @@
 
 #include "cameralens_p.h"
 #include <Qt3DRender/qcameralens.h>
+#include <Qt3DRender/qrenderaspect.h>
 #include <Qt3DRender/private/nodemanagers_p.h>
 #include <Qt3DRender/private/managers_p.h>
-#include <Qt3DRender/private/qcameralens_p.h>
 #include <Qt3DRender/private/renderlogging_p.h>
-#include <Qt3DRender/private/renderer_p.h>
+#include <Qt3DRender/private/abstractrenderer_p.h>
 #include <Qt3DRender/private/entity_p.h>
 #include <Qt3DRender/private/sphere_p.h>
 #include <Qt3DRender/private/computefilteredboundingvolumejob_p.h>
+#include <Qt3DRender/private/renderlogging_p.h>
+#include <Qt3DRender/private/qrenderaspect_p.h>
 #include <Qt3DCore/qentity.h>
-#include <Qt3DCore/qpropertyupdatedchange.h>
 #include <Qt3DCore/qtransform.h>
+#include <Qt3DCore/private/qaspectmanager_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -64,21 +66,21 @@ namespace {
 class GetBoundingVolumeWithoutCameraJob : public ComputeFilteredBoundingVolumeJob
 {
 public:
-    GetBoundingVolumeWithoutCameraJob(CameraLens *lens,
-                                      QNodeCommand::CommandId commandId)
-        : m_lens(lens), m_commandId(commandId)
+    GetBoundingVolumeWithoutCameraJob(CameraLens *lens, QNodeId commandId)
+        : m_lens(lens), m_requestId(commandId)
     {
     }
 
 protected:
-    void finished(const Sphere &sphere) override
+    // called in main thread
+    void finished(Qt3DCore::QAspectManager *aspectManager, const Sphere &sphere) override
     {
-        m_lens->notifySceneBoundingVolume(sphere, m_commandId);
+        m_lens->processViewAllResult(aspectManager, sphere, m_requestId);
     }
 
 private:
     CameraLens *m_lens;
-    QNodeCommand::CommandId m_commandId;
+    QNodeId m_requestId;
 };
 
 } // namespace
@@ -116,20 +118,41 @@ Matrix4x4 CameraLens::viewMatrix(const Matrix4x4 &worldTransform)
     m.lookAt(convertToQVector3D(Vector3D(position)),
              convertToQVector3D(Vector3D(position + viewDirection)),
              convertToQVector3D(Vector3D(upVector)));
+
     return Matrix4x4(m);
 }
 
-void CameraLens::initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change)
+void CameraLens::syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime)
 {
-    const auto typedChange = qSharedPointerCast<Qt3DCore::QNodeCreatedChange<QCameraLensData>>(change);
-    const auto &data = typedChange->data;
-    m_projection = Matrix4x4(data.projectionMatrix);
-    m_exposure = data.exposure;
+    const QCameraLens *node = qobject_cast<const QCameraLens *>(frontEnd);
+    if (!node)
+        return;
+
+    BackendNode::syncFromFrontEnd(frontEnd, firstTime);
+
+    const Matrix4x4 projectionMatrix(node->projectionMatrix());
+    if (projectionMatrix != m_projection) {
+        m_projection = projectionMatrix;
+        markDirty(AbstractRenderer::AllDirty);
+    }
+
+    if (!qFuzzyCompare(node->exposure(), m_exposure)) {
+        m_exposure = node->exposure();
+        markDirty(AbstractRenderer::AllDirty);
+    }
+
+    const QCameraLensPrivate *d = static_cast<const QCameraLensPrivate *>(QNodePrivate::get(node));
+    if (d->m_pendingViewAllRequest != m_pendingViewAllRequest) {
+        m_pendingViewAllRequest = d->m_pendingViewAllRequest;
+
+        if (m_pendingViewAllRequest)
+            computeSceneBoundingVolume(m_pendingViewAllRequest.entityId, m_pendingViewAllRequest.cameraId, m_pendingViewAllRequest.requestId);
+    }
 }
 
 void CameraLens::computeSceneBoundingVolume(QNodeId entityId,
                                             QNodeId cameraId,
-                                            QNodeCommand::CommandId commandId)
+                                            QNodeId requestId)
 {
     if (!m_renderer || !m_renderAspect)
         return;
@@ -142,25 +165,26 @@ void CameraLens::computeSceneBoundingVolume(QNodeId entityId,
         return;
 
     Entity *camNode = nodeManagers->renderNodesManager()->lookupResource(cameraId);
-    ComputeFilteredBoundingVolumeJobPtr job(new GetBoundingVolumeWithoutCameraJob(this, commandId));
-    job->addDependency(m_renderer->expandBoundingVolumeJob());
+    ComputeFilteredBoundingVolumeJobPtr job(new GetBoundingVolumeWithoutCameraJob(this, requestId));
+    job->addDependency(QRenderAspectPrivate::get(m_renderer->aspect())->m_expandBoundingVolumeJob);
     job->setRoot(root);
     job->setManagers(nodeManagers);
     job->ignoreSubTree(camNode);
     m_renderAspect->scheduleSingleShotJob(job);
 }
 
-void CameraLens::notifySceneBoundingVolume(const Sphere &sphere, QNodeCommand::CommandId commandId)
+void CameraLens::processViewAllResult(QAspectManager *aspectManager, const Sphere &sphere, QNodeId commandId)
 {
-    if (m_pendingViewAllCommand != commandId)
+    if (!m_pendingViewAllRequest || m_pendingViewAllRequest.requestId != commandId)
         return;
     if (sphere.radius() > 0.f) {
-        QVector<float> data = { sphere.center().x(), sphere.center().y(), sphere.center().z(),
-                                sphere.radius() };
-        QVariant v;
-        v.setValue(data);
-        sendCommand(QLatin1Literal("ViewAll"), v, m_pendingViewAllCommand);
+        QCameraLens *lens = qobject_cast<QCameraLens *>(aspectManager->lookupNode(peerId()));
+        if (lens) {
+            QCameraLensPrivate *dlens = static_cast<QCameraLensPrivate *>(QCameraLensPrivate::get(lens));
+            dlens->processViewAllResult(m_pendingViewAllRequest.requestId, { sphere.center().x(), sphere.center().y(), sphere.center().z() }, sphere.radius());
+        }
     }
+    m_pendingViewAllRequest = {};
 }
 
 void CameraLens::setProjection(const Matrix4x4 &projection)
@@ -171,47 +195,6 @@ void CameraLens::setProjection(const Matrix4x4 &projection)
 void CameraLens::setExposure(float exposure)
 {
     m_exposure = exposure;
-}
-
-void CameraLens::sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e)
-{
-    switch (e->type()) {
-    case PropertyUpdated: {
-        QPropertyUpdatedChangePtr propertyChange = qSharedPointerCast<QPropertyUpdatedChange>(e);
-
-        if (propertyChange->propertyName() == QByteArrayLiteral("projectionMatrix")) {
-            QMatrix4x4 projectionMatrix = propertyChange->value().value<QMatrix4x4>();
-            m_projection = Matrix4x4(projectionMatrix);
-        } else if (propertyChange->propertyName() == QByteArrayLiteral("exposure")) {
-            setExposure(propertyChange->value().toFloat());
-        }
-
-        markDirty(AbstractRenderer::AllDirty);
-    }
-        break;
-
-    case CommandRequested: {
-        QNodeCommandPtr command = qSharedPointerCast<QNodeCommand>(e);
-
-        if (command->name() == QLatin1Literal("QueryRootBoundingVolume")) {
-            m_pendingViewAllCommand = command->commandId();
-            QVariant v = command->data();
-            QNodeId id = v.value<QNodeId>();
-            computeSceneBoundingVolume({}, id, command->commandId());
-        } else if (command->name() == QLatin1Literal("QueryEntityBoundingVolume")) {
-            m_pendingViewAllCommand = command->commandId();
-            QVariant v = command->data();
-            QVector<QNodeId> ids = v.value<QVector<QNodeId>>();
-            if (ids.size() == 2)
-                computeSceneBoundingVolume(ids[0], ids[1], command->commandId());
-        }
-    }
-        break;
-
-    default:
-        break;
-    }
-    BackendNode::sceneChangeEvent(e);
 }
 
 bool CameraLens::viewMatrixForCamera(EntityManager* manager, Qt3DCore::QNodeId cameraId,

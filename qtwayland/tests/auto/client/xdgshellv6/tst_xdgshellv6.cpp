@@ -403,7 +403,7 @@ void tst_WaylandClientXdgShellV6::flushUnconfiguredXdgSurface()
     m_compositor->sendShellSurfaceConfigure(surface);
     QTRY_COMPARE(surface->image.size(), window.frameGeometry().size());
     QTRY_COMPARE(surface->image.pixel(window.frameMargins().left(), window.frameMargins().top()), color.rgba());
-    QVERIFY(window.isExposed());
+    QTRY_VERIFY(window.isExposed());
 }
 
 void tst_WaylandClientXdgShellV6::dontSpamExposeEvents()
@@ -413,16 +413,17 @@ void tst_WaylandClientXdgShellV6::dontSpamExposeEvents()
 
     QSharedPointer<MockSurface> surface;
     QTRY_VERIFY(surface = m_compositor->surface());
-    QTRY_VERIFY(window.exposeEventCount == 0);
+    QTRY_COMPARE(window.exposeEventCount, 0);
 
     m_compositor->sendShellSurfaceConfigure(surface);
     QTRY_VERIFY(window.isExposed());
-    QTRY_VERIFY(window.exposeEventCount == 1);
+    QTRY_COMPARE(window.exposeEventCount, 1);
 }
 
 int main(int argc, char **argv)
 {
-    setenv("XDG_RUNTIME_DIR", ".", 1);
+    QTemporaryDir tmpRuntimeDir;
+    setenv("XDG_RUNTIME_DIR", tmpRuntimeDir.path().toLocal8Bit(), 1);
     setenv("QT_QPA_PLATFORM", "wayland", 1); // force QGuiApplication to use wayland plugin
     setenv("QT_WAYLAND_SHELL_INTEGRATION", "xdg-shell-v6", 1);
 

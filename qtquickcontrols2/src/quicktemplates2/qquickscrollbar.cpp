@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \qmltype ScrollBar
     \inherits Control
-    \instantiates QQuickScrollBar
+//!     \instantiates QQuickScrollBar
     \inqmlmodule QtQuick.Controls
     \since 5.7
     \ingroup qtquickcontrols2-indicators
@@ -144,7 +144,7 @@ QT_BEGIN_NAMESPACE
 
     \list
     \li Layout the scroll bar (with the \l {Item::}{x} and \l {Item::}{y} or
-        \l {Item::anchors}{anchor} properties, for example).
+        \l [QtQuick]{Item::}{anchors} property, for example).
     \li Set the \l size and \l position properties to determine the size and position
         of the scroll bar in relation to the scrolled item.
     \li Set the \l active property to determine when the scroll bar will be
@@ -205,11 +205,17 @@ void QQuickScrollBarPrivate::setInteractive(bool enabled)
     interactive = enabled;
     if (interactive) {
         q->setAcceptedMouseButtons(Qt::LeftButton);
+#if QT_CONFIG(quicktemplates2_multitouch)
+        q->setAcceptTouchEvents(true);
+#endif
 #if QT_CONFIG(cursor)
         q->setCursor(Qt::ArrowCursor);
 #endif
     } else {
         q->setAcceptedMouseButtons(Qt::NoButton);
+#if QT_CONFIG(quicktemplates2_multitouch)
+        q->setAcceptTouchEvents(false);
+#endif
 #if QT_CONFIG(cursor)
         q->unsetCursor();
 #endif
@@ -303,6 +309,9 @@ QQuickScrollBar::QQuickScrollBar(QQuickItem *parent)
 {
     setKeepMouseGrab(true);
     setAcceptedMouseButtons(Qt::LeftButton);
+#if QT_CONFIG(quicktemplates2_multitouch)
+    setAcceptTouchEvents(true);
+#endif
 #if QT_CONFIG(cursor)
     setCursor(Qt::ArrowCursor);
 #endif

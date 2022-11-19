@@ -76,7 +76,7 @@ void QScriptDebuggerStackWidgetPrivate::_q_onCurrentChanged(const QModelIndex &i
 }
 
 QScriptDebuggerStackWidget::QScriptDebuggerStackWidget(QWidget *parent)
-    : QScriptDebuggerStackWidgetInterface(*new QScriptDebuggerStackWidgetPrivate, parent, 0)
+    : QScriptDebuggerStackWidgetInterface(*new QScriptDebuggerStackWidgetPrivate, parent, {})
 {
     Q_D(QScriptDebuggerStackWidget);
     d->view = new QTreeView();
@@ -88,7 +88,7 @@ QScriptDebuggerStackWidget::QScriptDebuggerStackWidget(QWidget *parent)
 //    d->view->header()->setResizeMode(QHeaderView::ResizeToContents);
 
     QVBoxLayout *vbox = new QVBoxLayout(this);
-    vbox->setMargin(0);
+    vbox->setContentsMargins(0, 0, 0, 0);
     vbox->addWidget(d->view);
 }
 

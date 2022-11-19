@@ -39,6 +39,7 @@
 
 #include "qrendersettings.h"
 #include "qrendersettings_p.h"
+#include "qrendercapabilities.h"
 #include "qframegraphnode.h"
 #include "qrendersurfaceselector.h"
 #include "qrendersurfaceselector_p.h"
@@ -96,6 +97,11 @@ void QRenderSettingsPrivate::init()
                      q, SLOT(_q_onWorldSpaceToleranceChanged(float)));
 }
 
+void QRenderSettingsPrivate::invalidateFrame()
+{
+    update();
+}
+
 /*! \internal */
 void QRenderSettingsPrivate::_q_onPickingMethodChanged(QPickingSettings::PickMethod pickMethod)
 {
@@ -134,6 +140,28 @@ QRenderSettings::QRenderSettings(QRenderSettingsPrivate &dd, Qt3DCore::QNode *pa
 /*! \internal */
 QRenderSettings::~QRenderSettings()
 {
+}
+
+/*!
+    \qmlproperty RenderCapabilities RenderSettings::renderCapabilities
+
+    Holds the details of the supported rendering engine
+
+    \readonly
+    \since 5.15
+*/
+/*!
+    \property QRenderSettings::renderCapabilities
+
+    Holds the details of the supported rendering engine
+
+    \readonly
+    \since 5.15
+*/
+QRenderCapabilities *QRenderSettings::renderCapabilities()
+{
+    Q_D(QRenderSettings);
+    return &(d->m_renderCapabilities);
 }
 
 /*!

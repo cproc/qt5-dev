@@ -89,15 +89,14 @@ class GeometryRenderer;
 class ObjectPicker;
 class RayCaster;
 class BoundingVolumeDebug;
-class OpenGLVertexArrayObject;
 class Light;
 class EnvironmentLight;
 class ComputeCommand;
-class GLBuffer;
 class RenderStateNode;
 class Armature;
 class Skeleton;
 class Joint;
+class ShaderImage;
 
 typedef Qt3DCore::QHandle<RenderTargetOutput> HAttachment;
 typedef Qt3DCore::QHandle<CameraLens> HCamera;
@@ -109,7 +108,6 @@ typedef Qt3DCore::QHandle<Layer> HLayer;
 typedef Qt3DCore::QHandle<LevelOfDetail> HLevelOfDetail;
 typedef Qt3DCore::QHandle<Material> HMaterial;
 typedef Qt3DCore::QHandle<Matrix4x4> HMatrix;
-typedef Qt3DCore::QHandle<OpenGLVertexArrayObject> HVao;
 typedef Qt3DCore::QHandle<Shader> HShader;
 typedef Qt3DCore::QHandle<ShaderBuilder> HShaderBuilder;
 typedef Qt3DCore::QHandle<Technique> HTechnique;
@@ -131,11 +129,11 @@ typedef Qt3DCore::QHandle<BoundingVolumeDebug> HBoundingVolumeDebug;
 typedef Qt3DCore::QHandle<Light> HLight;
 typedef Qt3DCore::QHandle<EnvironmentLight> HEnvironmentLight;
 typedef Qt3DCore::QHandle<ComputeCommand> HComputeCommand;
-typedef Qt3DCore::QHandle<GLBuffer> HGLBuffer;
 typedef Qt3DCore::QHandle<RenderStateNode> HRenderState;
 typedef Qt3DCore::QHandle<Armature> HArmature;
 typedef Qt3DCore::QHandle<Skeleton> HSkeleton;
 typedef Qt3DCore::QHandle<Joint> HJoint;
+typedef Qt3DCore::QHandle<ShaderImage> HShaderImage;
 
 } // namespace Render
 

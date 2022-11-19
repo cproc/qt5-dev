@@ -343,7 +343,7 @@ void QScriptDebuggerLocalsItemDelegate::paint(QPainter *painter, const QStyleOpt
 }
 
 QScriptDebuggerLocalsWidget::QScriptDebuggerLocalsWidget(QWidget *parent)
-    : QScriptDebuggerLocalsWidgetInterface(*new QScriptDebuggerLocalsWidgetPrivate, parent, 0)
+    : QScriptDebuggerLocalsWidgetInterface(*new QScriptDebuggerLocalsWidgetPrivate, parent, {})
 {
     Q_D(QScriptDebuggerLocalsWidget);
     d->view = new QTreeView();
@@ -359,7 +359,7 @@ QScriptDebuggerLocalsWidget::QScriptDebuggerLocalsWidget(QWidget *parent)
 //    d->view->header()->setResizeMode(QHeaderView::ResizeToContents);
 
     QVBoxLayout *vbox = new QVBoxLayout(this);
-    vbox->setMargin(0);
+    vbox->setContentsMargins(0, 0, 0, 0);
     vbox->addWidget(d->view);
 }
 

@@ -41,8 +41,11 @@
 #include "qpicktriangleevent.h"
 #include "qpicklineevent.h"
 #include "qpickpointevent.h"
+#include <Qt3DCore/private/qaspectmanager_p.h>
+#include <Qt3DRender/qobjectpicker.h>
+#include <Qt3DRender/qviewport.h>
 #include <Qt3DRender/qgeometryrenderer.h>
-#include <Qt3DRender/private/renderer_p.h>
+#include <Qt3DRender/private/qobjectpicker_p.h>
 #include <Qt3DRender/private/nodemanagers_p.h>
 #include <Qt3DRender/private/entity_p.h>
 #include <Qt3DRender/private/objectpicker_p.h>
@@ -64,6 +67,91 @@ namespace Qt3DRender {
 using namespace Qt3DRender::RayCasting;
 
 namespace Render {
+
+class PickBoundingVolumeJobPrivate : public Qt3DCore::QAspectJobPrivate
+{
+public:
+    PickBoundingVolumeJobPrivate(PickBoundingVolumeJob *q) : q_ptr(q) { }
+    ~PickBoundingVolumeJobPrivate() override = default;
+
+    bool isRequired() const override;
+    void postFrame(Qt3DCore::QAspectManager *manager) override;
+
+    enum CustomEventType {
+        MouseButtonClick = QEvent::User,
+    };
+
+    struct EventDetails {
+        Qt3DCore::QNodeId pickerId;
+        int sourceEventType;
+        QPickEventPtr resultingEvent;
+        Qt3DCore::QNodeId viewportNodeId;
+    };
+
+    QVector<EventDetails> dispatches;
+    PickBoundingVolumeJob *q_ptr;
+    Q_DECLARE_PUBLIC(PickBoundingVolumeJob)
+};
+
+
+bool PickBoundingVolumeJobPrivate::isRequired() const
+{
+    Q_Q(const PickBoundingVolumeJob);
+    return !q->m_pendingMouseEvents.isEmpty() || q->m_pickersDirty || q->m_oneEnabledAtLeast;
+}
+
+void PickBoundingVolumeJobPrivate::postFrame(Qt3DCore::QAspectManager *manager)
+{
+    using namespace Qt3DCore;
+    QNodeId previousId;
+    QObjectPicker *node = nullptr;
+
+    for (auto res: qAsConst(dispatches)) {
+        if (previousId != res.pickerId) {
+            node = qobject_cast<QObjectPicker *>(manager->lookupNode(res.pickerId));
+            previousId = res.pickerId;
+        }
+        if (!node)
+            continue;
+
+        QObjectPickerPrivate *dnode = static_cast<QObjectPickerPrivate *>(QObjectPickerPrivate::get(node));
+
+        // resolve front end details
+        QPickEvent *pickEvent = res.resultingEvent.data();
+        if (pickEvent) {
+            QPickEventPrivate *dpickEvent = QPickEventPrivate::get(pickEvent);
+            dpickEvent->m_viewport = static_cast<QViewport *>(manager->lookupNode(res.viewportNodeId));
+            dpickEvent->m_entityPtr = static_cast<QEntity *>(manager->lookupNode(dpickEvent->m_entity));
+        }
+
+        // dispatch event
+        switch (res.sourceEventType) {
+        case QEvent::MouseButtonPress:
+            dnode->pressedEvent(pickEvent);
+            break;
+        case QEvent::MouseButtonRelease:
+            dnode->releasedEvent(pickEvent);
+            break;
+        case MouseButtonClick:
+            dnode->clickedEvent(pickEvent);
+            break;
+        case QEvent::MouseMove:
+            dnode->movedEvent(pickEvent);
+            break;
+        case QEvent::Enter:
+            emit node->entered();
+            dnode->setContainsMouse(true);
+            break;
+        case QEvent::Leave:
+            dnode->setContainsMouse(false);
+            emit node->exited();
+            break;
+        default: Q_UNREACHABLE();
+        }
+    }
+
+    dispatches.clear();
+}
 
 namespace {
 
@@ -109,10 +197,10 @@ void setEventButtonAndModifiers(const QMouseEvent &event, QPickEvent::Buttons &e
 } // anonymous
 
 PickBoundingVolumeJob::PickBoundingVolumeJob()
-    : AbstractPickingJob()
+    : AbstractPickingJob(*new PickBoundingVolumeJobPrivate(this))
     , m_pickersDirty(true)
 {
-    SET_JOB_RUN_STAT_TYPE(this, JobTypes::PickBoundingVolume, 0);
+    SET_JOB_RUN_STAT_TYPE(this, JobTypes::PickBoundingVolume, 0)
 }
 
 void PickBoundingVolumeJob::setRoot(Entity *root)
@@ -236,7 +324,8 @@ bool PickBoundingVolumeJob::runHelper()
                 // has moved out of the viewport In case of a button released
                 // outside of the viewport, we still want to notify the
                 // lastCurrent entity about this.
-                dispatchPickEvents(event.second, PickingUtils::HitList(), eventButton, eventButtons, eventModifiers, m_renderSettings->pickResultMode());
+                dispatchPickEvents(event.second, PickingUtils::HitList(), eventButton, eventButtons, eventModifiers, m_renderSettings->pickResultMode(),
+                                   vca.viewportNodeId);
                 continue;
             }
 
@@ -278,7 +367,8 @@ bool PickBoundingVolumeJob::runHelper()
             }
 
             // Dispatch events based on hit results
-            dispatchPickEvents(event.second, sphereHits, eventButton, eventButtons, eventModifiers, m_renderSettings->pickResultMode());
+            dispatchPickEvents(event.second, sphereHits, eventButton, eventButtons, eventModifiers, m_renderSettings->pickResultMode(),
+                               vca.viewportNodeId);
         }
     }
 
@@ -295,8 +385,11 @@ void PickBoundingVolumeJob::dispatchPickEvents(const QMouseEvent &event,
                                                QPickEvent::Buttons eventButton,
                                                int eventButtons,
                                                int eventModifiers,
-                                               bool allHitsRequested)
+                                               bool allHitsRequested,
+                                               Qt3DCore::QNodeId viewportNodeId)
 {
+    Q_D(PickBoundingVolumeJob);
+
     ObjectPicker *lastCurrentPicker = m_manager->objectPickerManager()->data(m_currentPicker);
     // If we have hits
     if (!sphereHits.isEmpty()) {
@@ -380,37 +473,43 @@ void PickBoundingVolumeJob::dispatchPickEvents(const QMouseEvent &event,
                     // Store pressed object handle
                     m_currentPicker = objectPickerHandle;
                     // Send pressed event to m_currentPicker
-                    objectPicker->onPressed(pickEvent);
+                    d->dispatches.push_back({objectPicker->peerId(), event.type(), pickEvent, viewportNodeId});
+                    objectPicker->setPressed(true);
                     break;
                 }
 
                 case QEvent::MouseButtonRelease: {
                     // Only send the release event if it was pressed
-                    if (objectPicker->isPressed())
-                        objectPicker->onReleased(pickEvent);
+                    if (objectPicker->isPressed()) {
+                        d->dispatches.push_back({objectPicker->peerId(), event.type(), pickEvent, viewportNodeId});
+                        objectPicker->setPressed(false);
+                    }
                     if (lastCurrentPicker != nullptr && m_currentPicker == objectPickerHandle) {
-                        objectPicker->onClicked(pickEvent);
+                        d->dispatches.push_back({objectPicker->peerId(),
+                                                 PickBoundingVolumeJobPrivate::MouseButtonClick,
+                                                 pickEvent, viewportNodeId});
                         m_currentPicker = HObjectPicker();
                     }
                     break;
                 }
 #if QT_CONFIG(gestures)
                 case QEvent::Gesture: {
-                    objectPicker->onClicked(pickEvent);
+                    d->dispatches.push_back({objectPicker->peerId(),
+                                             PickBoundingVolumeJobPrivate::MouseButtonClick,
+                                             pickEvent, viewportNodeId});
                     break;
                 }
 #endif
                 case QEvent::MouseMove: {
-                    if ((objectPicker->isPressed() || objectPicker->isHoverEnabled()) && objectPicker->isDragEnabled()) {
-                        objectPicker->onMoved(pickEvent);
-                    }
+                    if ((objectPicker->isPressed() || objectPicker->isHoverEnabled()) && objectPicker->isDragEnabled())
+                        d->dispatches.push_back({objectPicker->peerId(), event.type(), pickEvent, viewportNodeId});
                     Q_FALLTHROUGH(); // fallthrough
                 }
                 case QEvent::HoverMove: {
                     if (!m_hoveredPickers.contains(objectPickerHandle)) {
                         if (objectPicker->isHoverEnabled()) {
                             // Send entered event to objectPicker
-                            objectPicker->onEntered();
+                            d->dispatches.push_back({objectPicker->peerId(), QEvent::Enter, pickEvent, viewportNodeId});
                             // and save it in the hoveredPickers
                             m_hoveredPickers.push_back(objectPickerHandle);
                         }
@@ -437,7 +536,8 @@ void PickBoundingVolumeJob::dispatchPickEvents(const QMouseEvent &event,
             if (lastCurrentPicker != nullptr) {
                 m_currentPicker = HObjectPicker();
                 QPickEventPtr pickEvent(new QPickEvent);
-                lastCurrentPicker->onReleased(pickEvent);
+                lastCurrentPicker->setPressed(false);
+                d->dispatches.push_back({lastCurrentPicker->peerId(), event.type(), pickEvent, viewportNodeId});
             }
             break;
         }
@@ -449,12 +549,15 @@ void PickBoundingVolumeJob::dispatchPickEvents(const QMouseEvent &event,
 
 void PickBoundingVolumeJob::clearPreviouslyHoveredPickers()
 {
+    Q_D(PickBoundingVolumeJob);
+
     for (const HObjectPicker &pickHandle : qAsConst(m_hoveredPickersToClear)) {
         ObjectPicker *pick = m_manager->objectPickerManager()->data(pickHandle);
         if (pick)
-            pick->onExited();
+            d->dispatches.push_back({pick->peerId(), QEvent::Leave, {}, {}});
         m_hoveredPickers.removeAll(pickHandle);
     }
+
     m_hoveredPickersToClear.clear();
 }
 

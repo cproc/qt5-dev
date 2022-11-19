@@ -26,13 +26,15 @@
 **
 ****************************************************************************/
 
+// TODO Remove in Qt6
+#include <QtCore/qcompilerdetection.h>
+QT_WARNING_DISABLE_DEPRECATED
 
 #include <QtTest/QTest>
 #include <Qt3DRender/qtexture.h>
 #include <Qt3DRender/private/qtexture_p.h>
 #include <QObject>
 #include <QSignalSpy>
-#include <Qt3DCore/qpropertyupdatedchange.h>
 #include <Qt3DCore/private/qnodecreatedchangegenerator_p.h>
 #include <Qt3DCore/qnodecreatedchange.h>
 #include "testpostmanarbiter.h"
@@ -168,15 +170,13 @@ private Q_SLOTS:
             QCoreApplication::processEvents();
 
             // THEN
-            QCOMPARE(arbiter.events.size(), 1);
-            const auto change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-            QCOMPARE(change->propertyName(), "generator");
-            QCOMPARE(change->type(), Qt3DCore::PropertyUpdated);
+            QCOMPARE(arbiter.dirtyNodes.size(), 1);
+            QCOMPARE(arbiter.dirtyNodes.front(), &textureLoader);
 
-            const auto generator = qSharedPointerCast<Qt3DRender::QTextureFromSourceGenerator>(change->value().value<Qt3DRender::QTextureGeneratorPtr>());
+            Qt3DRender::QAbstractTexturePrivate *d = dynamic_cast<Qt3DRender::QAbstractTexturePrivate *>(Qt3DRender::QAbstractTexturePrivate::get(&textureLoader));
+            const auto generator = qSharedPointerCast<Qt3DRender::QTextureFromSourceGenerator>(d->dataFunctor());
             QVERIFY(generator);
             QCOMPARE(generator->url(), QUrl(QStringLiteral("Gary")));
-
 
             arbiter.events.clear();
         }
@@ -205,16 +205,15 @@ private Q_SLOTS:
             QCoreApplication::processEvents();
 
             // THEN
-            QCOMPARE(arbiter.events.size(), 1);
-            const auto change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-            QCOMPARE(change->propertyName(), "generator");
-            QCOMPARE(change->type(), Qt3DCore::PropertyUpdated);
+            QCOMPARE(arbiter.dirtyNodes.size(), 1);
+            QCOMPARE(arbiter.dirtyNodes.front(), &textureLoader);
 
-            const auto generator = qSharedPointerCast<Qt3DRender::QTextureFromSourceGenerator>(change->value().value<Qt3DRender::QTextureGeneratorPtr>());
+            Qt3DRender::QAbstractTexturePrivate *d = dynamic_cast<Qt3DRender::QAbstractTexturePrivate *>(Qt3DRender::QAbstractTexturePrivate::get(&textureLoader));
+            const auto generator = qSharedPointerCast<Qt3DRender::QTextureFromSourceGenerator>(d->dataFunctor());
             QVERIFY(generator);
             QCOMPARE(generator->isMirrored(), false);
 
-            arbiter.events.clear();
+            arbiter.dirtyNodes.clear();
         }
 
         {
@@ -223,7 +222,7 @@ private Q_SLOTS:
             QCoreApplication::processEvents();
 
             // THEN
-            QCOMPARE(arbiter.events.size(), 0);
+            QCOMPARE(arbiter.dirtyNodes.size(), 0);
         }
 
     }

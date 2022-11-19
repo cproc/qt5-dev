@@ -5,11 +5,13 @@
  * found in the LICENSE file.
  */
 
-#include "SkCpu.h"
-#include "SkOnce.h"
+#include "include/core/SkStream.h"
+#include "include/core/SkString.h"
+#include "include/private/SkOnce.h"
+#include "src/core/SkCpu.h"
 
 #if defined(SK_CPU_X86)
-    #if defined(SK_BUILD_FOR_WIN)
+    #if defined(_MSC_VER)
         #include <intrin.h>
         static void cpuid (uint32_t abcd[4]) { __cpuid  ((int*)abcd, 1);    }
         static void cpuid7(uint32_t abcd[4]) { __cpuidex((int*)abcd, 7, 0); }
@@ -72,14 +74,17 @@
 
 #elif defined(SK_CPU_ARM64) && defined(__FreeBSD__)
     #include <machine/armreg.h>
+    #ifndef ID_AA64ISAR0_CRC32_VAL
+    #define ID_AA64ISAR0_CRC32_VAL ID_AA64ISAR0_CRC32
+    #endif
 
     static uint32_t read_cpu_features() {
         uint32_t features = 0;
 #if !defined(__GENODE__)
         uint64_t id_aa64isar0;
 
-        id_aa64isar0 = READ_SPECIALREG(ID_AA64ISAR0_EL1);
-        if (ID_AA64ISAR0_CRC32(id_aa64isar0) == ID_AA64ISAR0_CRC32_BASE) {
+        id_aa64isar0 = READ_SPECIALREG(id_aa64isar0_el1);
+        if (ID_AA64ISAR0_CRC32_VAL(id_aa64isar0) == ID_AA64ISAR0_CRC32_BASE) {
 #endif
             features |= SkCpu::CRC32;
 #if !defined(__GENODE__)
@@ -96,9 +101,42 @@
                        kHWCAP_ASIMDHP = (1<<10);
 
         uint32_t features = 0;
+#if defined(__FreeBSD__)
+        uint32_t hwcaps = 0;
+        elf_aux_info(AT_HWCAP, &hwcaps, sizeof(hwcaps));
+#else
         uint32_t hwcaps = getauxval(AT_HWCAP);
+#endif
         if (hwcaps & kHWCAP_CRC32  ) { features |= SkCpu::CRC32; }
         if (hwcaps & kHWCAP_ASIMDHP) { features |= SkCpu::ASIMDHP; }
+
+        // The Samsung Mongoose 3 core sets the ASIMDHP bit but doesn't support it.
+        for (int core = 0; features & SkCpu::ASIMDHP; core++) {
+            // These /sys files contain the core's MIDR_EL1 register, the source of
+            // CPU {implementer, variant, part, revision} you'd see in /proc/cpuinfo.
+            SkString path =
+                SkStringPrintf("/sys/devices/system/cpu/cpu%d/regs/identification/midr_el1", core);
+
+            // Can't use SkData::MakeFromFileName() here, I think because /sys can't be mmap()'d.
+            SkFILEStream midr_el1(path.c_str());
+            if (!midr_el1.isValid()) {
+                // This is our ordinary exit path.
+                // If we ask for MIDR_EL1 from a core that doesn't exist, we've checked all cores.
+                if (core == 0) {
+                    // On the other hand, if we can't read MIDR_EL1 from any core, assume the worst.
+                    features &= ~(SkCpu::ASIMDHP);
+                }
+                break;
+            }
+
+            const char kMongoose3[] = "0x00000000531f0020";  // 53 == Samsung.
+            char buf[SK_ARRAY_COUNT(kMongoose3) - 1];  // No need for the terminating \0.
+
+            if (SK_ARRAY_COUNT(buf) != midr_el1.read(buf, SK_ARRAY_COUNT(buf))
+                          || 0 == memcmp(kMongoose3, buf, SK_ARRAY_COUNT(buf))) {
+                features &= ~(SkCpu::ASIMDHP);
+            }
+        }
         return features;
     }
 
@@ -113,12 +151,7 @@
         const uint32_t kHWCAP_VFPv4 = (1<<16);
 
         uint32_t features = 0;
-#if defined(__FreeBSD__)
-        uint32_t hwcaps = 0;
-        elf_aux_info(AT_HWCAP, &hwcaps, sizeof(hwcaps));
-#else
         uint32_t hwcaps = getauxval(AT_HWCAP);
-#endif
         if (hwcaps & kHWCAP_NEON ) {
             features |= SkCpu::NEON;
             if (hwcaps & kHWCAP_VFPv4) { features |= SkCpu::NEON_FMA|SkCpu::VFP_FP16; }

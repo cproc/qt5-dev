@@ -36,7 +36,7 @@
 QT_BEGIN_NAMESPACE
 
 AmbientProperties::AmbientProperties(QWidget *parent)
-: QDialog(parent), container(0)
+: QDialog(parent), container(nullptr)
 {
     setupUi(this);
 
@@ -122,7 +122,7 @@ QWidgetList AmbientProperties::mdiAreaWidgets() const
     QWidgetList result;
 
     if (QMdiArea *mdiArea = qobject_cast<QMdiArea*>(container)) {
-        const QList<QMdiSubWindow *> mdiSubWindows = mdiArea->subWindowList();
+        const auto mdiSubWindows = mdiArea->subWindowList();
         for (const QMdiSubWindow *subWindow : mdiSubWindows)
             result.push_back(subWindow->widget());
     }

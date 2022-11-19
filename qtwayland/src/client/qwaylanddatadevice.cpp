@@ -47,6 +47,7 @@
 #include "qwaylandinputdevice_p.h"
 #include "qwaylanddisplay_p.h"
 #include "qwaylandabstractdecoration_p.h"
+#include "qwaylandsurface_p.h"
 
 #include <QtCore/QMimeData>
 #include <QtGui/QGuiApplication>
@@ -80,7 +81,14 @@ QWaylandDataOffer *QWaylandDataDevice::selectionOffer() const
 
 void QWaylandDataDevice::invalidateSelectionOffer()
 {
+    if (m_selectionOffer.isNull())
+        return;
+
     m_selectionOffer.reset();
+
+#if QT_CONFIG(clipboard)
+    QGuiApplicationPrivate::platformIntegration()->clipboard()->emitChanged(QClipboard::Clipboard);
+#endif
 }
 
 QWaylandDataSource *QWaylandDataDevice::selectionSource() const
@@ -104,9 +112,10 @@ QWaylandDataOffer *QWaylandDataDevice::dragOffer() const
 
 bool QWaylandDataDevice::startDrag(QMimeData *mimeData, QWaylandWindow *icon)
 {
-    QWaylandWindow *origin = m_display->currentInputDevice()->pointerFocus();
+    auto *seat = m_display->currentInputDevice();
+    auto *origin = seat->pointerFocus();
     if (!origin)
-        origin = m_display->currentInputDevice()->touchFocus();
+        origin = seat->touchFocus();
 
     if (!origin) {
         qCDebug(lcQpaWayland) << "Couldn't start a drag because the origin window could not be found.";
@@ -116,7 +125,7 @@ bool QWaylandDataDevice::startDrag(QMimeData *mimeData, QWaylandWindow *icon)
     m_dragSource.reset(new QWaylandDataSource(m_display->dndSelectionHandler(), mimeData));
     connect(m_dragSource.data(), &QWaylandDataSource::cancelled, this, &QWaylandDataDevice::dragSourceCancelled);
 
-    start_drag(m_dragSource->object(), origin->object(), icon->object(), m_display->currentInputDevice()->serial());
+    start_drag(m_dragSource->object(), origin->wlSurface(), icon->wlSurface(), m_display->currentInputDevice()->serial());
     return true;
 }
 
@@ -148,7 +157,9 @@ void QWaylandDataDevice::data_device_drop()
         return;
     }
 
-    QPlatformDropQtResponse response = QWindowSystemInterface::handleDrop(m_dragWindow, dragData, m_dragPoint, supportedActions);
+    QPlatformDropQtResponse response = QWindowSystemInterface::handleDrop(m_dragWindow, dragData, m_dragPoint, supportedActions,
+                                                                          QGuiApplication::mouseButtons(),
+                                                                          QGuiApplication::keyboardModifiers());
 
     if (drag) {
         static_cast<QWaylandDrag *>(QGuiApplicationPrivate::platformIntegration()->drag())->finishDrag(response);
@@ -178,7 +189,9 @@ void QWaylandDataDevice::data_device_enter(uint32_t serial, wl_surface *surface,
         supportedActions = Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
     }
 
-    const QPlatformDragQtResponse &response = QWindowSystemInterface::handleDrag(m_dragWindow, dragData, m_dragPoint, supportedActions);
+    const QPlatformDragQtResponse &response = QWindowSystemInterface::handleDrag(m_dragWindow, dragData, m_dragPoint, supportedActions,
+                                                                                 QGuiApplication::mouseButtons(),
+                                                                                 QGuiApplication::keyboardModifiers());
 
     if (drag) {
         static_cast<QWaylandDrag *>(QGuiApplicationPrivate::platformIntegration()->drag())->setResponse(response);
@@ -194,7 +207,9 @@ void QWaylandDataDevice::data_device_enter(uint32_t serial, wl_surface *surface,
 void QWaylandDataDevice::data_device_leave()
 {
     if (m_dragWindow)
-        QWindowSystemInterface::handleDrag(m_dragWindow, nullptr, QPoint(), Qt::IgnoreAction);
+        QWindowSystemInterface::handleDrag(m_dragWindow, nullptr, QPoint(), Qt::IgnoreAction,
+                                           QGuiApplication::mouseButtons(),
+                                           QGuiApplication::keyboardModifiers());
 
     QDrag *drag = static_cast<QWaylandDrag *>(QGuiApplicationPrivate::platformIntegration()->drag())->currentDrag();
     if (!drag) {
@@ -223,7 +238,9 @@ void QWaylandDataDevice::data_device_motion(uint32_t time, wl_fixed_t x, wl_fixe
         supportedActions = Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
     }
 
-    QPlatformDragQtResponse response = QWindowSystemInterface::handleDrag(m_dragWindow, dragData, m_dragPoint, supportedActions);
+    QPlatformDragQtResponse response = QWindowSystemInterface::handleDrag(m_dragWindow, dragData, m_dragPoint, supportedActions,
+                                                                          QGuiApplication::mouseButtons(),
+                                                                          QGuiApplication::keyboardModifiers());
 
     if (drag) {
         static_cast<QWaylandDrag *>(QGuiApplicationPrivate::platformIntegration()->drag())->setResponse(response);

@@ -39,7 +39,7 @@
 QT_BEGIN_NAMESPACE
 
 ChangeProperties::ChangeProperties(QWidget *parent)
-: QDialog(parent), activex(0)
+: QDialog(parent), activex(nullptr)
 {
     setupUi(this);
 
@@ -60,9 +60,9 @@ void ChangeProperties::setControl(QAxWidget *ax)
 
 void ChangeProperties::on_listProperties_currentItemChanged(QTreeWidgetItem *current)
 {
-    editValue->setEnabled(current != 0);
-    buttonSet->setEnabled(current != 0);
-    valueLabel->setEnabled(current != 0);
+    editValue->setEnabled(current != nullptr);
+    buttonSet->setEnabled(current != nullptr);
+    valueLabel->setEnabled(current != nullptr);
 
     if (!current)
         return;
@@ -144,7 +144,7 @@ void ChangeProperties::on_buttonSet_clicked()
     case QVariant::List:
         {
             QStringList txtList = editValue->text().split(QRegularExpression(QLatin1String("[,;]")));
-            QList<QVariant> varList;
+            QVariantList varList;
             for (int i = 0; i < txtList.count(); ++i) {
                 QVariant svar(txtList.at(i));
                 QString str = svar.toString();
@@ -234,7 +234,7 @@ void ChangeProperties::updateProperties()
                 break;
             case QVariant::List:
                 {
-                    const QList<QVariant> varList = var.toList();
+                    const auto varList = var.toList();
                     QStringList strList;
                     for (const auto &var : varList)
                         strList << var.toString();

@@ -102,7 +102,7 @@ public:
         inputEdit = new InputEdit();
         QHBoxLayout *hbox = new QHBoxLayout(this);
         hbox->setSpacing(0);
-        hbox->setMargin(0);
+        hbox->setContentsMargins(0, 0, 0, 0);
         hbox->addWidget(promptLabel);
         hbox->addWidget(inputEdit);
 
@@ -315,7 +315,7 @@ void QScriptDebuggerConsoleWidgetPrivate::_q_onCompletionTaskFinished()
 }
 
 QScriptDebuggerConsoleWidget::QScriptDebuggerConsoleWidget(QWidget *parent)
-    : QScriptDebuggerConsoleWidgetInterface(*new QScriptDebuggerConsoleWidgetPrivate, parent, 0)
+    : QScriptDebuggerConsoleWidgetInterface(*new QScriptDebuggerConsoleWidgetPrivate, parent, {})
 {
     Q_D(QScriptDebuggerConsoleWidget);
     d->commandLine = new CommandLine();
@@ -323,7 +323,7 @@ QScriptDebuggerConsoleWidget::QScriptDebuggerConsoleWidget(QWidget *parent)
     d->outputEdit = new QScriptDebuggerConsoleWidgetOutputEdit();
     QVBoxLayout *vbox = new QVBoxLayout(this);
     vbox->setSpacing(0);
-    vbox->setMargin(0);
+    vbox->setContentsMargins(0, 0, 0, 0);
     vbox->addWidget(d->outputEdit);
     vbox->addWidget(d->commandLine);
 

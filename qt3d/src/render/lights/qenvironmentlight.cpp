@@ -42,6 +42,8 @@
 #include "qabstracttexture.h"
 #include <QVector3D>
 
+#include <cmath>
+
 QT_BEGIN_NAMESPACE
 
 namespace Qt3DRender
@@ -98,6 +100,9 @@ void QEnvironmentLightPrivate::_q_updateEnvMapsSize()
                                  m_specular->height(),
                                  m_specular->depth());
     m_shaderData->setProperty("specularSize", QVariant::fromValue(specularSize));
+
+    const int levels = int(std::log2(specularSize.x() > 0.0f ? specularSize.x() : 1.0f)) + 1;
+    m_shaderData->setProperty("specularMipLevels", QVariant::fromValue(levels));
 }
 
 Qt3DCore::QNodeCreatedChangeBasePtr QEnvironmentLight::createNodeCreationChange() const
@@ -158,6 +163,9 @@ QEnvironmentLight::~QEnvironmentLight()
     Holds the current environment irradiance map texture.
 
     By default, the environment irradiance texture is null.
+
+    \note The exact meaning and use of this property is up to the
+          material implementation.
 */
 
 /*!
@@ -166,6 +174,9 @@ QEnvironmentLight::~QEnvironmentLight()
     Holds the current environment irradiance map texture.
 
     By default, the environment irradiance texture is null.
+
+    \note The exact meaning and use of this property is up to the
+          material implementation.
 */
 QAbstractTexture *QEnvironmentLight::irradiance() const
 {
@@ -179,6 +190,9 @@ QAbstractTexture *QEnvironmentLight::irradiance() const
     Holds the current environment specular map texture.
 
     By default, the environment specular texture is null.
+
+    \note The exact meaning and use of this property is up to the
+          material implementation.
 */
 
 /*!
@@ -187,6 +201,9 @@ QAbstractTexture *QEnvironmentLight::irradiance() const
     Holds the current environment specular map texture.
 
     By default, the environment specular texture is null.
+
+    \note The exact meaning and use of this property is up to the
+          material implementation.
 */
 QAbstractTexture *QEnvironmentLight::specular() const
 {

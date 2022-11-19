@@ -2,9 +2,9 @@ include (../xmlpatterns.pri)
 
 TARGET   = $$XMLPATTERNS_SDK
 TEMPLATE = lib
-DEFINES += Q_PATTERNISTSDK_BUILDING QT_ENABLE_QEXPLICITLYSHAREDDATAPOINTER_STATICCAST
+DEFINES += QT_ENABLE_QEXPLICITLYSHAREDDATAPOINTER_STATICCAST
 
-CONFIG += exceptions
+CONFIG += exceptions static
 
 # lib_bundle ensures we get a framework on OS X, a library bundle.
 CONFIG  += resources
@@ -53,7 +53,8 @@ HEADERS = ASTItem.h                     \
           XQTSTestCase.h                \
           XSDTestSuiteHandler.h         \
           XSDTSTestCase.h               \
-          XSLTTestSuiteHandler.h
+          XSLTTestSuiteHandler.h        \
+          XmlParseHelper.h
 
 SOURCES = ASTItem.cpp                   \
           DebugExpressionFactory.cpp    \
@@ -80,4 +81,5 @@ SOURCES = ASTItem.cpp                   \
           XQTSTestCase.cpp              \
           XSDTestSuiteHandler.cpp       \
           XSDTSTestCase.cpp             \
-          XSLTTestSuiteHandler.cpp
+          XSLTTestSuiteHandler.cpp      \
+          XmlParseHelper.cpp

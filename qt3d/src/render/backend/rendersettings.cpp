@@ -42,8 +42,7 @@
 #include <Qt3DRender/QFrameGraphNode>
 #include <Qt3DRender/private/abstractrenderer_p.h>
 #include <Qt3DRender/private/qrendersettings_p.h>
-#include <Qt3DCore/qnodecommand.h>
-#include <Qt3DCore/qpropertyupdatedchange.h>
+#include <Qt3DRender/private/qrendercapabilities_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -63,42 +62,46 @@ RenderSettings::RenderSettings()
 {
 }
 
-void RenderSettings::initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change)
+void RenderSettings::syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime)
 {
-    const auto typedChange = qSharedPointerCast<Qt3DCore::QNodeCreatedChange<QRenderSettingsData>>(change);
-    const auto &data = typedChange->data;
-    m_activeFrameGraph = data.activeFrameGraphId;
-    m_renderPolicy = data.renderPolicy;
-    m_pickMethod = data.pickMethod;
-    m_pickResultMode = data.pickResultMode;
-    m_pickWorldSpaceTolerance = data.pickWorldSpaceTolerance;
-    m_faceOrientationPickingMode = data.faceOrientationPickingMode;
-}
+    const QRenderSettings *node = qobject_cast<const QRenderSettings *>(frontEnd);
+    if (!node)
+        return;
 
-void RenderSettings::sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e)
-{
-    if (e->type() == PropertyUpdated) {
-        QPropertyUpdatedChangePtr propertyChange = qSharedPointerCast<QPropertyUpdatedChange>(e);
-        if (propertyChange->propertyName() == QByteArrayLiteral("pickMethod"))
-            m_pickMethod = propertyChange->value().value<QPickingSettings::PickMethod>();
-        else if (propertyChange->propertyName() == QByteArrayLiteral("pickResult"))
-            m_pickResultMode = propertyChange->value().value<QPickingSettings::PickResultMode>();
-        else if (propertyChange->propertyName() == QByteArrayLiteral("faceOrientationPickingMode"))
-            m_faceOrientationPickingMode = propertyChange->value().value<QPickingSettings::FaceOrientationPickingMode>();
-        else if (propertyChange->propertyName() == QByteArrayLiteral("pickWorldSpaceTolerance"))
-            m_pickWorldSpaceTolerance = propertyChange->value().toFloat();
-        else if (propertyChange->propertyName() == QByteArrayLiteral("activeFrameGraph"))
-            m_activeFrameGraph = propertyChange->value().value<QNodeId>();
-        else if (propertyChange->propertyName() == QByteArrayLiteral("renderPolicy"))
-            m_renderPolicy = propertyChange->value().value<QRenderSettings::RenderPolicy>();
-        markDirty(AbstractRenderer::AllDirty);
-    } else if (e->type() == CommandRequested) {
-        QNodeCommandPtr command = qSharedPointerCast<QNodeCommand>(e);
-        if (command->name() == QLatin1Literal("InvalidateFrame"))
-            markDirty(AbstractRenderer::AllDirty);
+    BackendNode::syncFromFrontEnd(frontEnd, firstTime);
+
+    const Qt3DCore::QNodeId activeFGId = Qt3DCore::qIdForNode(node->activeFrameGraph());
+    if (activeFGId != m_activeFrameGraph) {
+        m_activeFrameGraph = activeFGId;
     }
 
-    BackendNode::sceneChangeEvent(e);
+    if (node->renderPolicy() != m_renderPolicy) {
+        m_renderPolicy = node->renderPolicy();
+    }
+
+    auto ncnode = const_cast<QRenderSettings *>(node);
+    if (ncnode->pickingSettings()->pickMethod() != m_pickMethod) {
+        m_pickMethod = ncnode->pickingSettings()->pickMethod();
+    }
+
+    if (ncnode->pickingSettings()->pickResultMode() != m_pickResultMode) {
+        m_pickResultMode = ncnode->pickingSettings()->pickResultMode();
+    }
+
+    if (!qFuzzyCompare(ncnode->pickingSettings()->worldSpaceTolerance(), m_pickWorldSpaceTolerance)) {
+        m_pickWorldSpaceTolerance = ncnode->pickingSettings()->worldSpaceTolerance();
+    }
+
+    if (ncnode->pickingSettings()->faceOrientationPickingMode() != m_faceOrientationPickingMode) {
+        m_faceOrientationPickingMode = ncnode->pickingSettings()->faceOrientationPickingMode();
+    }
+
+    if (firstTime)
+        m_capabilities = QRenderCapabilitiesPrivate::get(const_cast<QRenderSettings *>(node)->renderCapabilities())->toString();
+
+    // Either because something above as changed or if QRenderSettingsPrivate::invalidFrame()
+    // was called
+    markDirty(AbstractRenderer::AllDirty);
 }
 
 RenderSettingsFunctor::RenderSettingsFunctor(AbstractRenderer *renderer)
@@ -108,7 +111,7 @@ RenderSettingsFunctor::RenderSettingsFunctor(AbstractRenderer *renderer)
 
 Qt3DCore::QBackendNode *RenderSettingsFunctor::create(const Qt3DCore::QNodeCreatedChangeBasePtr &change) const
 {
-    Q_UNUSED(change);
+    Q_UNUSED(change)
     if (m_renderer->settings() != nullptr) {
         qWarning() << "Renderer settings already exists";
         return nullptr;
@@ -122,17 +125,19 @@ Qt3DCore::QBackendNode *RenderSettingsFunctor::create(const Qt3DCore::QNodeCreat
 
 Qt3DCore::QBackendNode *RenderSettingsFunctor::get(Qt3DCore::QNodeId id) const
 {
-    Q_UNUSED(id);
+    Q_UNUSED(id)
     return m_renderer->settings();
 }
 
 void RenderSettingsFunctor::destroy(Qt3DCore::QNodeId id) const
 {
-    Q_UNUSED(id);
+    Q_UNUSED(id)
     // Deletes the old settings object
     auto settings = m_renderer->settings();
-    delete settings;
-    m_renderer->setSettings(nullptr);
+    if (settings && settings->peerId() == id) {
+        m_renderer->setSettings(nullptr);
+        delete settings;
+    }
 }
 
 } // namespace Render

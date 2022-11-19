@@ -137,6 +137,7 @@ qtConfig(settings) {
     } else: darwin:!nacl {
         SOURCES += io/qsettings_mac.cpp
     }
+    wasm : SOURCES += io/qsettings_wasm.cpp
 }
 
 win32 {
@@ -159,7 +160,8 @@ win32 {
             io/qwindowspipereader.cpp \
             io/qwindowspipewriter.cpp
 
-        LIBS += -lmpr -lnetapi32 -luserenv
+        LIBS += -lmpr -luserenv
+        QMAKE_USE_PRIVATE += netapi32
     } else {
         SOURCES += \
                 io/qstandardpaths_winrt.cpp \
@@ -176,7 +178,7 @@ win32 {
                 io/qfilesystemengine_unix.cpp \
                 io/qfilesystemiterator_unix.cpp
 
-#        !integrity:!uikit {
+#        !integrity:!uikit:!rtems {
 #            SOURCES += io/forkfd_qt.cpp
 #            HEADERS += \
 #                     ../3rdparty/forkfd/forkfd.h
@@ -186,7 +188,9 @@ win32 {
             SOURCES += io/qstorageinfo_mac.cpp
             qtConfig(processenvironment): \
                 OBJECTIVE_SOURCES += io/qprocess_darwin.mm
-            OBJECTIVE_SOURCES += io/qstandardpaths_mac.mm
+            OBJECTIVE_SOURCES += \
+                io/qstandardpaths_mac.mm \
+                io/qfilesystemengine_mac.mm
             osx {
                 LIBS += -framework DiskArbitration -framework IOKit
             } else {

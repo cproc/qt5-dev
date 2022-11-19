@@ -52,11 +52,13 @@
 //
 
 #include <Qt3DCore/qaspectjob.h>
+#include <Qt3DCore/private/qaspectjob_p.h>
 #include <Qt3DCore/qnodeid.h>
 #include <Qt3DRender/qsceneloader.h>
 #include <QSharedPointer>
 #include <QUrl>
 #include <functional>
+#include <Qt3DRender/private/qt3drender_global_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -69,7 +71,25 @@ namespace Render {
 class Scene;
 class NodeManagers;
 
-class Q_AUTOTEST_EXPORT LoadSceneJob : public Qt3DCore::QAspectJob
+class LoadSceneJob;
+
+class Q_AUTOTEST_EXPORT LoadSceneJobPrivate : public Qt3DCore::QAspectJobPrivate
+{
+public:
+    explicit LoadSceneJobPrivate(LoadSceneJob *q): q_ptr(q) {}
+    ~LoadSceneJobPrivate() override {}
+
+    void postFrame(Qt3DCore::QAspectManager *manager) override;
+
+    Qt3DCore::QEntity *m_sceneSubtree = nullptr;
+    QSceneLoader::Status m_status = QSceneLoader::None;
+
+    Q_DECLARE_PUBLIC(LoadSceneJob)
+private:
+    LoadSceneJob *q_ptr;
+};
+
+class Q_3DRENDERSHARED_PRIVATE_EXPORT LoadSceneJob : public Qt3DCore::QAspectJob
 {
 public:
     explicit LoadSceneJob(const QUrl &source, Qt3DCore::QNodeId sceneComponent);
@@ -91,10 +111,10 @@ private:
     NodeManagers *m_managers;
     QList<QSceneImporter *> m_sceneImporters;
 
-    Qt3DCore::QEntity *tryLoadScene(Scene *scene,
-                                    QSceneLoader::Status &finalStatus,
+    Qt3DCore::QEntity *tryLoadScene(QSceneLoader::Status &finalStatus,
                                     const QStringList &extensions,
                                     const std::function<void (QSceneImporter *)> &importerSetupFunc);
+    Q_DECLARE_PRIVATE(LoadSceneJob)
 };
 
 typedef QSharedPointer<LoadSceneJob> LoadSceneJobPtr;

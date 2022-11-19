@@ -47,6 +47,7 @@
 #include <QtCore/qstandardpaths.h>
 #include <QtCore/qtemporaryfile.h>
 #include <QtGui/QPainter>
+#include <QtGui/QTransform>
 #include <QMutexLocker>
 
 #include <QtWaylandClient/private/wayland-wayland-client-protocol.h>
@@ -151,9 +152,9 @@ QImage *QWaylandShmBuffer::imageInsideMargins(const QMargins &marginsIn)
 
 }
 
-QWaylandShmBackingStore::QWaylandShmBackingStore(QWindow *window)
+QWaylandShmBackingStore::QWaylandShmBackingStore(QWindow *window, QWaylandDisplay *display)
     : QPlatformBackingStore(window)
-    , mDisplay(QWaylandScreen::waylandScreenFromWindow(window)->display())
+    , mDisplay(display)
 {
 
 }
@@ -243,12 +244,13 @@ void QWaylandShmBackingStore::resize(const QSize &size, const QRegion &)
 
 QWaylandShmBuffer *QWaylandShmBackingStore::getBuffer(const QSize &size)
 {
-    foreach (QWaylandShmBuffer *b, mBuffers) {
+    const auto copy = mBuffers; // remove when ported to vector<unique_ptr> + remove_if
+    for (QWaylandShmBuffer *b : copy) {
         if (!b->busy()) {
             if (b->size() == size) {
                 return b;
             } else {
-                mBuffers.removeOne(b);
+                mBuffers.remove(b);
                 if (mBackBuffer == b)
                     mBackBuffer = nullptr;
                 delete b;
@@ -256,11 +258,11 @@ QWaylandShmBuffer *QWaylandShmBackingStore::getBuffer(const QSize &size)
         }
     }
 
-    static const int MAX_BUFFERS = 5;
-    if (mBuffers.count() < MAX_BUFFERS) {
+    static const size_t MAX_BUFFERS = 5;
+    if (mBuffers.size() < MAX_BUFFERS) {
         QImage::Format format = QPlatformScreen::platformScreenForWindow(window())->format();
         QWaylandShmBuffer *b = new QWaylandShmBuffer(mDisplay, size, format, waylandWindow()->scale());
-        mBuffers.prepend(b);
+        mBuffers.push_front(b);
         return b;
     }
     return nullptr;
@@ -288,20 +290,23 @@ void QWaylandShmBackingStore::resize(const QSize &size)
         buffer = getBuffer(sizeWithMargins);
     }
 
-    qsizetype oldSize = mBackBuffer ? mBackBuffer->image()->sizeInBytes() : 0;
+    qsizetype oldSizeInBytes = mBackBuffer ? mBackBuffer->image()->sizeInBytes() : 0;
+    qsizetype newSizeInBytes = buffer->image()->sizeInBytes();
+
     // mBackBuffer may have been deleted here but if so it means its size was different so we wouldn't copy it anyway
-    if (mBackBuffer != buffer && oldSize == buffer->image()->sizeInBytes()) {
-        memcpy(buffer->image()->bits(), mBackBuffer->image()->constBits(), buffer->image()->sizeInBytes());
-    }
+    if (mBackBuffer != buffer && oldSizeInBytes == newSizeInBytes)
+        memcpy(buffer->image()->bits(), mBackBuffer->image()->constBits(), newSizeInBytes);
+
     mBackBuffer = buffer;
+
     // ensure the new buffer is at the beginning of the list so next time getBuffer() will pick
     // it if possible
-    if (mBuffers.first() != buffer) {
-        mBuffers.removeOne(buffer);
-        mBuffers.prepend(buffer);
+    if (mBuffers.front() != buffer) {
+        mBuffers.remove(buffer);
+        mBuffers.push_front(buffer);
     }
 
-    if (windowDecoration() && window()->isVisible())
+    if (windowDecoration() && window()->isVisible() && oldSizeInBytes != newSizeInBytes)
         windowDecoration()->update();
 }
 
@@ -324,7 +329,7 @@ void QWaylandShmBackingStore::updateDecorations()
     qreal dp = sourceImage.devicePixelRatio();
     int dpWidth = int(sourceImage.width() / dp);
     int dpHeight = int(sourceImage.height() / dp);
-    QMatrix sourceMatrix;
+    QTransform sourceMatrix;
     sourceMatrix.scale(dp, dp);
     QRect target; // needs to be in device independent pixels
 
