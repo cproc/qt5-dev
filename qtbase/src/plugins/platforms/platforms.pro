@@ -1,6 +1,8 @@
 TEMPLATE = subdirs
 QT_FOR_CONFIG += gui-private
 
+genode: SUBDIRS += genode
+
 android:!android-embedded: SUBDIRS += android
 
 !android: SUBDIRS += minimal
@@ -38,9 +40,9 @@ qtConfig(linuxfb): SUBDIRS += linuxfb
 
 qtHaveModule(network):qtConfig(vnc): SUBDIRS += vnc
 
-freebsd {
-    SUBDIRS += bsdfb
-}
+#freebsd {
+#    SUBDIRS += bsdfb
+#}
 
 haiku {
     SUBDIRS += haiku
