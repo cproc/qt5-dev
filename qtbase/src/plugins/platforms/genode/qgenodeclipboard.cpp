@@ -27,8 +27,9 @@ QT_BEGIN_NAMESPACE
 static constexpr bool verbose = false;
 
 
-QGenodeClipboard::QGenodeClipboard(Genode::Env &env)
-: _clipboard_signal_handler(env.ep(), *this, &QGenodeClipboard::_clipboard_changed)
+QGenodeClipboard::QGenodeClipboard(Genode::Env &env, QGenodeSignalProxyThread &signal_proxy)
+: _signal_proxy(signal_proxy),
+  _clipboard_signal_handler(env.ep(), *this, &QGenodeClipboard::_handle_clipboard_changed)
 {
 	try {
 
@@ -53,8 +54,8 @@ QGenodeClipboard::QGenodeClipboard(Genode::Env &env)
 		}
 	} catch (...) { }
 
-	connect(this, SIGNAL(_clipboard_changed()),
-	        this, SLOT(_handle_clipboard()),
+	connect(&_signal_proxy, SIGNAL(clipboard_changed_signal()),
+	        this, SLOT(_clipboard_changed()),
 	        Qt::QueuedConnection);
 }
 
@@ -67,7 +68,13 @@ QGenodeClipboard::~QGenodeClipboard()
 }
 
 
-void QGenodeClipboard::_handle_clipboard()
+void QGenodeClipboard::_handle_clipboard_changed()
+{
+	_signal_proxy.clipboard_changed();
+}
+
+
+void QGenodeClipboard::_clipboard_changed()
 {
 	emitChanged(QClipboard::Clipboard);
 }

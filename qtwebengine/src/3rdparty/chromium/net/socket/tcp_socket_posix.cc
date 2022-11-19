@@ -59,6 +59,7 @@ namespace {
 
 // SetTCPKeepAlive sets SO_KEEPALIVE.
 bool SetTCPKeepAlive(int fd, bool enable, int delay) {
+#if 0
   // Enabling TCP keepalives is the same on all platforms.
   int on = enable ? 1 : 0;
   if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on))) {
@@ -88,6 +89,18 @@ bool SetTCPKeepAlive(int fd, bool enable, int delay) {
     PLOG(ERROR) << "Failed to set TCP_KEEPALIVE on fd: " << fd;
     return false;
   }
+#elif defined(OS_BSD)
+  // Set seconds until first TCP keep alive.
+  if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &delay, sizeof(delay))) {
+    PLOG(ERROR) << "Failed to set TCP_KEEPIDLE on fd: " << fd;
+    return false;
+  }
+  // Set seconds between TCP keep alives.
+  if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &delay, sizeof(delay))) {
+    PLOG(ERROR) << "Failed to set TCP_KEEPINTVL on fd: " << fd;
+    return false;
+  }
+#endif
 #endif
   return true;
 }
@@ -543,6 +556,7 @@ void TCPSocketPosix::LogConnectBegin(const AddressList& addresses) const {
 }
 
 void TCPSocketPosix::LogConnectEnd(int net_error) const {
+#if !defined(OS_GENODE)
   if (net_error != OK) {
     net_log_.EndEventWithNetErrorCode(NetLogEventType::TCP_CONNECT, net_error);
     return;
@@ -560,6 +574,13 @@ void TCPSocketPosix::LogConnectEnd(int net_error) const {
   net_log_.EndEvent(
       NetLogEventType::TCP_CONNECT,
       CreateNetLogSourceAddressCallback(storage.addr, storage.addr_len));
+#else
+  /*
+   * 'GetLocalAddress()' failed occasionally when the remote host had closed
+   * the connection (according to lwip) in the meantime. It's not clear
+   * why this is considered as fatal error in the original code path.
+   */
+#endif /* OS_GENODE */
 }
 
 void TCPSocketPosix::ReadCompleted(const scoped_refptr<IOBuffer>& buf,

@@ -20,6 +20,9 @@
 #include <input/event.h>
 #include <gui_session/connection.h>
 
+/* libc includes */
+#include <libc/component.h>
+
 /* EGL includes */
 #include <EGL/egl.h>
 
@@ -31,6 +34,8 @@
 /* Qoost includes */
 #include <qoost/qmember.h>
 
+class QGenodeSignalProxyThread;
+
 QT_BEGIN_NAMESPACE
 
 class __attribute__ ((visibility ("default"))) QGenodePlatformWindow;
@@ -41,6 +46,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 	private:
 
 		Genode::Env                &_env;
+		QGenodeSignalProxyThread   &_signal_proxy;
 		QString                     _gui_session_label;
 		static QStringList          _gui_session_label_list;
 		Gui::Connection             _gui_session;
@@ -86,9 +92,12 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		Genode::Io_signal_handler<QGenodePlatformWindow> _input_signal_handler;
 		Genode::Io_signal_handler<QGenodePlatformWindow> _mode_changed_signal_handler;
 
+		void _handle_input();
+		void _handle_mode_changed();
+
 		QVector<QWindowSystemInterface::TouchPoint>  _touch_points { 16 };
 		QTouchDevice                                *_touch_device;
-		QTouchDevice * _init_touch_device();
+		QTouchDevice                                *_init_touch_device();
 
 		void _process_touch_events(QList<Input::Event> const &events);
 
@@ -105,18 +114,14 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 
 	private Q_SLOTS:
 
-		void _handle_input();
-		void _handle_mode_changed();
-
-	Q_SIGNALS:
-
 		void _input();
 		void _mode_changed();
 
 	public:
 
-		QGenodePlatformWindow(Genode::Env &env, QWindow *window,
-		                      int screen_width, int screen_height);
+		QGenodePlatformWindow(Genode::Env &env,
+		                      QGenodeSignalProxyThread &signal_proxy,
+		                      QWindow *window);
 
 		~QGenodePlatformWindow();
 

@@ -14,7 +14,7 @@
 #if defined(OS_MACOSX)
 #include <mach/mach.h>
 #endif
-#if defined(OS_LINUX)
+#if defined(OS_BSD) || defined(OS_LINUX)
 #include <sys/resource.h>
 
 #include <algorithm>
@@ -48,7 +48,7 @@ int GetAccessFlags(PageAccessibilityConfiguration accessibility) {
   }
 }
 
-#if defined(OS_LINUX) && defined(ARCH_CPU_64_BITS)
+#if (defined(OS_BSD) || defined(OS_LINUX)) && defined(ARCH_CPU_64_BITS)
 
 // Multiple guarded memory regions may exceed the process address space limit.
 // This function will raise or lower the limit by |amount|.
@@ -68,7 +68,7 @@ bool AdjustAddressSpaceLimit(int64_t amount) {
 // schemes that reduce that to 4 GiB.
 constexpr size_t kMinimumGuardedMemorySize = 1ULL << 32;  // 4 GiB
 
-#endif  // defined(OS_LINUX) && defined(ARCH_CPU_64_BITS)
+#endif  // (defined(OS_BSD) || defined(OS_LINUX)) && defined(ARCH_CPU_64_BITS)
 
 void* SystemAllocPagesInternal(void* hint,
                                size_t length,
@@ -86,6 +86,13 @@ void* SystemAllocPagesInternal(void* hint,
 #endif
 
   int access_flag = GetAccessFlags(accessibility);
+#if defined(OS_GENODE)
+  /*
+   * The access type cannot be changed later with 'mprotect()' on Genode,
+   * but some memory needs to be executable.
+   */
+  access_flag |= PROT_EXEC;
+#endif
   void* ret =
       mmap(hint, length, access_flag, MAP_ANONYMOUS | MAP_PRIVATE, fd, 0);
   if (ret == MAP_FAILED) {
@@ -106,14 +113,18 @@ void* TrimMappingInternal(void* base,
   // We can resize the allocation run. Release unneeded memory before and after
   // the aligned range.
   if (pre_slack) {
+#if 0
     int res = munmap(base, pre_slack);
     CHECK(!res);
+#endif
     ret = reinterpret_cast<char*>(base) + pre_slack;
   }
+#if 0
   if (post_slack) {
     int res = munmap(reinterpret_cast<char*>(ret) + trim_length, post_slack);
     CHECK(!res);
   }
+#endif
   return ret;
 }
 
@@ -132,9 +143,17 @@ void SetSystemPagesAccessInternal(
 }
 
 void FreePagesInternal(void* address, size_t length) {
+#if defined(OS_GENODE)
+  /*
+   * Sometimes only parts of the originally allocated area are to be freed,
+   * which is currently not supported on Genode.
+   */
+  munmap(address, length);
+#else
   CHECK(!munmap(address, length));
+#endif
 
-#if defined(OS_LINUX) && defined(ARCH_CPU_64_BITS)
+#if (defined(OS_BSD) || defined(OS_LINUX)) && defined(ARCH_CPU_64_BITS)
   // Restore the address space limit.
   if (length >= kMinimumGuardedMemorySize) {
     CHECK(AdjustAddressSpaceLimit(-base::checked_cast<int64_t>(length)));

@@ -26,6 +26,9 @@
 /* Qt includes */
 #include <qpa/qplatformclipboard.h>
 
+/* local includes */
+#include "qgenodesignalproxythread.h"
+
 QT_BEGIN_NAMESPACE
 
 class QGenodeClipboard : public QObject, public QPlatformClipboard
@@ -34,8 +37,12 @@ class QGenodeClipboard : public QObject, public QPlatformClipboard
 
 	private:
 
+		QGenodeSignalProxyThread &_signal_proxy;
+
 		Genode::Attached_rom_dataspace              *_clipboard_ds = nullptr;
 		Genode::Io_signal_handler<QGenodeClipboard>  _clipboard_signal_handler;
+
+		void _handle_clipboard_changed();
 
 		Genode::Reporter *_clipboard_reporter = nullptr;
 
@@ -51,15 +58,11 @@ class QGenodeClipboard : public QObject, public QPlatformClipboard
 
 	private Q_SLOTS:
 
-		void _handle_clipboard();
-
-	Q_SIGNALS:
-
 		void _clipboard_changed();
 
 	public:
 
-		QGenodeClipboard(Genode::Env &env);
+		QGenodeClipboard(Genode::Env &env, QGenodeSignalProxyThread &signal_proxy);
 		~QGenodeClipboard();
 		QMimeData *mimeData(QClipboard::Mode mode = QClipboard::Clipboard);
 		void setMimeData(QMimeData *data, QClipboard::Mode mode = QClipboard::Clipboard);

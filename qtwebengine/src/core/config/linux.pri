@@ -13,7 +13,7 @@ gn_args += \
     use_gnome_keyring=false \
     linux_use_bundled_binutils=false \
     use_udev=true \
-    use_bundled_fontconfig=false \
+    use_bundled_fontconfig=true \
     use_sysroot=false \
     enable_session_service=false \
     is_cfi=false \
@@ -131,11 +131,13 @@ host_build {
     gn_args += custom_toolchain=\"$$QTWEBENGINE_OUT_ROOT/src/toolchain:target\"
     gn_args += host_toolchain=\"$$QTWEBENGINE_OUT_ROOT/src/toolchain:host\"
     GN_TARGET_CPU = $$gnArch($$QT_ARCH)
+    GN_TARGET_OS = $$gnOS()
     cross_compile {
         gn_args += v8_snapshot_toolchain=\"$$QTWEBENGINE_OUT_ROOT/src/toolchain:v8_snapshot\"
         # FIXME: we should set host_cpu in case host-toolchain doesn't match os arch,
         # but currently we don't it available at this point
         gn_args += target_cpu=\"$$GN_TARGET_CPU\"
+        gn_args += target_os=\"$$GN_TARGET_OS\"
     } else {
         gn_args += host_cpu=\"$$GN_TARGET_CPU\"
     }
@@ -188,6 +190,11 @@ host_build {
         gn_args += use_alsa=true
     } else {
         gn_args += use_alsa=false
+    }
+    qtConfig(webengine-sndio) {
+        gn_args += use_sndio=true
+    } else {
+        gn_args += use_sndio=false
     }
     !packagesExist(libpci): gn_args += use_libpci=false
 

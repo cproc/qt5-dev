@@ -9,8 +9,13 @@ import("//build/buildflag_header.gni")
 import("//build/config/sanitizers/sanitizers.gni")
 
 # Path to platform configuration files.
-platform_config_root =
-    "chromium/config/$ffmpeg_branding/$os_config/$ffmpeg_arch"
+if (!is_bsd) {
+  platform_config_root =
+      "chromium/config/$ffmpeg_branding/$os_config/$ffmpeg_arch"
+} else {
+  platform_config_root =
+      "chromium/config/$ffmpeg_branding/linux/$ffmpeg_arch"
+}
 
 has_nasm_deps =
     ffmpeg_asm_sources != [] &&
@@ -296,7 +301,7 @@ target(link_target_type, "ffmpeg_internal") {
     ]
     cflags += [
       "-std=c99",
-      "-pthread",
+      #"-pthread",
       "-fno-math-errno",
       "-fno-signed-zeros",
       "-fno-tree-vectorize",
@@ -320,11 +325,11 @@ target(link_target_type, "ffmpeg_internal") {
       # all unwinder-providing libraries).
 
       # librt for clock_gettime on precise
-      libs += [
-        "m",
-        "z",
-        "rt",
-      ]
+      #libs += [
+      #  "m",
+      #  "z",
+      #  "rt",
+      #]
     }
     if (is_component_ffmpeg) {
       # Export all symbols when building as component.

@@ -60,7 +60,7 @@
 #include <sys/resource.h>
 #endif
 
-#if !defined(_AIX) && !defined(V8_OS_FUCHSIA)
+#if !defined(_AIX) && !defined(V8_OS_FUCHSIA) && !defined(V8_OS_FREEBSD)
 #include <sys/syscall.h>
 #endif
 
@@ -320,6 +320,26 @@ bool OS::Release(void* address, size_t size) {
   return munmap(address, size) == 0;
 }
 
+
+#if defined(V8_OS_GENODE)
+
+#include <libc/genode.h>
+
+extern "C" int mprotect(void *addr, ::size_t len, int prot)
+{
+	/*
+	 * At least flush the cache for the area if it is to be made executable.
+	 * This is usually done by the Linux kernel and probably needed for ARM.
+	 */
+
+	if (prot & PROT_EXEC)
+		genode_cache_coherent(addr, len);
+
+	return 0;
+}
+#endif /* OS_GENODE */
+
+
 // static
 bool OS::SetPermissions(void* address, size_t size, MemoryPermission access) {
   DCHECK_EQ(0, reinterpret_cast<uintptr_t>(address) % CommitPageSize());
@@ -376,7 +396,7 @@ bool OS::DiscardSystemPages(void* address, size_t size) {
 
 // static
 bool OS::HasLazyCommits() {
-#if V8_OS_AIX || V8_OS_LINUX || V8_OS_MACOSX
+#if V8_OS_AIX || V8_OS_LINUX || V8_OS_MACOSX || V8_OS_FREEBSD
   return true;
 #else
   // TODO(bbudge) Return true for all POSIX platforms.
@@ -501,6 +521,12 @@ int OS::GetCurrentThreadId() {
   return static_cast<int>(syscall(__NR_gettid));
 #elif V8_OS_ANDROID
   return static_cast<int>(gettid());
+#elif V8_OS_DRAGONFLYBSD || defined(__DragonFly__)
+  return static_cast<int>(lwp_gettid());
+#elif V8_OS_FREEBSD && 0
+  return static_cast<int>(pthread_getthreadid_np());
+#elif V8_OS_NETBSD
+  return static_cast<int>(_lwp_self());
 #elif V8_OS_AIX
   return static_cast<int>(thread_self());
 #elif V8_OS_FUCHSIA
@@ -711,7 +737,7 @@ Thread::~Thread() {
 
 
 static void SetThreadName(const char* name) {
-#if V8_OS_DRAGONFLYBSD || V8_OS_FREEBSD || V8_OS_OPENBSD
+#if (V8_OS_DRAGONFLYBSD || V8_OS_FREEBSD || V8_OS_OPENBSD) && 0
   pthread_set_name_np(pthread_self(), name);
 #elif V8_OS_NETBSD
   STATIC_ASSERT(Thread::kMaxThreadNameLength <= PTHREAD_MAX_NAMELEN_NP);

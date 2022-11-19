@@ -22,6 +22,7 @@ SOURCES =   main.cpp \
 HEADERS =   qgenodeclipboard.h \
             qgenodeintegrationplugin.h \
             qgenodeplatformwindow.h \ 
+            qgenodesignalproxythread.h \
             qgenodewindowsurface.h
 
 OTHER_FILES += genode.json

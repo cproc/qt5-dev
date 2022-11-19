@@ -206,6 +206,7 @@ int SocketPosix::Connect(const SockaddrStorage& address,
     return MapSystemError(errno);
   }
 
+#if !defined(OS_GENODE)
   // There is a race-condition in the above code if the kernel receive a RST
   // packet for the "connect" call before the registration of the socket file
   // descriptor to the message loop pump. On most platform it is benign as the
@@ -224,6 +225,12 @@ int SocketPosix::Connect(const SockaddrStorage& address,
     write_socket_watcher_.StopWatchingFileDescriptor();
     return rv;
   }
+#else /* OS_GENODE */
+  /*
+   * Calling 'getsockopt()' with 'SO_ERROR' option without waiting for
+   * writability of the socket first is currently not supported.
+   */
+#endif
 
   write_callback_ = std::move(callback);
   waiting_connect_ = true;
@@ -568,7 +575,7 @@ void SocketPosix::ReadCompleted() {
 }
 
 int SocketPosix::DoWrite(IOBuffer* buf, int buf_len) {
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_BSD)
   // Disable SIGPIPE for this write. Although Chromium globally disables
   // SIGPIPE, the net stack may be used in other consumers which do not do
   // this. MSG_NOSIGNAL is a Linux-only API. On OS X, this is a setsockopt on

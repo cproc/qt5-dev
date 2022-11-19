@@ -23,6 +23,7 @@
 #include <QDebug>
 
 #include "qgenodeplatformwindow.h"
+#include "qgenodesignalproxythread.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -326,6 +327,12 @@ void QGenodePlatformWindow::_mouse_button_event(Input::Keycode button, bool pres
 
 void QGenodePlatformWindow::_handle_input()
 {
+	_signal_proxy.input();
+}
+
+
+void QGenodePlatformWindow::_input()
+{
 	QList<Input::Event> touch_events;
 
 	_input_session.for_each_event([&] (Input::Event const &event) {
@@ -360,7 +367,7 @@ void QGenodePlatformWindow::_handle_input()
 			_key_event(Input::KEY_UNKNOWN, codepoint, Mapped_key::REPEAT);
 		});
 
-		event.handle_wheel([&] (int x, int y) {
+		event.handle_wheel([&] (int, int y) {
 			QWindowSystemInterface::handleWheelEvent(window(),
 			                                         _local_position(),
 			                                         _local_position(),
@@ -378,6 +385,12 @@ void QGenodePlatformWindow::_handle_input()
 
 
 void QGenodePlatformWindow::_handle_mode_changed()
+{
+	_signal_proxy.mode_changed();
+}
+
+
+void QGenodePlatformWindow::_mode_changed()
 {
 	Framebuffer::Mode mode(_gui_session.mode());
 
@@ -438,8 +451,7 @@ Gui::Session::View_handle QGenodePlatformWindow::_create_view()
 
 void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 {
-	/* limit window size to screen size */
-	QRect adjusted_rect(rect.intersected(screen()->geometry()));
+	QRect adjusted_rect(rect);
 
 	/* Currently, top level windows must start at (0,0) */
 	if (!window()->transientParent())
@@ -490,10 +502,12 @@ QString QGenodePlatformWindow::_sanitize_label(QString label)
 }
 
 
-QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env, QWindow *window,
-                                             int screen_width, int screen_height)
+QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
+                                             QGenodeSignalProxyThread &signal_proxy,
+                                             QWindow *window)
 : QPlatformWindow(window),
   _env(env),
+  _signal_proxy(signal_proxy),
   _gui_session_label(_sanitize_label(window->title())),
   _gui_session(env, _gui_session_label.toStdString().c_str()),
   _framebuffer_session(_gui_session.framebuffer_session()),
@@ -507,9 +521,9 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env, QWindow *window,
   _decoration(!window->flags().testFlag(Qt::Popup)),
   _egl_surface(EGL_NO_SURFACE),
   _input_signal_handler(_env.ep(), *this,
-                        &QGenodePlatformWindow::_input),
+                        &QGenodePlatformWindow::_handle_input),
   _mode_changed_signal_handler(_env.ep(), *this,
-                               &QGenodePlatformWindow::_mode_changed),
+                               &QGenodePlatformWindow::_handle_mode_changed),
   _touch_device(_init_touch_device())
 {
 	if (qnpw_verbose)
@@ -532,12 +546,12 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env, QWindow *window,
 		_gui_session.execute();
 	}
 
-	connect(this, SIGNAL(_input()),
-	        this, SLOT(_handle_input()),
+	connect(&signal_proxy, SIGNAL(input_signal()),
+	        this, SLOT(_input()),
 	        Qt::QueuedConnection);
 
-	connect(this, SIGNAL(_mode_changed()),
-	        this, SLOT(_handle_mode_changed()),
+	connect(&signal_proxy, SIGNAL(mode_changed_signal()),
+	        this, SLOT(_mode_changed()),
 	        Qt::QueuedConnection);
 
 	_mode_changed();

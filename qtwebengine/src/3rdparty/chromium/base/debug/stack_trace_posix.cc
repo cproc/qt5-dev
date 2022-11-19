@@ -27,7 +27,7 @@
 #if !defined(USE_SYMBOLIZE)
 #include <cxxabi.h>
 #endif
-#if !defined(__UCLIBC__) && !defined(_AIX)
+#if !defined(__UCLIBC__) && !defined(_AIX) && 0
 #include <execinfo.h>
 #endif
 
@@ -35,7 +35,7 @@
 #include <AvailabilityMacros.h>
 #endif
 
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) || defined(OS_BSD)
 #include "base/debug/proc_maps_linux.h"
 #endif
 
@@ -133,7 +133,7 @@ class BacktraceOutputHandler {
   virtual ~BacktraceOutputHandler() = default;
 };
 
-#if !defined(__UCLIBC__) && !defined(_AIX)
+#if !defined(__UCLIBC__) && !defined(_AIX) && 0
 void OutputPointer(void* pointer, BacktraceOutputHandler* handler) {
   // This should be more than enough to store a 64-bit number in hex:
   // 16 hex digits + 1 for null-terminator.
@@ -653,6 +653,11 @@ class SandboxSymbolizeHelper {
   // for the modules that are loaded in the current process.
   // Returns true on success.
   bool CacheMemoryRegions() {
+#if defined(OS_BSD)
+    // TODO (rene) avoid link error, implement something?
+    NOTIMPLEMENTED();
+    return false;
+#else
     // Reads /proc/self/maps.
     std::string contents;
     if (!ReadProcMaps(&contents)) {
@@ -670,6 +675,7 @@ class SandboxSymbolizeHelper {
 
     is_initialized_ = true;
     return true;
+#endif
   }
 
   // Opens all object files and caches their file descriptors.
@@ -812,7 +818,7 @@ size_t CollectStackTrace(void** trace, size_t count) {
   // NOTE: This code MUST be async-signal safe (it's used by in-process
   // stack dumping signal handler). NO malloc or stdio is allowed here.
 
-#if !defined(__UCLIBC__) && !defined(_AIX)
+#if !defined(__UCLIBC__) && !defined(_AIX) && 0
   // Though the backtrace API man page does not list any possible negative
   // return values, we take no chance.
   return base::saturated_cast<size_t>(backtrace(trace, count));
@@ -825,7 +831,7 @@ void StackTrace::PrintWithPrefix(const char* prefix_string) const {
 // NOTE: This code MUST be async-signal safe (it's used by in-process
 // stack dumping signal handler). NO malloc or stdio is allowed here.
 
-#if !defined(__UCLIBC__) && !defined(_AIX)
+#if !defined(__UCLIBC__) && !defined(_AIX) && 0
   PrintBacktraceOutputHandler handler;
   ProcessBacktrace(trace_, count_, prefix_string, &handler);
 #endif
@@ -834,8 +840,10 @@ void StackTrace::PrintWithPrefix(const char* prefix_string) const {
 #if !defined(__UCLIBC__) && !defined(_AIX)
 void StackTrace::OutputToStreamWithPrefix(std::ostream* os,
                                           const char* prefix_string) const {
+#if 0
   StreamBacktraceOutputHandler handler(os);
   ProcessBacktrace(trace_, count_, prefix_string, &handler);
+#endif
 }
 #endif
 
