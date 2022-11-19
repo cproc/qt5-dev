@@ -48,10 +48,7 @@ QPlatformWindow *QGenodeIntegration::createPlatformWindow(QWindow *window) const
 	if (verbose)
 		qDebug() << "QGenodeIntegration::createPlatformWindow(" << window << ")";
 
-    QRect screen_geometry = _genode_screen->geometry();
-    return new QGenodePlatformWindow(_env, window,
-                                     screen_geometry.width(),
-                                     screen_geometry.height());
+    return new QGenodePlatformWindow(_env, _signal_proxy, window);
 }
 
 
@@ -92,7 +89,7 @@ QPlatformFontDatabase *QGenodeIntegration::fontDatabase() const
 #ifndef QT_NO_CLIPBOARD
 QPlatformClipboard *QGenodeIntegration::clipboard() const
 {
-	static QGenodeClipboard cb(_env);
+	static QGenodeClipboard cb(_env, _signal_proxy);
 	return &cb;
 }
 #endif

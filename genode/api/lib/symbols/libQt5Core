@@ -1698,6 +1698,22 @@ _ZN18QCryptographicHashC1ENS_9AlgorithmE T
 _ZN18QCryptographicHashC2ENS_9AlgorithmE T
 _ZN18QCryptographicHashD1Ev T
 _ZN18QCryptographicHashD2Ev T
+_ZN18QFileSystemWatcher10removePathERK7QString T
+_ZN18QFileSystemWatcher11fileChangedERK7QStringNS_14QPrivateSignalE T
+_ZN18QFileSystemWatcher11qt_metacallEN11QMetaObject4CallEiPPv T
+_ZN18QFileSystemWatcher11qt_metacastEPKc T
+_ZN18QFileSystemWatcher11removePathsERK11QStringList T
+_ZN18QFileSystemWatcher16directoryChangedERK7QStringNS_14QPrivateSignalE T
+_ZN18QFileSystemWatcher16staticMetaObjectE D 48
+_ZN18QFileSystemWatcher7addPathERK7QString T
+_ZN18QFileSystemWatcher8addPathsERK11QStringList T
+_ZN18QFileSystemWatcherC1EP7QObject T
+_ZN18QFileSystemWatcherC1ERK11QStringListP7QObject T
+_ZN18QFileSystemWatcherC2EP7QObject T
+_ZN18QFileSystemWatcherC2ERK11QStringListP7QObject T
+_ZN18QFileSystemWatcherD0Ev T
+_ZN18QFileSystemWatcherD1Ev T
+_ZN18QFileSystemWatcherD2Ev T
 _ZN18QFinalStatePrivateC1Ev T
 _ZN18QFinalStatePrivateC2Ev T
 _ZN18QFinalStatePrivateD0Ev T
@@ -4321,6 +4337,9 @@ _ZNK18QCommandLineParser6valuesERK7QString T
 _ZNK18QCommandLineParser8helpTextEv T
 _ZNK18QCommandLineParser9errorTextEv T
 _ZNK18QCryptographicHash6resultEv T
+_ZNK18QFileSystemWatcher10metaObjectEv T
+_ZNK18QFileSystemWatcher11directoriesEv T
+_ZNK18QFileSystemWatcher5filesEv T
 _ZNK18QFutureWatcherBase10isCanceledEv T
 _ZNK18QFutureWatcherBase10isFinishedEv T
 _ZNK18QFutureWatcherBase10metaObjectEv T
@@ -5396,6 +5415,7 @@ _ZTI17QVariantAnimation D 24
 _ZTI18QAbstractAnimation D 24
 _ZTI18QAbstractItemModel D 24
 _ZTI18QAbstractListModel D 24
+_ZTI18QFileSystemWatcher D 24
 _ZTI18QFinalStatePrivate D 24
 _ZTI18QFutureWatcherBase D 24
 _ZTI18QMetaObjectBuilder D 16
@@ -5498,6 +5518,7 @@ _ZTS17QVariantAnimation R 20
 _ZTS18QAbstractAnimation R 21
 _ZTS18QAbstractItemModel R 21
 _ZTS18QAbstractListModel R 21
+_ZTS18QFileSystemWatcher R 21
 _ZTS18QFinalStatePrivate R 21
 _ZTS18QFutureWatcherBase R 21
 _ZTS18QMetaObjectBuilder R 21
@@ -5598,6 +5619,7 @@ _ZTV17QVariantAnimation D 168
 _ZTV18QAbstractAnimation D 152
 _ZTV18QAbstractItemModel D 392
 _ZTV18QAbstractListModel D 392
+_ZTV18QFileSystemWatcher D 120
 _ZTV18QFinalStatePrivate D 32
 _ZTV18QFutureWatcherBase D 136
 _ZTV18QMetaObjectBuilder D 32

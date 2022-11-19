@@ -22,6 +22,7 @@
 #include <qpa/qplatforminputcontext.h>
 
 #include "qgenodescreen.h"
+#include "qgenodesignalproxythread.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -29,9 +30,10 @@ class QGenodeIntegration : public QPlatformIntegration
 {
 	private:
 
-		Genode::Env   &_env;
-		QGenodeScreen *_genode_screen;
-		QScopedPointer<QPlatformInputContext> m_inputContext;
+		Genode::Env                           &_env;
+		mutable QGenodeSignalProxyThread       _signal_proxy;
+		QGenodeScreen                         *_genode_screen;
+		QScopedPointer<QPlatformInputContext>  m_inputContext;
 
 	public:
 
@@ -52,7 +54,7 @@ class QGenodeIntegration : public QPlatformIntegration
 #endif
 		QPlatformOpenGLContext *createPlatformOpenGLContext(QOpenGLContext *context) const Q_DECL_OVERRIDE;
 
-                QPlatformInputContext *inputContext() const Q_DECL_OVERRIDE;
+		QPlatformInputContext *inputContext() const Q_DECL_OVERRIDE;
 };
 
 QT_END_NAMESPACE

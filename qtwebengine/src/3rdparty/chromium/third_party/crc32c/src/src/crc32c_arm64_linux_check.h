@@ -16,6 +16,28 @@
 
 #if HAVE_ARM64_CRC32C
 
+#if defined(__FreeBSD__)
+#include <machine/armreg.h>
+#include <sys/types.h>
+namespace crc32c {
+
+inline bool CanUseArm64Linux() {
+#if defined(__GENODE__)
+  return true;
+#else
+  uint64_t id_aa64isar0;
+
+  id_aa64isar0 = READ_SPECIALREG(ID_AA64ISAR0_EL1);
+  if ((ID_AA64ISAR0_AES(id_aa64isar0) == ID_AA64ISAR0_AES_PMULL) && \
+     (ID_AA64ISAR0_CRC32(id_aa64isar0) == ID_AA64ISAR0_CRC32_BASE))
+    return true;
+  return false;
+#endif
+}
+
+}  // namespace crc32c
+
+#elif defined(__linux__)
 #if HAVE_STRONG_GETAUXVAL
 #include <sys/auxv.h>
 #elif HAVE_WEAK_GETAUXVAL
@@ -43,6 +65,7 @@ inline bool CanUseArm64Linux() {
 
 }  // namespace crc32c
 
+#endif
 #endif  // HAVE_ARM64_CRC32C
 
 #endif  // CRC32C_CRC32C_ARM_LINUX_CHECK_H_

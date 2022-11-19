@@ -19,6 +19,10 @@
 #include <unistd.h>
 #endif
 
+#if defined(OS_BSD)
+#include <sys/stdint.h>
+#endif
+
 #if defined(OS_WIN)
 struct _EXCEPTION_POINTERS;
 struct _CONTEXT;

@@ -17,10 +17,16 @@
 #error Blink does not support threading on your platform.
 #endif
 
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) || defined(OS_BSD)
+#if 0
 #include <sys/syscall.h>
+#endif
 #elif defined(OS_ANDROID)
 #include <sys/types.h>
+#endif
+
+#if defined(OS_BSD)
+#include <pthread_np.h>
 #endif
 
 namespace WTF {
@@ -38,6 +44,8 @@ ThreadIdentifier CurrentThreadSyscall() {
   return syscall(__NR_gettid);
 #elif defined(OS_ANDROID)
   return gettid();
+#elif defined(OS_BSD) && 0
+  return pthread_getthreadid_np();
 #else
   return reinterpret_cast<uintptr_t>(pthread_self());
 #endif
