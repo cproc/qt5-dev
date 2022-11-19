@@ -53,6 +53,7 @@
 
 #include <Qt3DRender/private/framegraphnode_p.h>
 #include <Qt3DRender/QLayerFilter>
+#include <Qt3DRender/QLayer>
 #include <QStringList>
 
 QT_BEGIN_NAMESPACE
@@ -63,20 +64,19 @@ namespace Render {
 
 class Renderer;
 
-class LayerFilterNode : public FrameGraphNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT LayerFilterNode : public FrameGraphNode
 {
 public:
     LayerFilterNode();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
+
     Qt3DCore::QNodeIdVector layerIds() const;
     void setLayerIds(const Qt3DCore::QNodeIdVector &list);
 
     QLayerFilter::FilterMode filterMode() const;
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     Qt3DCore::QNodeIdVector m_layerIds;
     QLayerFilter::FilterMode m_filterMode;
 };

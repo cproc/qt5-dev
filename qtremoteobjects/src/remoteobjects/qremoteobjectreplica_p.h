@@ -117,13 +117,14 @@ public:
     void setProperty(int i, const QVariant &) override = 0;
     virtual bool isShortCircuit() const = 0;
     bool isInitialized() const override { return true; }
-    QRemoteObjectReplica::State state() const override { return QRemoteObjectReplica::State(m_state.load()); }
+    QRemoteObjectReplica::State state() const override { return QRemoteObjectReplica::State(m_state.loadRelaxed()); }
     void setState(QRemoteObjectReplica::State state);
     bool waitForSource(int) override { return true; }
     virtual bool waitForFinished(const QRemoteObjectPendingCall &, int) { return true; }
     virtual void notifyAboutReply(int, const QVariant &) {}
     virtual void configurePrivate(QRemoteObjectReplica *);
     void emitInitialized();
+    void emitNotified();
     QRemoteObjectNode *node() const override { return m_node; }
 
     void _q_send(QMetaObject::Call call, int index, const QVariantList &args) override = 0;

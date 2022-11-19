@@ -42,7 +42,6 @@
 #include <Qt3DInput/qmousedevice.h>
 #include <Qt3DCore/qentity.h>
 #include <Qt3DCore/qnode.h>
-#include <Qt3DCore/qpropertyupdatedchange.h>
 
 #include <Qt3DInput/private/inputmanagers_p.h>
 #include <Qt3DInput/private/inputhandler_p.h>
@@ -58,19 +57,12 @@ MouseDevice::MouseDevice()
     , m_inputHandler(nullptr)
     , m_wasPressed(false)
     , m_sensitivity(0.1f)
+    , m_updateAxesContinuously(false)
 {
 }
 
 MouseDevice::~MouseDevice()
 {
-}
-
-void MouseDevice::initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change)
-{
-    const auto typedChange = qSharedPointerCast<Qt3DCore::QNodeCreatedChange<QMouseDeviceData>>(change);
-    const auto &data = typedChange->data;
-    m_sensitivity = data.sensitivity;
-    QAbstractPhysicalDeviceBackendNode::initializeFromPeer(change);
 }
 
 void MouseDevice::setInputHandler(InputHandler *handler)
@@ -135,6 +127,11 @@ float MouseDevice::sensitivity() const
     return m_sensitivity;
 }
 
+bool MouseDevice::updateAxesContinuously() const
+{
+    return m_updateAxesContinuously;
+}
+
 #if QT_CONFIG(wheelevent)
 void MouseDevice::updateWheelEvents(const QList<QT_PREPEND_NAMESPACE (QWheelEvent)> &events)
 {
@@ -150,6 +147,7 @@ void MouseDevice::updateWheelEvents(const QList<QT_PREPEND_NAMESPACE (QWheelEven
 }
 #endif
 
+// Main Thread
 void MouseDevice::updateMouseEvents(const QList<QT_PREPEND_NAMESPACE(QMouseEvent)> &events)
 {
     // Reset axis values before we accumulate new values for this frame
@@ -161,8 +159,8 @@ void MouseDevice::updateMouseEvents(const QList<QT_PREPEND_NAMESPACE(QMouseEvent
             m_mouseState.leftPressed = e.buttons() & (Qt::LeftButton);
             m_mouseState.centerPressed = e.buttons() & (Qt::MiddleButton);
             m_mouseState.rightPressed = e.buttons() & (Qt::RightButton);
-            bool pressed = m_mouseState.leftPressed || m_mouseState.centerPressed || m_mouseState.rightPressed;
-            if (m_wasPressed && pressed) {
+            const bool pressed = m_mouseState.leftPressed || m_mouseState.centerPressed || m_mouseState.rightPressed;
+            if (m_updateAxesContinuously || (m_wasPressed && pressed)) {
                 m_mouseState.xAxis += m_sensitivity * (e.screenPos().x() - m_previousPos.x());
                 m_mouseState.yAxis += m_sensitivity * (m_previousPos.y() - e.screenPos().y());
             }
@@ -172,13 +170,15 @@ void MouseDevice::updateMouseEvents(const QList<QT_PREPEND_NAMESPACE(QMouseEvent
     }
 }
 
-void MouseDevice::sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e)
+void MouseDevice::syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime)
 {
-    if (e->type() == Qt3DCore::PropertyUpdated) {
-        Qt3DCore::QPropertyUpdatedChangePtr propertyChange = qSharedPointerCast<Qt3DCore::QPropertyUpdatedChange>(e);
-        if (propertyChange->propertyName() == QByteArrayLiteral("sensitivity"))
-            m_sensitivity = propertyChange->value().toFloat();
-    }
+    QAbstractPhysicalDeviceBackendNode::syncFromFrontEnd(frontEnd, firstTime);
+    const Qt3DInput::QMouseDevice *node = qobject_cast<const Qt3DInput::QMouseDevice *>(frontEnd);
+    if (!node)
+        return;
+
+    m_sensitivity = node->sensitivity();
+    m_updateAxesContinuously = node->updateAxesContinuously();
 }
 
 MouseDeviceFunctor::MouseDeviceFunctor(QInputAspect *inputAspect, InputHandler *handler)

@@ -54,12 +54,29 @@ QTextureImageDataPrivate::QTextureImageDataPrivate()
     , m_faces(-1)
     , m_mipLevels(-1)
     , m_blockSize(-1)
+    , m_alignment(1)
     , m_target(QOpenGLTexture::Target2D)
     , m_format(QOpenGLTexture::NoFormat)
     , m_pixelFormat(QOpenGLTexture::RGBA)
     , m_pixelType(QOpenGLTexture::UInt8)
     , m_isCompressed(false)
+    , m_isKtx(false)
 {
+}
+
+QByteArray QTextureImageDataPrivate::ktxData(int layer, int face, int mipmapLevel) const
+{
+    Q_ASSERT(layer >= 0 && layer < m_layers &&
+            face >= 0 && face < m_faces &&
+            mipmapLevel >= 0 && mipmapLevel < m_mipLevels);
+
+    int offset = 0;
+    for (int i = 0; i < mipmapLevel; i++)
+        offset += (mipmapLevelSize(i) * m_faces * m_layers) + 4;
+    const int selectedMipmapLevelSize = mipmapLevelSize(mipmapLevel);
+    offset += (selectedMipmapLevelSize * m_faces * layer) + (selectedMipmapLevelSize * face) + 4;
+
+    return QByteArray::fromRawData(m_data.constData() + offset, selectedMipmapLevelSize);
 }
 
 QByteArray QTextureImageDataPrivate::data(int layer, int face, int mipmapLevel) const
@@ -71,7 +88,13 @@ QByteArray QTextureImageDataPrivate::data(int layer, int face, int mipmapLevel) 
         return QByteArray();
     }
 
-    int offset = layer * layerSize() + face * faceSize();
+    if (m_dataExtractor)
+        return m_dataExtractor(m_data, layer, face, mipmapLevel);
+
+    if (m_isKtx)
+        return ktxData(layer, face, mipmapLevel);
+
+    int offset = layer * ddsLayerSize() + face * ddsFaceSize();
 
     for (int i = 0; i < mipmapLevel; i++)
         offset += mipmapLevelSize(i);
@@ -93,12 +116,21 @@ void QTextureImageDataPrivate::setData(const QByteArray &data,
     m_blockSize = blockSize;
 }
 
-int QTextureImageDataPrivate::layerSize() const
+void QTextureImageDataPrivate::setData(const QByteArray &data,
+                                       std::function<QByteArray(QByteArray rawData, int layer, int face, int mipmapLevel)> dataExtractor,
+                                       bool isCompressed)
 {
-    return m_faces * faceSize();
+    m_isCompressed = isCompressed;
+    m_data = data;
+    m_dataExtractor = dataExtractor;
 }
 
-int QTextureImageDataPrivate::faceSize() const
+int QTextureImageDataPrivate::ddsLayerSize() const
+{
+    return m_faces * ddsFaceSize();
+}
+
+int QTextureImageDataPrivate::ddsFaceSize() const
 {
     int size = 0;
 
@@ -169,6 +201,7 @@ void QTextureImageData::cleanup() Q_DECL_NOTHROW
     d->m_faces = -1;
     d->m_mipLevels = -1;
     d->m_blockSize = 0;
+    d->m_alignment = 1;
     d->m_isCompressed = false;
     d->m_data.clear();
 }

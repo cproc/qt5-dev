@@ -210,7 +210,7 @@ bool XsdValidatingInstanceReader::validate(bool &hasStateMachine, XsdElement::Pt
     // first check if a custom schema is defined
     if (hasAttribute(m_xsiSchemaLocationName)) {
         const QString schemaLocation = attribute(m_xsiSchemaLocationName);
-        const QStringList parts = schemaLocation.split(QLatin1Char(' '), QString::SkipEmptyParts);
+        const QStringList parts = schemaLocation.split(QLatin1Char(' '), Qt::SkipEmptyParts);
         if ((parts.count()%2) == 1) {
             error(QtXmlPatterns::tr("%1 contains invalid data.").arg(formatKeyword(m_namePool, m_xsiSchemaLocationName)));
             return false;
@@ -489,7 +489,7 @@ bool XsdValidatingInstanceReader::validateElement(const XsdElement::Ptr &declara
         }
 
         // 4.2
-        SchemaType::DerivationConstraints constraints = 0;
+        SchemaType::DerivationConstraints constraints;
         if (declaration->disallowedSubstitutions() & NamedSchemaComponent::ExtensionConstraint)
             constraints |= SchemaType::ExtensionConstraint;
         if (declaration->disallowedSubstitutions() & NamedSchemaComponent::RestrictionConstraint)
@@ -595,7 +595,7 @@ bool XsdValidatingInstanceReader::validateElementSimpleType(const XsdElement::Pt
     }
 
     if (m_idRefsType->wxsTypeMatches(type)) {
-        const QStringList idRefs = actualValue.split(QLatin1Char(' '), QString::SkipEmptyParts);
+        const QStringList idRefs = actualValue.split(QLatin1Char(' '), Qt::SkipEmptyParts);
         for (int i = 0; i < idRefs.count(); ++i) {
             m_idRefs.insert(idRefs.at(i));
         }
@@ -853,7 +853,7 @@ bool XsdValidatingInstanceReader::validateAttribute(const XsdAttributeUse::Ptr &
     }
 
     if (m_idRefsType->wxsTypeMatches(declaration->attribute()->type())) {
-        const QStringList idRefs = actualValue.split(QLatin1Char(' '), QString::SkipEmptyParts);
+        const QStringList idRefs = actualValue.split(QLatin1Char(' '), Qt::SkipEmptyParts);
         for (int i = 0; i < idRefs.count(); ++i)
             m_idRefs.insert(idRefs.at(i));
     } else if (BuiltinTypes::xsIDREF->wxsTypeMatches(declaration->attribute()->type())) {
@@ -899,7 +899,7 @@ bool XsdValidatingInstanceReader::validateAttribute(const XsdAttribute::Ptr &dec
     }
 
     if (m_idRefsType->wxsTypeMatches(declaration->type())) {
-        const QStringList idRefs = actualValue.split(QLatin1Char(' '), QString::SkipEmptyParts);
+        const QStringList idRefs = actualValue.split(QLatin1Char(' '), Qt::SkipEmptyParts);
         for (int i = 0; i < idRefs.count(); ++i)
             m_idRefs.insert(idRefs.at(i));
     } else if (BuiltinTypes::xsIDREF->wxsTypeMatches(declaration->type())) {
@@ -1113,6 +1113,7 @@ bool XsdValidatingInstanceReader::selectNodeSets(const XsdElement::Ptr&, const Q
 
                 const QXmlNodeModelIndex index = fieldItem.toNodeModelIndex();
                 const SchemaType::Ptr type = m_model->assignedType(index);
+                Q_ASSERT(type);
 
                 bool typeOk = true;
                 if (type->isComplexType()) {
@@ -1136,6 +1137,15 @@ bool XsdValidatingInstanceReader::selectNodeSets(const XsdElement::Ptr&, const Q
                         targetType = XsdSimpleType::Ptr(type)->primitiveType();
                     else
                         targetType = XsdComplexType::Ptr(type)->contentType()->simpleType();
+
+                    if (!targetType) {
+                        // QTBUG-77620: pattern type within a union doesn't get
+                        // its primitive type set.  FIXME: find root cause and
+                        // fix that, so we can remove this (and an XFAIL).
+                        error(QtXmlPatterns::tr("Field %1 is missing its simple type.")
+                                                        .arg(formatData(field->expression())));
+                        return false;
+                    }
                 } else {
                     if (BuiltinTypes::xsAnySimpleType->name(m_namePool) == type->name(m_namePool)) {
                         targetType = BuiltinTypes::xsString;

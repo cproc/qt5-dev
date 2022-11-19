@@ -79,6 +79,9 @@ Time Process::CreationTime() const {
                                   internal::VM_STARTTIME)
                             : internal::ReadProcStatsAndGetFieldAsInt64(
                                   Pid(), internal::VM_STARTTIME);
+#if defined(OS_BSD)
+  return Time::FromTimeT(start_ticks);
+#else
   if (!start_ticks)
     return Time();
   TimeDelta start_offset = internal::ClockTicksToTimeDelta(start_ticks);
@@ -86,6 +89,7 @@ Time Process::CreationTime() const {
   if (boot_time.is_null())
     return Time();
   return Time(boot_time + start_offset);
+#endif
 }
 
 #if !defined(OS_BSD)
@@ -125,7 +129,7 @@ bool Process::SetProcessBackgrounded(bool background) {
 
 #if defined(OS_CHROMEOS)
   if (CGroups::Get().enabled) {
-    std::string pid = IntToString(process_);
+    std::string pid = NumberToString(process_);
     const base::FilePath file = background ? CGroups::Get().background_file
                                            : CGroups::Get().foreground_file;
     return base::WriteFile(file, pid.c_str(), pid.size()) > 0;
@@ -175,7 +179,7 @@ ProcessId Process::GetPidInNamespace() const {
     // Synchronously reading files in /proc does not hit the disk.
     ThreadRestrictions::ScopedAllowIO allow_io;
     FilePath status_file =
-        FilePath("/proc").Append(IntToString(process_)).Append("status");
+        FilePath("/proc").Append(NumberToString(process_)).Append("status");
     if (!ReadFileToString(status_file, &status)) {
       return kNullProcessId;
     }

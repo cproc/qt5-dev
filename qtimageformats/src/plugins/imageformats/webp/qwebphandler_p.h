@@ -41,6 +41,7 @@
 #define QWEBPHANDLER_P_H
 
 #include <QtGui/qcolor.h>
+#include <QtGui/qcolorspace.h>
 #include <QtGui/qimage.h>
 #include <QtGui/qimageiohandler.h>
 #include <QtCore/qbytearray.h>
@@ -56,10 +57,6 @@ public:
     ~QWebpHandler();
 
 public:
-#if QT_DEPRECATED_SINCE(5, 13)
-    QByteArray name() const override;
-#endif
-
     bool canRead() const override;
     bool read(QImage *image) override;
 
@@ -90,6 +87,7 @@ private:
     int m_quality;
     mutable ScanState m_scanState;
     WebPBitstreamFeatures m_features;
+    uint32_t m_formatFlags;
     int m_loop;
     int m_frameCount;
     QColor m_bgColor;
@@ -97,6 +95,7 @@ private:
     WebPData m_webpData;
     WebPDemuxer *m_demuxer;
     WebPIterator m_iter;
+    QColorSpace m_colorSpace;
     QImage *m_composited;   // For animation frames composition
 };
 

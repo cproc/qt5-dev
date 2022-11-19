@@ -57,7 +57,8 @@
 #include <QtGui/QImage>
 #include <qpa/qplatformwindow.h>
 #include <QMutex>
-#include <QLinkedList>
+
+#include <list>
 
 QT_BEGIN_NAMESPACE
 
@@ -87,7 +88,7 @@ private:
 class Q_WAYLAND_CLIENT_EXPORT QWaylandShmBackingStore : public QPlatformBackingStore
 {
 public:
-    QWaylandShmBackingStore(QWindow *window);
+    QWaylandShmBackingStore(QWindow *window, QWaylandDisplay *display);
     ~QWaylandShmBackingStore() override;
 
     QPaintDevice *paintDevice() override;
@@ -116,7 +117,7 @@ private:
     QWaylandShmBuffer *getBuffer(const QSize &size);
 
     QWaylandDisplay *mDisplay = nullptr;
-    QLinkedList<QWaylandShmBuffer *> mBuffers;
+    std::list<QWaylandShmBuffer *> mBuffers;
     QWaylandShmBuffer *mFrontBuffer = nullptr;
     QWaylandShmBuffer *mBackBuffer = nullptr;
     bool mPainting = false;

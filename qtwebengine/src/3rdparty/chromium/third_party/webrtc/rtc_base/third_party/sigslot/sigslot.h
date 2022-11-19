@@ -178,6 +178,10 @@ class multi_threaded_local {
 #endif  // _SIGSLOT_HAS_WIN32_THREADS
 
 #ifdef _SIGSLOT_HAS_POSIX_THREADS
+#pragma GCC diagnostic push
+#if 0
+#pragma GCC diagnostic ignored "-Wthread-safety-analysis"
+#endif
 // The multi threading policies only get compiled in if they are enabled.
 class multi_threaded_global {
  public:
@@ -201,6 +205,7 @@ class multi_threaded_local {
  private:
   pthread_mutex_t m_mutex;
 };
+#pragma GCC diagnostic pop
 #endif  // _SIGSLOT_HAS_POSIX_THREADS
 
 template <class mt_policy>
@@ -640,4 +645,4 @@ using signal8 =
 
 }  // namespace sigslot
 
-#endif  /* RTC_BASE_THIRD_PARTY_SIGSLOT_SIGSLOT_H_ */
+#endif /* RTC_BASE_THIRD_PARTY_SIGSLOT_SIGSLOT_H_ */

@@ -52,15 +52,17 @@ UpdateWorldBoundingVolumeJob::UpdateWorldBoundingVolumeJob()
     : Qt3DCore::QAspectJob()
     , m_manager(nullptr)
 {
-    SET_JOB_RUN_STAT_TYPE(this, JobTypes::UpdateWorldBoundingVolume, 0);
+    SET_JOB_RUN_STAT_TYPE(this, JobTypes::UpdateWorldBoundingVolume, 0)
 }
 
 void UpdateWorldBoundingVolumeJob::run()
 {
-    const QVector<HEntity> handles = m_manager->activeHandles();
+    const std::vector<HEntity> &handles = m_manager->activeHandles();
 
     for (const HEntity &handle : handles) {
         Entity *node = m_manager->data(handle);
+        if (!node->isEnabled())
+            continue;
         *(node->worldBoundingVolume()) = node->localBoundingVolume()->transformed(*(node->worldTransform()));
         *(node->worldBoundingVolumeWithChildren()) = *(node->worldBoundingVolume()); // expanded in UpdateBoundingVolumeJob
     }

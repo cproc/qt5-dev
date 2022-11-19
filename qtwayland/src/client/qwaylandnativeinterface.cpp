@@ -47,9 +47,13 @@
 #include "qwaylanddisplay_p.h"
 #include "qwaylandwindowmanagerintegration_p.h"
 #include "qwaylandscreen_p.h"
+#include "qwaylandinputdevice_p.h"
 #include <QtGui/private/qguiapplication_p.h>
 #include <QtGui/QScreen>
 #include <QtWaylandClient/private/qwaylandclientbufferintegration_p.h>
+#if QT_CONFIG(vulkan)
+#include <QtWaylandClient/private/qwaylandvulkanwindow_p.h>
+#endif
 
 #include <QtPlatformHeaders/qwaylandwindowfunctions.h>
 
@@ -76,6 +80,27 @@ void *QWaylandNativeInterface::nativeResourceForIntegration(const QByteArray &re
     if (lowerCaseResource == "egldisplay" && m_integration->clientBufferIntegration())
         return m_integration->clientBufferIntegration()->nativeResource(QWaylandClientBufferIntegration::EglDisplay);
 
+    if (lowerCaseResource == "wl_seat")
+        return m_integration->display()->defaultInputDevice()->wl_seat();
+    if (lowerCaseResource == "wl_keyboard") {
+        auto *keyboard = m_integration->display()->defaultInputDevice()->keyboard();
+        if (keyboard)
+            return keyboard->wl_keyboard();
+        return nullptr;
+    }
+    if (lowerCaseResource == "wl_pointer") {
+        auto *pointer = m_integration->display()->defaultInputDevice()->pointer();
+        if (pointer)
+            return pointer->wl_pointer();
+        return nullptr;
+    }
+    if (lowerCaseResource == "wl_touch") {
+        auto *touch = m_integration->display()->defaultInputDevice()->touch();
+        if (touch)
+            return touch->wl_touch();
+        return nullptr;
+    }
+
     return nullptr;
 }
 
@@ -89,11 +114,20 @@ void *QWaylandNativeInterface::nativeResourceForWindow(const QByteArray &resourc
         return const_cast<wl_compositor *>(m_integration->display()->wl_compositor());
     if (lowerCaseResource == "surface") {
         QWaylandWindow *w = static_cast<QWaylandWindow*>(window->handle());
-        return w ? w->object() : nullptr;
+        return w ? w->wlSurface() : nullptr;
     }
 
     if (lowerCaseResource == "egldisplay" && m_integration->clientBufferIntegration())
         return m_integration->clientBufferIntegration()->nativeResource(QWaylandClientBufferIntegration::EglDisplay);
+
+#if QT_CONFIG(vulkan)
+    if (lowerCaseResource == "vksurface") {
+        if (window->surfaceType() == QSurface::VulkanSurface && window->handle()) {
+            // return a pointer to the VkSurfaceKHR value, not the value itself
+            return static_cast<QWaylandVulkanWindow *>(window->handle())->surface();
+        }
+    }
+#endif
 
     if (auto shellIntegration = m_integration->shellIntegration())
         return shellIntegration->nativeResourceForWindow(resourceString, window);

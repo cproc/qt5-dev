@@ -255,11 +255,15 @@ public:
 #ifndef Q_QDOC //suppress qdoc warnings
     QVector<QBluetoothUuid> serviceUuids() const;
 #endif // Q_QDOC
-#else
+#elif QT_DEPRECATED_SINCE(5, 13)
     QList<QBluetoothUuid> serviceUuids(DataCompleteness *completeness = nullptr) const;
+#else
+    QList<QBluetoothUuid> serviceUuids() const;
 #endif
     void setServiceUuids(const QVector<QBluetoothUuid> &uuids);
 
+    // TODO Qt6 manufacturerData() need to be changed to return
+    // QMultiHash<quint16, QByteArray>
     QVector<quint16> manufacturerIds() const;
     QByteArray manufacturerData(quint16 manufacturerId) const;
     bool setManufacturerData(quint16 manufacturerId, const QByteArray &data);

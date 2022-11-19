@@ -17,6 +17,7 @@ AUX_QML_FILES += \
     $$PWD/DialSpecifics.qml \
     $$PWD/FrameSpecifics.qml \
     $$PWD/GroupBoxSpecifics.qml \
+    $$PWD/InsetSection.qml \
     $$PWD/ItemDelegateSection.qml \
     $$PWD/ItemDelegateSpecifics.qml \
     $$PWD/LabelSpecifics.qml \
@@ -48,4 +49,4 @@ AUX_QML_FILES += \
     $$PWD/TumblerSpecifics.qml
 
 AUX_QML_FILES += \
-    $$PWD/images/*.png
+    $$files($$PWD/images/*.png)

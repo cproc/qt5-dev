@@ -58,8 +58,6 @@ private:
     QByteArray mComposeModule = QByteArray("QComposeInputContext"); // default input context
     QByteArray mIbusModule    = QByteArray("QIBusPlatformInputContext");
     QByteArray mWaylandModule = QByteArray("QtWaylandClient::QWaylandInputContext");
-
-    TextInputManager *mTextInputManager = nullptr;
 };
 
 void tst_inputcontext::initTestCase()
@@ -173,7 +171,8 @@ void tst_inputcontext::inputContextReconfigurationWhenTogglingTextInputExtension
 
 int main(int argc, char *argv[])
 {
-    qputenv("XDG_RUNTIME_DIR", ".");
+    QTemporaryDir tmpRuntimeDir;
+    qputenv("XDG_RUNTIME_DIR", tmpRuntimeDir.path().toLocal8Bit());
     qputenv("QT_QPA_PLATFORM", "wayland");
 
     tst_inputcontext tc;

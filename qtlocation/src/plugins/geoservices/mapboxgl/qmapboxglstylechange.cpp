@@ -43,6 +43,7 @@
 #include <QtPositioning/QGeoPath>
 #include <QtPositioning/QGeoPolygon>
 #include <QtQml/QJSValue>
+#include <QtLocation/private/qdeclarativecirclemapitem_p_p.h>
 
 namespace {
 
@@ -93,12 +94,12 @@ QMapbox::Feature featureFromMapCircle(QDeclarativeCircleMapItem *mapItem)
     const QGeoProjectionWebMercator &p = static_cast<const QGeoProjectionWebMercator&>(mapItem->map()->geoProjection());
     QList<QGeoCoordinate> path;
     QGeoCoordinate leftBound;
-    QDeclarativeCircleMapItem::calculatePeripheralPoints(path, mapItem->center(), mapItem->radius(), circleSamples, leftBound);
+    QDeclarativeCircleMapItemPrivateCPU::calculatePeripheralPoints(path, mapItem->center(), mapItem->radius(), circleSamples, leftBound);
     QList<QDoubleVector2D> pathProjected;
     for (const QGeoCoordinate &c : qAsConst(path))
         pathProjected << p.geoToMapProjection(c);
-    if (QDeclarativeCircleMapItem::crossEarthPole(mapItem->center(), mapItem->radius()))
-        mapItem->preserveCircleGeometry(pathProjected, mapItem->center(), mapItem->radius(), p);
+    if (QDeclarativeCircleMapItemPrivateCPU::crossEarthPole(mapItem->center(), mapItem->radius()))
+        QDeclarativeCircleMapItemPrivateCPU::preserveCircleGeometry(pathProjected, mapItem->center(), mapItem->radius(), p);
     path.clear();
     for (const QDoubleVector2D &c : qAsConst(pathProjected))
         path << p.mapProjectionToGeo(c);
@@ -552,7 +553,7 @@ QSharedPointer<QMapboxGLStyleChange> QMapboxGLStyleAddSource::fromMapParameter(Q
     Q_ASSERT(param->type() == "source");
 
     static const QStringList acceptedSourceTypes = QStringList()
-        << QStringLiteral("vector") << QStringLiteral("raster") << QStringLiteral("raster-dem") << QStringLiteral("geojson");
+        << QStringLiteral("vector") << QStringLiteral("raster") << QStringLiteral("raster-dem") << QStringLiteral("geojson") << QStringLiteral("image");
 
     QString sourceType = param->property("sourceType").toString();
 
@@ -578,6 +579,10 @@ QSharedPointer<QMapboxGLStyleChange> QMapboxGLStyleAddSource::fromMapParameter(Q
         } else {
             source->m_params[QStringLiteral("data")] = data.toUtf8();
         }
+    } break;
+    case 4: { // image
+        source->m_params[QStringLiteral("url")] = param->property("url");
+        source->m_params[QStringLiteral("coordinates")] = param->property("coordinates");
     } break;
     }
 

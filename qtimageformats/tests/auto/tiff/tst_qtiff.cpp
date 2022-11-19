@@ -87,6 +87,12 @@ private slots:
     void readRgba64();
     void readGray16();
 
+    void colorSpace_data();
+    void colorSpace();
+
+    void bigtiff_data();
+    void bigtiff();
+
 private:
     QString prefix;
 };
@@ -170,6 +176,10 @@ void tst_qtiff::readImage_data()
     QTest::newRow("tiled_oddsize_mono") << QString("tiled_oddsize_mono.tiff") << QSize(59, 71);
     QTest::newRow("16bpc") << QString("16bpc.tiff") << QSize(64, 46);
     QTest::newRow("gray16") << QString("gray16.tiff") << QSize(64, 46);
+    QTest::newRow("big_rgb") << QString("big_rgb.tiff") << QSize(64, 64);
+    QTest::newRow("big_rgb_bigendian") << QString("big_rgb_bigendian.tiff") << QSize(64, 64);
+    QTest::newRow("big_grayscale") << QString("big_grayscale.tiff") << QSize(64, 64);
+    QTest::newRow("big_16bpc") << QString("big_16bpc.tiff") << QSize(64, 46);
 }
 
 void tst_qtiff::readImage()
@@ -499,7 +509,7 @@ void tst_qtiff::supportsOption()
         allOptions.remove(QImageIOHandler::ImageOption(options.at(i)));
     }
 
-    foreach (QImageIOHandler::ImageOption option, allOptions)
+    for (QImageIOHandler::ImageOption option : qAsConst(allOptions))
         QVERIFY(!writer.supportsOption(option));
 }
 
@@ -625,6 +635,63 @@ void tst_qtiff::readGray16()
     QImage image = reader.read();
     QVERIFY(!image.isNull());
     QCOMPARE(image.format(), QImage::Format_Grayscale16);
+}
+
+void tst_qtiff::colorSpace_data()
+{
+    QTest::addColumn<decltype(QColorSpace::SRgb)>("namedColorSpace");
+
+    QTest::newRow("sRGB")         << QColorSpace::SRgb;
+    QTest::newRow("sRGB(linear)") << QColorSpace::SRgbLinear;
+    QTest::newRow("AdobeRGB")     << QColorSpace::AdobeRgb;
+    QTest::newRow("DisplayP3")    << QColorSpace::DisplayP3;
+    QTest::newRow("ProPhotoRgb")  << QColorSpace::ProPhotoRgb;
+}
+
+void tst_qtiff::colorSpace()
+{
+    QFETCH(decltype(QColorSpace::SRgb), namedColorSpace);
+
+    QImage image(prefix + "colorful.bmp");
+    QVERIFY(!image.isNull());
+
+    image.setColorSpace(namedColorSpace);
+
+    QByteArray output;
+    QBuffer buf(&output);
+    QVERIFY(buf.open(QIODevice::WriteOnly));
+    QImageWriter writer(&buf, "tiff");
+    writer.write(image);
+    buf.close();
+
+    QVERIFY(buf.open(QIODevice::ReadOnly));
+    QImageReader reader(&buf);
+    QImage image2 = reader.read();
+
+    QCOMPARE(image2.colorSpace(), namedColorSpace);
+    QCOMPARE(image2, image);
+}
+
+void tst_qtiff::bigtiff_data()
+{
+    QTest::addColumn<QString>("expectedFile");
+    QTest::addColumn<QString>("bigtiffFile");
+
+    QTest::newRow("big_rgb") << QString("original_rgb.tiff") << QString("big_rgb.tiff");
+    QTest::newRow("big_rgb_bigendian") << QString("original_rgb.tiff") << QString("big_rgb_bigendian.tiff");
+    QTest::newRow("big_grayscale") << QString("original_grayscale.tiff") << QString("big_grayscale.tiff");
+    QTest::newRow("big_16bpc") << QString("16bpc.tiff") << QString("big_16bpc.tiff");
+}
+
+void tst_qtiff::bigtiff()
+{
+    QFETCH(QString, expectedFile);
+    QFETCH(QString, bigtiffFile);
+
+    QImage expectedImage(prefix + expectedFile);
+    QImage bigtiffImage(prefix + bigtiffFile);
+    QVERIFY(!bigtiffImage.isNull());
+    QCOMPARE(expectedImage, bigtiffImage);
 }
 
 QTEST_MAIN(tst_qtiff)

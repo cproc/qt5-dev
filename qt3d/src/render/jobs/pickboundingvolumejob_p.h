@@ -58,6 +58,7 @@
 #include <Qt3DRender/private/qboundingvolumeprovider_p.h>
 #include <Qt3DRender/private/qcollisionqueryresult_p.h>
 #include <Qt3DRender/private/pickboundingvolumeutils_p.h>
+#include <Qt3DRender/private/qt3drender_global_p.h>
 #include <Qt3DRender/qpickevent.h>
 #include <QMouseEvent>
 #include <QKeyEvent>
@@ -66,13 +67,17 @@
 QT_BEGIN_NAMESPACE
 
 namespace Qt3DRender {
+
+class QViewport;
+
 namespace Render {
+class PickBoundingVolumeJobPrivate;
 
 namespace PickingUtils {
 typedef QVector<RayCasting::QCollisionQueryResult::Hit> HitList;
 }
 
-class Q_AUTOTEST_EXPORT PickBoundingVolumeJob : public AbstractPickingJob
+class Q_3DRENDERSHARED_PRIVATE_EXPORT PickBoundingVolumeJob : public AbstractPickingJob
 {
 public:
     PickBoundingVolumeJob();
@@ -94,9 +99,12 @@ protected:
                             QPickEvent::Buttons eventButton,
                             int eventButtons,
                             int eventModifiers,
-                            bool allHitsRequested);
+                            bool allHitsRequested,
+                            Qt3DCore::QNodeId viewportNodeId);
 
 private:
+    Q_DECLARE_PRIVATE(PickBoundingVolumeJob)
+
     void clearPreviouslyHoveredPickers();
 
     QList<QPair<QObject*, QMouseEvent>> m_pendingMouseEvents;

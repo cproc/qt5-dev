@@ -140,6 +140,7 @@ bool PhysicalSocket::Create(int family, int type) {
   Close();
   s_ = ::socket(family, type, 0);
   udp_ = (SOCK_DGRAM == type);
+  family_ = family;
   UpdateLastError();
   if (udp_) {
     SetEnabledEvents(DE_READ | DE_WRITE);
@@ -148,7 +149,7 @@ bool PhysicalSocket::Create(int family, int type) {
 }
 
 SocketAddress PhysicalSocket::GetLocalAddress() const {
-  sockaddr_storage addr_storage = {0};
+  sockaddr_storage addr_storage = {};
   socklen_t addrlen = sizeof(addr_storage);
   sockaddr* addr = reinterpret_cast<sockaddr*>(&addr_storage);
   int result = ::getsockname(s_, addr, &addrlen);
@@ -163,7 +164,7 @@ SocketAddress PhysicalSocket::GetLocalAddress() const {
 }
 
 SocketAddress PhysicalSocket::GetRemoteAddress() const {
-  sockaddr_storage addr_storage = {0};
+  sockaddr_storage addr_storage = {};
   socklen_t addrlen = sizeof(addr_storage);
   sockaddr* addr = reinterpret_cast<sockaddr*>(&addr_storage);
   int result = ::getpeername(s_, addr, &addrlen);
@@ -197,12 +198,10 @@ int PhysicalSocket::Bind(const SocketAddress& bind_addr) {
       if (bind_addr.IsLoopbackIP()) {
         // If we couldn't bind to a loopback IP (which should only happen in
         // test scenarios), continue on. This may be expected behavior.
-        RTC_LOG(LS_VERBOSE) << "Binding socket to loopback address "
-                            << bind_addr.ipaddr().ToString()
+        RTC_LOG(LS_VERBOSE) << "Binding socket to loopback address"
                             << " failed; result: " << static_cast<int>(result);
       } else {
-        RTC_LOG(LS_WARNING) << "Binding socket to network address "
-                            << bind_addr.ipaddr().ToString()
+        RTC_LOG(LS_WARNING) << "Binding socket to network address"
                             << " failed; result: " << static_cast<int>(result);
         // If a network binding was attempted and failed, we should stop here
         // and not try to use the socket. Otherwise, we may end up sending
@@ -289,9 +288,17 @@ int PhysicalSocket::GetOption(Option opt, int* value) {
     return -1;
   socklen_t optlen = sizeof(*value);
   int ret = ::getsockopt(s_, slevel, sopt, (SockOptArg)value, &optlen);
-  if (ret != -1 && opt == OPT_DONTFRAGMENT) {
+  if (ret == -1) {
+    return -1;
+  }
+  if (opt == OPT_DONTFRAGMENT) {
 #if defined(WEBRTC_LINUX) && !defined(WEBRTC_ANDROID) && !defined(WEBRTC_BSD)
     *value = (*value != IP_PMTUDISC_DONT) ? 1 : 0;
+#endif
+  } else if (opt == OPT_DSCP) {
+#if defined(WEBRTC_POSIX)
+    // unshift DSCP value to get six most significant bits of IP DiffServ field
+    *value >>= 2;
 #endif
   }
   return ret;
@@ -306,14 +313,25 @@ int PhysicalSocket::SetOption(Option opt, int value) {
 #if defined(WEBRTC_LINUX) && !defined(WEBRTC_ANDROID) && !defined(WEBRTC_BSD)
     value = (value) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
 #endif
+  } else if (opt == OPT_DSCP) {
+#if defined(WEBRTC_POSIX)
+    // shift DSCP value to fit six most significant bits of IP DiffServ field
+    value <<= 2;
+#endif
   }
+#if defined(WEBRTC_POSIX)
+  if (sopt == IPV6_TCLASS) {
+    // Set the IPv4 option in all cases to support dual-stack sockets.
+    ::setsockopt(s_, IPPROTO_IP, IP_TOS, (SockOptArg)&value, sizeof(value));
+  }
+#endif
   return ::setsockopt(s_, slevel, sopt, (SockOptArg)&value, sizeof(value));
 }
 
 int PhysicalSocket::Send(const void* pv, size_t cb) {
   int sent = DoSend(
       s_, reinterpret_cast<const char*>(pv), static_cast<int>(cb),
-#if defined(WEBRTC_LINUX) && !defined(WEBRTC_ANDROID) && !defined(WEBRTC_BSD)
+#if defined(WEBRTC_LINUX) && !defined(WEBRTC_ANDROID)
       // Suppress SIGPIPE. Without this, attempting to send on a socket whose
       // other end is closed will result in a SIGPIPE signal being raised to
       // our process, which by default will terminate the process, which we
@@ -323,7 +341,7 @@ int PhysicalSocket::Send(const void* pv, size_t cb) {
 #else
       0
 #endif
-      );
+  );
   UpdateLastError();
   MaybeRemapSendError();
   // We have seen minidumps where this may be false.
@@ -342,7 +360,7 @@ int PhysicalSocket::SendTo(const void* buffer,
   size_t len = addr.ToSockAddrStorage(&saddr);
   int sent =
       DoSendTo(s_, static_cast<const char*>(buffer), static_cast<int>(length),
-#if defined(WEBRTC_LINUX) && !defined(WEBRTC_ANDROID) && !defined(WEBRTC_BSD)
+#if defined(WEBRTC_LINUX) && !defined(WEBRTC_ANDROID)
                // Suppress SIGPIPE. See above for explanation.
                MSG_NOSIGNAL,
 #else
@@ -554,8 +572,19 @@ int PhysicalSocket::TranslateOption(Option opt, int* slevel, int* sopt) {
       *sopt = TCP_NODELAY;
       break;
     case OPT_DSCP:
+#if defined(WEBRTC_POSIX)
+      if (family_ == AF_INET6) {
+        *slevel = IPPROTO_IPV6;
+        *sopt = IPV6_TCLASS;
+      } else {
+        *slevel = IPPROTO_IP;
+        *sopt = IP_TOS;
+      }
+      break;
+#else
       RTC_LOG(LS_WARNING) << "Socket::OPT_DSCP not supported.";
       return -1;
+#endif
     case OPT_RTP_SENDTIME_EXTN_ID:
       return -1;  // No logging is necessary as this not a OS socket option.
     default:
@@ -1265,8 +1294,8 @@ void PhysicalSocketServer::Remove(Dispatcher* pdispatcher) {
     if (!pending_add_dispatchers_.erase(pdispatcher) &&
         dispatchers_.find(pdispatcher) == dispatchers_.end()) {
       RTC_LOG(LS_WARNING) << "PhysicalSocketServer asked to remove a unknown "
-                          << "dispatcher, potentially from a duplicate call to "
-                          << "Add.";
+                             "dispatcher, potentially from a duplicate call to "
+                             "Add.";
       return;
     }
 
@@ -1274,7 +1303,7 @@ void PhysicalSocketServer::Remove(Dispatcher* pdispatcher) {
   } else if (!dispatchers_.erase(pdispatcher)) {
     RTC_LOG(LS_WARNING)
         << "PhysicalSocketServer asked to remove a unknown "
-        << "dispatcher, potentially from a duplicate call to Add.";
+           "dispatcher, potentially from a duplicate call to Add.";
     return;
   }
 #if defined(WEBRTC_USE_EPOLL)

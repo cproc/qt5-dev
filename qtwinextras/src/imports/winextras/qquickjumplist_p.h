@@ -55,6 +55,7 @@
 #include <QObject>
 #include <QQmlParserStatus>
 #include <QQmlListProperty>
+#include <QVector>
 
 QT_BEGIN_NAMESPACE
 
@@ -72,7 +73,7 @@ class QQuickJumpList : public QObject, public QQmlParserStatus
     Q_INTERFACES(QQmlParserStatus)
 
 public:
-    explicit QQuickJumpList(QObject *parent = 0);
+    explicit QQuickJumpList(QObject *parent = nullptr);
     ~QQuickJumpList();
 
     QQuickJumpListCategory *recent() const;
@@ -84,8 +85,8 @@ public:
     QQmlListProperty<QObject> data();
     QQmlListProperty<QQuickJumpListCategory> categories();
 
-    void classBegin();
-    void componentComplete();
+    void classBegin() override;
+    void componentComplete() override;
 
 Q_SIGNALS:
     void tasksChanged();
@@ -99,10 +100,10 @@ private:
     static int categories_count(QQmlListProperty<QQuickJumpListCategory> *property);
     static QQuickJumpListCategory *categories_at(QQmlListProperty<QQuickJumpListCategory> *property, int index);
 
-    QQuickJumpListCategory *m_recent;
-    QQuickJumpListCategory *m_frequent;
-    QQuickJumpListCategory *m_tasks;
-    QList<QQuickJumpListCategory *> m_categories;
+    QQuickJumpListCategory *m_recent = nullptr;
+    QQuickJumpListCategory *m_frequent = nullptr;
+    QQuickJumpListCategory *m_tasks = nullptr;
+    QVector<QQuickJumpListCategory *> m_categories;
 };
 
 QT_END_NAMESPACE

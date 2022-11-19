@@ -40,8 +40,6 @@
 #include <Qt3DAnimation/private/clipblendnode_p.h>
 #include <Qt3DAnimation/private/clipblendnodevisitor_p.h>
 #include <Qt3DAnimation/private/clipblendvalue_p.h>
-#include <Qt3DCore/qpropertyupdatedchange.h>
-#include <Qt3DCore/private/qpropertyupdatedchangebase_p.h>
 #include <QtGui/qvector2d.h>
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector4d.h>
@@ -82,7 +80,8 @@ ClipEvaluationData evaluationDataForClip(AnimationClip *clip,
                                                 animatorData.playbackRate, clip->duration(),
                                                 animatorData.loopCount, result.currentLoop);
     result.isFinalFrame = isFinalFrame(result.localTime, clip->duration(),
-                                       result.currentLoop, animatorData.loopCount);
+                                       result.currentLoop, animatorData.loopCount,
+                                       animatorData.playbackRate);
     const bool hasNormalizedTime = isValidNormalizedTime(animatorData.normalizedLocalTime);
     result.normalizedLocalTime = hasNormalizedTime ? animatorData.normalizedLocalTime
                                                    : result.localTime / clip->duration();
@@ -114,9 +113,10 @@ double localTimeFromElapsedTime(double t_current_local,
         t_local = std::fmod(t_local, duration);
 
         // Ensure we clamp to end of final loop
-        if (int(loopNumber) == loopCount) {
+
+        if (int(loopNumber) == loopCount || int(loopNumber) < 0) {
             loopNumber = loopCount - 1;
-            t_local = duration;
+            t_local = playbackRate >= 0.0 ? duration : 0.0;
         }
     }
 
@@ -160,11 +160,13 @@ ComponentIndices channelComponentsToIndices(const Channel &channel,
 #if defined Q_COMPILER_UNIFORM_INIT
     static const QVector<char> standardSuffixes = { 'X', 'Y', 'Z', 'W' };
     static const QVector<char> quaternionSuffixes = { 'W', 'X', 'Y', 'Z' };
-    static const QVector<char> colorSuffixes = { 'R', 'G', 'B' };
+    static const QVector<char> colorSuffixesRGB = { 'R', 'G', 'B' };
+    static const QVector<char> colorSuffixesRGBA = { 'R', 'G', 'B', 'A' };
 #else
     static const QVector<char> standardSuffixes = (QVector<char>() << 'X' << 'Y' << 'Z' << 'W');
     static const QVector<char> quaternionSuffixes = (QVector<char>() << 'W' << 'X' << 'Y' << 'Z');
-    static const QVector<char> colorSuffixes = (QVector<char>() << 'R' << 'G' << 'B');
+    static const QVector<char> colorSuffixesRGB = (QVector<char>() << 'R' << 'G' << 'B');
+    static const QVector<char> colorSuffixesRGBA = (QVector<char>() << 'R' << 'G' << 'B' << 'A');
 #endif
 
     switch (dataType) {
@@ -172,8 +174,12 @@ ComponentIndices channelComponentsToIndices(const Channel &channel,
         return channelComponentsToIndicesHelper(channel, expectedComponentCount,
                                                 offset, quaternionSuffixes);
     case QVariant::Color:
+        if (expectedComponentCount == 3)
+            return channelComponentsToIndicesHelper(channel, expectedComponentCount,
+                                                    offset, colorSuffixesRGB);
+        Q_ASSERT(expectedComponentCount == 4);
         return channelComponentsToIndicesHelper(channel, expectedComponentCount,
-                                                offset, colorSuffixes);
+                                                offset, colorSuffixesRGBA);
     default:
         return channelComponentsToIndicesHelper(channel, expectedComponentCount,
                                                 offset, standardSuffixes);
@@ -271,7 +277,7 @@ ClipResults evaluateClipAtLocalTime(AnimationClip *clip, float localTime)
                         return quat;
                     };
 
-                    const int lowerKeyframeBound = channel.channelComponents[0].fcurve.lowerKeyframeBound(localTime);
+                    const int lowerKeyframeBound = std::max(0, channel.channelComponents[0].fcurve.lowerKeyframeBound(localTime));
                     const auto lowerQuat = quaternionFromChannel(lowerKeyframeBound);
                     const auto higherQuat = quaternionFromChannel(lowerKeyframeBound + 1);
                     auto cosHalfTheta = QQuaternion::dotProduct(lowerQuat, higherQuat);
@@ -387,10 +393,12 @@ QVariant buildPropertyValue(const MappingData &mappingData, const QVector<float>
     }
 
     case QVariant::Color: {
+        // A color can either be a vec3 or a vec4
         const QColor color =
                 QColor::fromRgbF(channelResults[mappingData.channelIndices[0]],
                 channelResults[mappingData.channelIndices[1]],
-                channelResults[mappingData.channelIndices[2]]);
+                channelResults[mappingData.channelIndices[2]],
+                mappingData.channelIndices.size() > 3 ? channelResults[mappingData.channelIndices[3]] : 1.0f);
         return QVariant::fromValue(color);
     }
 
@@ -407,13 +415,17 @@ QVariant buildPropertyValue(const MappingData &mappingData, const QVector<float>
     return QVariant();
 }
 
-QVector<Qt3DCore::QSceneChangePtr> preparePropertyChanges(Qt3DCore::QNodeId animatorId,
-                                                          const QVector<MappingData> &mappingDataVec,
-                                                          const QVector<float> &channelResults,
-                                                          bool finalFrame,
-                                                          float normalizedLocalTime)
+AnimationRecord prepareAnimationRecord(Qt3DCore::QNodeId animatorId,
+                                       const QVector<MappingData> &mappingDataVec,
+                                       const QVector<float> &channelResults,
+                                       bool finalFrame,
+                                       float normalizedLocalTime)
 {
-    QVector<Qt3DCore::QSceneChangePtr> changes;
+    AnimationRecord record;
+    record.finalFrame = finalFrame;
+    record.animatorId = animatorId;
+    record.normalizedTime = normalizedLocalTime;
+
     QVarLengthArray<Skeleton *, 4> dirtySkeletons;
 
     // Iterate over the mappings
@@ -453,40 +465,14 @@ QVector<Qt3DCore::QSceneChangePtr> preparePropertyChanges(Qt3DCore::QNodeId anim
                 break;
             }
         } else {
-            // Construct a property update change, set target, property and delivery options
-            auto e = Qt3DCore::QPropertyUpdatedChangePtr::create(mappingData.targetId);
-            e->setDeliveryFlags(Qt3DCore::QSceneChange::DeliverToAll);
-            e->setPropertyName(mappingData.propertyName);
-            // Handle intermediate updates vs final flag properly
-            Qt3DCore::QPropertyUpdatedChangeBasePrivate::get(e.data())->m_isIntermediate = !finalFrame;
-            // Assign new value and send
-            e->setValue(v);
-            changes.push_back(e);
+            record.targetChanges.push_back({mappingData.targetId, mappingData.propertyName, v});
         }
     }
 
     for (const auto skeleton : dirtySkeletons)
-        skeleton->sendLocalPoses();
+        record.skeletonChanges.push_back({skeleton->peerId(), skeleton->joints()});
 
-    if (isValidNormalizedTime(normalizedLocalTime)) {
-        auto e = Qt3DCore::QPropertyUpdatedChangePtr::create(animatorId);
-        e->setDeliveryFlags(Qt3DCore::QSceneChange::DeliverToAll);
-        e->setPropertyName("normalizedTime");
-        e->setValue(normalizedLocalTime);
-        Qt3DCore::QPropertyUpdatedChangeBasePrivate::get(e.data())->m_isIntermediate = !finalFrame;
-        changes.push_back(e);
-    }
-
-    // If it's the final frame, notify the frontend that we've stopped
-    if (finalFrame) {
-        auto e = Qt3DCore::QPropertyUpdatedChangePtr::create(animatorId);
-        e->setDeliveryFlags(Qt3DCore::QSceneChange::DeliverToAll);
-        e->setPropertyName("running");
-        e->setValue(false);
-        changes.push_back(e);
-    }
-
-    return changes;
+    return record;
 }
 
 QVector<AnimationCallbackAndValue> prepareCallbacks(const QVector<MappingData> &mappingDataVec,

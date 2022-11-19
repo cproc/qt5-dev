@@ -16,12 +16,21 @@
 
 #include "perfetto/protozero/message.h"
 
+#include <atomic>
 #include <type_traits>
 
 #include "perfetto/base/logging.h"
 #include "perfetto/protozero/message_handle.h"
 
 namespace protozero {
+
+namespace {
+
+#if PERFETTO_DCHECK_IS_ON()
+std::atomic<uint32_t> g_generation;
+#endif
+
+}  // namespace
 
 // static
 constexpr uint32_t Message::kMaxNestingDepth;
@@ -55,7 +64,7 @@ void Message::Reset(ScatteredStreamWriter* stream_writer) {
   finalized_ = false;
 #if PERFETTO_DCHECK_IS_ON()
   handle_ = nullptr;
-  generation_++;
+  generation_ = g_generation.fetch_add(1, std::memory_order_relaxed);
 #endif
 }
 

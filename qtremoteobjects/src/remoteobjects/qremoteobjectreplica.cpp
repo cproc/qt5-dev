@@ -158,15 +158,15 @@ bool QRemoteObjectReplicaImplementation::needsDynamicInitialization() const
 
 void QRemoteObjectReplicaImplementation::setState(QRemoteObjectReplica::State state)
 {
-    if (m_state != QRemoteObjectReplica::Suspect && m_state >= state)
+    if (m_state.loadAcquire() != QRemoteObjectReplica::Suspect && m_state.loadAcquire() >= state)
         return;
 
-    int oldState = m_state;
-    m_state = state;
+    int oldState = m_state.loadAcquire();
+    m_state.storeRelease(state);
 
     // We should emit initialized before emitting any changed signals in case connections are made in a
     // Slot responding to initialized/validChanged.
-    if (m_state == QRemoteObjectReplica::Valid) {
+    if (m_state.loadAcquire() == QRemoteObjectReplica::Valid) {
         // we're initialized now, emit signal
         emitInitialized();
     }
@@ -175,6 +175,14 @@ void QRemoteObjectReplicaImplementation::setState(QRemoteObjectReplica::State st
     Q_ASSERT(stateChangedIndex != -1);
     void *args[] = {nullptr, &state, &oldState};
     QMetaObject::activate(this, metaObject(), stateChangedIndex, args);
+}
+
+void QRemoteObjectReplicaImplementation::emitNotified()
+{
+    const static int notifiedIndex = QRemoteObjectReplica::staticMetaObject.indexOfMethod("notified()");
+    Q_ASSERT(notifiedIndex != -1);
+    void *args[] = {nullptr};
+    QMetaObject::activate(this, metaObject(), notifiedIndex, args);
 }
 
 bool QConnectedReplicaImplementation::sendCommand()
@@ -201,7 +209,7 @@ void QConnectedReplicaImplementation::initialize(QVariantList &values)
     qCDebug(QT_REMOTEOBJECT) << "initialize()" << m_propertyStorage.size();
     const int nParam = values.size();
     QVarLengthArray<int> changedProperties(nParam);
-    const int offset = m_metaObject->propertyOffset();
+    const int offset = m_propertyOffset;
     for (int i = 0; i < nParam; ++i) {
         qCDebug(QT_REMOTEOBJECT) << "  in loop" << i << m_propertyStorage.size();
         changedProperties[i] = -1;
@@ -213,7 +221,7 @@ void QConnectedReplicaImplementation::initialize(QVariantList &values)
         qCDebug(QT_REMOTEOBJECT) << "SETPROPERTY" << i << m_metaObject->property(i+offset).name() << values.at(i).typeName() << values.at(i).toString();
     }
 
-    Q_ASSERT(m_state < QRemoteObjectReplica::Valid || m_state == QRemoteObjectReplica::Suspect);
+    Q_ASSERT(m_state.loadAcquire() < QRemoteObjectReplica::Valid || m_state.loadAcquire() == QRemoteObjectReplica::Suspect);
     setState(QRemoteObjectReplica::Valid);
 
     void *args[] = {nullptr, nullptr};
@@ -227,6 +235,7 @@ void QConnectedReplicaImplementation::initialize(QVariantList &values)
         args[1] = m_propertyStorage[i].data();
         QMetaObject::activate(this, metaObject(), notifyIndex, args);
     }
+    emitNotified();
 
     qCDebug(QT_REMOTEOBJECT) << "isSet = true for" << m_objectName;
     if (node()->heartbeatInterval())
@@ -292,11 +301,10 @@ void QRemoteObjectReplicaImplementation::setDynamicProperties(const QVariantList
 void QConnectedReplicaImplementation::setDynamicProperties(const QVariantList &values)
 {
     QRemoteObjectReplicaImplementation::setDynamicProperties(values);
-    foreach (QRemoteObjectReplica *obj, m_parentsNeedingConnect)
+    for (QRemoteObjectReplica *obj : qExchange(m_parentsNeedingConnect, {}))
         configurePrivate(obj);
-    m_parentsNeedingConnect.clear();
 
-    Q_ASSERT(m_state < QRemoteObjectReplica::Valid);
+    Q_ASSERT(m_state.loadAcquire() < QRemoteObjectReplica::Valid);
     setState(QRemoteObjectReplica::Valid);
 
     void *args[] = {nullptr, nullptr};
@@ -308,13 +316,14 @@ void QConnectedReplicaImplementation::setDynamicProperties(const QVariantList &v
             QMetaObject::activate(this, metaObject(), mp.notifySignalIndex(), args);
         }
     }
+    emitNotified();
 
     qCDebug(QT_REMOTEOBJECT) << "isSet = true for" << m_objectName;
 }
 
 bool QConnectedReplicaImplementation::isInitialized() const
 {
-    return  m_state > QRemoteObjectReplica::Default && m_state != QRemoteObjectReplica::SignatureMismatch;
+    return  m_state.loadAcquire() > QRemoteObjectReplica::Default && m_state.loadAcquire() != QRemoteObjectReplica::SignatureMismatch;
 }
 
 bool QConnectedReplicaImplementation::waitForSource(int timeout)
@@ -547,9 +556,29 @@ void QRemoteObjectReplicaImplementation::configurePrivate(QRemoteObjectReplica *
 
 void QConnectedReplicaImplementation::configurePrivate(QRemoteObjectReplica *rep)
 {
-    if (m_metaObject)
+    if (m_metaObject) {
+        // see QRemoteObjectReplicaImplementation::configurePrivate
+        const bool firstReplicaInstance = (m_methodOffset == 0);
+
         QRemoteObjectReplicaImplementation::configurePrivate(rep);
-    else
+
+        // ensure that notify signals are emitted for the new replica, when
+        // we are initializing an nth replica of the same type
+        if (!firstReplicaInstance) {
+            const int offset = m_propertyOffset;
+            const int nParam = m_propertyStorage.count();
+            void *args[] = {nullptr, nullptr};
+            for (int i = 0; i < nParam; ++i) {
+                const int notifyIndex = m_metaObject->property(i+offset).notifySignalIndex();
+                if (notifyIndex < 0)
+                    continue;
+                qCDebug(QT_REMOTEOBJECT) << " Before activate" << notifyIndex << m_metaObject->property(i+offset).name();
+                args[1] = m_propertyStorage[i].data();
+                // NOTE: this over-emits (assumes all values have changed)
+                QMetaObject::activate(rep, rep->metaObject(), notifyIndex - m_signalOffset, args);
+            }
+        }
+    } else
         m_parentsNeedingConnect.append(rep);
 }
 
@@ -597,9 +626,25 @@ void QConnectedReplicaImplementation::configurePrivate(QRemoteObjectReplica *rep
 /*!
     \fn void QRemoteObjectReplica::initialized()
 
-    This signal is emitted once the replica is initialized.
+    This signal is emitted once the replica is initialized. An intialized replica
+    has all property values set, but has not yet emitted any property change
+    notifications.
 
     \sa isInitialized(), stateChanged()
+*/
+
+/*!
+    \fn void QRemoteObjectReplica::notified()
+
+    This signal is emitted once the replica is initialized and all property change
+    notifications have been emitted.
+
+    It is sometimes useful to respond to property changes as events.
+    For example, you might want to display a user notification when a certain
+    property change occurs. However, this user notification would then also be
+    triggered when a replica first became \c QRemoteObjectReplica::Valid, as
+    all property change signals are emitted at that time. This isn't always desirable,
+    and \c notified allows the developer to distinguish between these two cases.
 */
 
 /*!

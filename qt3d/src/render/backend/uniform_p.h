@@ -56,7 +56,7 @@
 #include <Qt3DCore/private/matrix4x4_p.h>
 #include <Qt3DCore/private/vector3d_p.h>
 #include <Qt3DCore/private/vector4d_p.h>
-
+#include <Qt3DRender/private/qt3drender_global_p.h>
 #include <QMatrix4x4>
 #include <QVector2D>
 #include <QVector3D>
@@ -101,17 +101,19 @@ enum UniformType {
     Mat3x4,
     Mat4x3,
     Sampler,
+    Image,
     Unknown
 };
 
-class Q_AUTOTEST_EXPORT UniformValue
+class Q_3DRENDERSHARED_PRIVATE_EXPORT UniformValue
 {
 public:
     enum ValueType {
         ScalarValue,
         NodeId,
         TextureValue,
-        BufferValue
+        BufferValue,
+        ShaderImageValue
     };
 
     // UniformValue implicitely converts doubles to floats to ensure
@@ -166,7 +168,7 @@ public:
         int offset = 0;
         const int byteSize = 16 * sizeof(float);
         float *data = m_data.data();
-        for (const auto m : v) {
+        for (const auto &m : v) {
             memcpy(data + offset, m.constData(), byteSize);
             offset += 16;
         }
@@ -225,9 +227,9 @@ public:
         return !(*this == other);
     }
 private:
-    // Allocate 4 floats on stack
+    // Allocate 16 floats on stack
     // For larger elements, heap allocation will be used
-    QVarLengthArray<float, 4> m_data;
+    QVarLengthArray<float, 16> m_data;
 
     ValueType m_valueType = ScalarValue;
 
@@ -236,7 +238,7 @@ private:
 };
 
 template<>
-Q_AUTOTEST_EXPORT void UniformValue::setData<QMatrix4x4>(const QVector<QMatrix4x4> &v);
+Q_3DRENDERSHARED_PRIVATE_EXPORT void UniformValue::setData<QMatrix4x4>(const QVector<QMatrix4x4> &v);
 
 } // namespace Render
 } // namespace Qt3DRender

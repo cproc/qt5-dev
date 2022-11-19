@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 EglFSDeviceIntegration module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5EglFSDeviceIntegration_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5EglFSDeviceIntegration_VERSION instead.
-set(Qt5EglFSDeviceIntegration_VERSION_STRING 5.13.2)
+set(Qt5EglFSDeviceIntegration_VERSION_STRING 5.15.2)
 
 set(Qt5EglFSDeviceIntegration_LIBRARIES Qt5::EglFSDeviceIntegration)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::EglFSDeviceIntegration)
 
     set(_Qt5EglFSDeviceIntegration_OWN_INCLUDE_DIRS "${_qt5EglFSDeviceIntegration_install_prefix}/include/" "${_qt5EglFSDeviceIntegration_install_prefix}/include/QtEglFSDeviceIntegration")
     set(Qt5EglFSDeviceIntegration_PRIVATE_INCLUDE_DIRS
-        "${_qt5EglFSDeviceIntegration_install_prefix}/include/QtEglFSDeviceIntegration/5.13.2"
-        "${_qt5EglFSDeviceIntegration_install_prefix}/include/QtEglFSDeviceIntegration/5.13.2/QtEglFSDeviceIntegration"
+        "${_qt5EglFSDeviceIntegration_install_prefix}/include/QtEglFSDeviceIntegration/5.15.2"
+        "${_qt5EglFSDeviceIntegration_install_prefix}/include/QtEglFSDeviceIntegration/5.15.2/QtEglFSDeviceIntegration"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::EglFSDeviceIntegration)
     foreach(_module_dep ${_Qt5EglFSDeviceIntegration_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5EglFSDeviceIntegration_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5EglFSDeviceIntegration_FIND_VERSION_EXACT}
                 ${_Qt5EglFSDeviceIntegration_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5EglFSDeviceIntegration_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -123,10 +122,27 @@ if (NOT TARGET Qt5::EglFSDeviceIntegration)
     list(REMOVE_DUPLICATES Qt5EglFSDeviceIntegration_COMPILE_DEFINITIONS)
     list(REMOVE_DUPLICATES Qt5EglFSDeviceIntegration_EXECUTABLE_COMPILE_FLAGS)
 
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::EglFSDeviceIntegration)
+        return()
+    endif()
+
     set(_Qt5EglFSDeviceIntegration_LIB_DEPENDENCIES "Qt5::EventDispatcherSupport;Qt5::ServiceSupport;Qt5::ThemeSupport;Qt5::FontDatabaseSupport;Qt5::FbSupport;Qt5::EglSupport;Qt5::PlatformCompositorSupport;Qt5::Gui;Qt5::Gui;Qt5::DeviceDiscoverySupport;Qt5::Core;Qt5::Core")
 
 
     add_library(Qt5::EglFSDeviceIntegration SHARED IMPORTED)
+
 
     set_property(TARGET Qt5::EglFSDeviceIntegration PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5EglFSDeviceIntegration_OWN_INCLUDE_DIRS})
@@ -135,6 +151,22 @@ if (NOT TARGET Qt5::EglFSDeviceIntegration)
 
     set_property(TARGET Qt5::EglFSDeviceIntegration PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::EglFSDeviceIntegration PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::EglFSDeviceIntegration
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::EglFSDeviceIntegration
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::EglFSDeviceIntegration
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::EglFSDeviceIntegration
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
+
+    set_property(TARGET Qt5::EglFSDeviceIntegration PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
     set(_Qt5EglFSDeviceIntegration_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5EglFSDeviceIntegration_PRIVATE_DIR ${Qt5EglFSDeviceIntegration_OWN_PRIVATE_INCLUDE_DIRS})
@@ -157,6 +189,14 @@ if (NOT TARGET Qt5::EglFSDeviceIntegration)
         set_property(TARGET Qt5::EglFSDeviceIntegrationPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::EglFSDeviceIntegration ${_Qt5EglFSDeviceIntegration_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::EglFSDeviceIntegrationPrivate)
+            add_library(Qt::EglFSDeviceIntegrationPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::EglFSDeviceIntegrationPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::EglFSDeviceIntegrationPrivate"
+            )
+        endif()
     endif()
 
     _populate_EglFSDeviceIntegration_target_properties(RELEASE "libQt5EglFSDeviceIntegration.lib.so" "" FALSE)
@@ -167,7 +207,13 @@ if (NOT TARGET Qt5::EglFSDeviceIntegration)
 
 
 
+    _qt5_EglFSDeviceIntegration_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5EglFSDeviceIntegrationConfigVersion.cmake")
+endif()
 
-_qt5_EglFSDeviceIntegration_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5EglFSDeviceIntegrationConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::EglFSDeviceIntegration AND NOT TARGET Qt::EglFSDeviceIntegration)
+    add_library(Qt::EglFSDeviceIntegration INTERFACE IMPORTED)
+    set_target_properties(Qt::EglFSDeviceIntegration PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::EglFSDeviceIntegration"
+    )
 endif()

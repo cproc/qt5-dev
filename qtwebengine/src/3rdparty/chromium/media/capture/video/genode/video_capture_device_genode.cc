@@ -187,7 +187,9 @@ void VideoCaptureDeviceGenode::OnCaptureTask() {
   const base::TimeTicks current_time = base::TimeTicks::Now();
   if (first_ref_time_.is_null())
     first_ref_time_ = current_time;
-  client_->OnIncomingCapturedData(frame_ptr, frame_size, capture_format_, 0,
+  client_->OnIncomingCapturedData(frame_ptr, frame_size, capture_format_,
+                                  gfx::ColorSpace(),
+                                  0 /* rotation */, false /* flip_y */,
                                   current_time, current_time - first_ref_time_);
 
   // Process waiting photo callbacks

@@ -57,6 +57,7 @@
 #include <Qt3DRender/private/qboundingvolumeprovider_p.h>
 #include <Qt3DRender/private/qcollisionqueryresult_p.h>
 #include <Qt3DRender/private/pickboundingvolumeutils_p.h>
+#include <Qt3DRender/private/qt3drender_global_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -72,7 +73,7 @@ class Renderer;
 class NodeManagers;
 class RenderSettings;
 
-class Q_AUTOTEST_EXPORT AbstractPickingJob : public Qt3DCore::QAspectJob
+class Q_3DRENDERSHARED_PRIVATE_EXPORT AbstractPickingJob : public Qt3DCore::QAspectJob
 {
 public:
     AbstractPickingJob();
@@ -90,6 +91,8 @@ public:
                                               const QRect &viewport);
 
 protected:
+    AbstractPickingJob(Qt3DCore::QAspectJobPrivate &dd);
+
     void run() final;
 
     NodeManagers *m_manager;

@@ -25,15 +25,13 @@ SOURCES += main.mm \
     qcocoaclipboard.mm \
     qcocoadrag.mm \
     qmacclipboard.mm \
-    qcocoasystemsettings.mm \
     qcocoainputcontext.mm \
     qcocoaservices.mm \
     qcocoasystemtrayicon.mm \
     qcocoaintrospection.mm \
     qcocoakeymapper.mm \
     qcocoamimetypes.mm \
-    qiosurfacegraphicsbuffer.mm \
-    messages.cpp
+    qiosurfacegraphicsbuffer.mm
 
 HEADERS += qcocoaintegration.h \
     qcocoascreen.h \
@@ -59,13 +57,11 @@ HEADERS += qcocoaintegration.h \
     qcocoaclipboard.h \
     qcocoadrag.h \
     qmacclipboard.h \
-    qcocoasystemsettings.h \
     qcocoainputcontext.h \
     qcocoaservices.h \
     qcocoasystemtrayicon.h \
     qcocoaintrospection.h \
     qcocoakeymapper.h \
-    messages.h \
     qiosurfacegraphicsbuffer.h \
     qcocoamimetypes.h
 
@@ -87,9 +83,16 @@ qtConfig(accessibility) {
         qcocoaaccessibility.h
 }
 
+qtConfig(sessionmanager) {
+    SOURCES += qcocoasessionmanager.cpp
+    HEADERS += qcocoasessionmanager.h
+}
+
 RESOURCES += qcocoaresources.qrc
 
 LIBS += -framework AppKit -framework CoreServices -framework Carbon -framework IOKit -framework QuartzCore -framework CoreVideo -framework Metal -framework IOSurface -lcups
+
+DEFINES += QT_NO_FOREACH
 
 QT += \
     core-private gui-private \

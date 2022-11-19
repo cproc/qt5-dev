@@ -462,7 +462,7 @@ QModelIndex QScriptDebuggerLocalsModelPrivate::addTopLevelObject(const QString &
         return indexFromNode(node);
     QScriptDebuggerValueProperty prop(name, object,
                                       QString::fromLatin1(""), // ### string representation of object
-                                      /*flags=*/0);
+                                      QScriptValue::PropertyFlags{});
     int rowIndex = invisibleRootNode->children.size();
     q->beginInsertRows(QModelIndex(), rowIndex, rowIndex);
     node = new QScriptDebuggerLocalsModelNode(prop, invisibleRootNode);
@@ -850,7 +850,7 @@ QVariant QScriptDebuggerLocalsModel::data(const QModelIndex &index, int role) co
     else if (role == Qt::BackgroundRole) {
         if (d->isTopLevelNode(node))
             return QBrush(Qt::darkGray);
-    } else if (role == Qt::TextColorRole) {
+    } else if (role == Qt::ForegroundRole) {
         if (d->isTopLevelNode(node))
             return QColor(Qt::white);
     } else if (role == Qt::FontRole) {
@@ -907,7 +907,7 @@ Qt::ItemFlags QScriptDebuggerLocalsModel::flags(const QModelIndex &index) const
 {
     Q_D(const QScriptDebuggerLocalsModel);
     if (!index.isValid())
-        return 0;
+        return {};
     Qt::ItemFlags ret = QAbstractItemModel::flags(index);
     if ((index.column() == 1) && index.parent().isValid()) {
         QScriptDebuggerLocalsModelNode *node = d->nodeFromIndex(index);

@@ -73,11 +73,6 @@ QT_CHARTS_BEGIN_NAMESPACE
 */
 
 /*!
-    \qmlproperty QString BoxSet::brushFilename
-    The name of the file used as a brush for the box-and-whiskers item.
-*/
-
-/*!
     \fn void QBoxSet::clicked()
     This signal is emitted when the user clicks a box-and-whiskers item in the chart.
 */
@@ -348,8 +343,9 @@ bool QBoxSetPrivate::append(QList<qreal> values)
 void QBoxSetPrivate::clear()
 {
     m_appendCount = 0;
-    for (int i = 0; i < m_valuesCount; i++)
+    for (int i = 0; i < m_valuesCount; i++) {
          m_values[i] = 0.0;
+    }
     emit restructuredBox();
 }
 

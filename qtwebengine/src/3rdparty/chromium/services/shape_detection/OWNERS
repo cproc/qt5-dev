@@ -1,8 +1,4 @@
-# COMPONENT: Blink>ImageCapture
-# TEAM: media-dev@chromium.org
+file://third_party/blink/renderer/modules/shapedetection/OWNERS
 
-mcasas@chromium.org
-reillyg@chromium.org
-
-per-file manifest.json=set noparent
-per-file manifest.json=file://ipc/SECURITY_OWNERS
+# COMPONENT: Blink>ShapeDetection
+# TEAM: device-dev@chromium.org

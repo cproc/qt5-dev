@@ -54,6 +54,7 @@
 #include <qglobal.h>
 
 #include <Qt3DCore/qaspectjob.h>
+#include <Qt3DRender/private/qt3drender_global_p.h>
 
 #include <QVector>
 
@@ -66,18 +67,20 @@ class FrameGraphNode;
 class Renderer;
 class FrameGraphManager;
 
-class Q_AUTOTEST_EXPORT FrameGraphVisitor
+class Q_3DRENDERSHARED_PRIVATE_EXPORT FrameGraphVisitor
 {
 public:
     explicit FrameGraphVisitor(const FrameGraphManager *nodeManager);
 
     QVector<FrameGraphNode *> traverse(FrameGraphNode *root);
+    QVector<FrameGraphNode *> &&takeEnablersToDisable();
 
 private:
     void visit(Render::FrameGraphNode *node);
 
     const FrameGraphManager *m_manager;
     QVector<FrameGraphNode *> m_leaves;
+    QVector<FrameGraphNode *> m_enablersToDisable;
 };
 
 } // namespace Render

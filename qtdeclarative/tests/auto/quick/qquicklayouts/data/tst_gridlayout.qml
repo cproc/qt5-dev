@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 The Qt Company Ltd.
+** Copyright (C) 2020 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the test suite of the Qt Toolkit.
@@ -48,7 +48,7 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.2
+import QtQuick 2.6
 import QtTest 1.0
 import QtQuick.Layouts 1.1
 
@@ -991,6 +991,47 @@ Item {
         }
 
         Component {
+
+            id: layout_RTL_Component
+            GridLayout {
+                LayoutMirroring.enabled: true
+                columns: 2
+                rowSpacing: 0
+                columnSpacing: 0
+                Rectangle {
+                    color: "red"
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
+                    Layout.leftMargin: 2
+                    Layout.rightMargin: 1
+                }
+                Rectangle {
+                    color: "blue"
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
+                    Layout.leftMargin: 3
+                    Layout.rightMargin: 4
+                }
+            }
+        }
+
+        function test_Rtl()
+        {
+            var layout = layout_RTL_Component.createObject(container)
+
+            compare(layout.implicitWidth, 3 + 20 + 4 + 2 + 20 + 1 )
+            layout.width = layout.implicitWidth
+
+            waitForRendering(layout)
+
+            var c0 = layout.children[0]
+            var c1 = layout.children[1]
+
+            compare(c1.x, 4) // c1 is first, with the right margin on the left
+            compare(c0.x, 20 + 3 + 4 + 1)
+        }
+
+        Component {
             id: layout_invalidateWhileRearranging_Component
 
             GridLayout {
@@ -1018,6 +1059,149 @@ Item {
 
             waitForRendering(layout);
             verify(layout.children[1].visible == false);
+        }
+
+
+
+        Component {
+            id: gridlayout_propertyChanges_Component
+            GridLayout {
+                columns: 1
+                property alias spy : signalSpy
+                SignalSpy {
+                    id: signalSpy
+                    target: parent
+                }
+            }
+        }
+
+        Component {
+            id: rowlayout_propertyChanges_Component
+            RowLayout {
+                property alias spy : signalSpy
+                SignalSpy {
+                    id: signalSpy
+                    target: parent
+                }
+            }
+        }
+
+        function test_propertyChanges_data()
+        {
+            let data = [
+                { tag: "columnSpacing", value: 9 },
+                { tag: "rowSpacing", value: 9 },
+                { tag: "columns", value: 2 },
+                { tag: "rows", value: 2 },
+                { tag: "flow", value: GridLayout.TopToBottom},
+                { tag: "layoutDirection", value: Qt.RightToLeft },
+                { tag: "spacing", value: 9 }
+            ]
+            return data
+        }
+
+        function test_propertyChanges(data)
+        {
+            var propName = data.tag
+            var layout = createTemporaryObject(propName === "spacing"
+                                               ? rowlayout_propertyChanges_Component
+                                               : gridlayout_propertyChanges_Component
+                                               , container)
+
+            layout.spy.signalName = propName + "Changed"
+            verify(layout.spy.valid)
+
+            layout[propName] = data.value
+            compare(layout.spy.count, 1)
+        }
+
+        Component {
+            id: layout_columnIsOutsideGrid_Component
+            GridLayout {
+                columns: 2
+                Item {
+                    Layout.row: 0
+                    Layout.column: 1
+                }
+                Item {
+                    implicitWidth: 10
+                    implicitHeight: 10
+                    Layout.row: 0
+                    Layout.column: 2
+                }
+                Item {
+                    Layout.columnSpan: 2
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                }
+            }
+        }
+
+        function test_columnIsOutsideGrid()
+        {
+            ignoreWarning(/QML Item: Layout: column \(2\) should be less than the number of columns \(2\)/);
+            var layout = layout_columnIsOutsideGrid_Component.createObject(container);
+            layout.width = layout.implicitWidth
+            layout.height = layout.implicitHeight
+            waitForRendering(layout);
+            layout.destroy()
+        }
+
+        // ------------------
+        Component {
+            id: replaceCell_QTBUG_65121
+            GridLayout {
+                id: gridLayout
+                anchors.fill: parent
+                columns: 2
+                property var categories: ['one', 'two', 'three']
+                property var values: [1, 2, 3]
+                Repeater {
+                    model: gridLayout.categories
+                    Item {
+                        Layout.row: index
+                        Layout.column: 0
+                        Layout.preferredWidth: label.width
+                        Layout.fillHeight: true
+                        Text {
+                            id: label
+                            height: parent.height
+                            anchors.right: parent.right
+                            text: modelData
+                            verticalAlignment: Text.AlignVCenter
+                            font.pointSize: 27
+                            leftPadding: 10
+                        }
+                    }
+                }
+                Repeater {
+                    model: gridLayout.values
+                    Item {
+                        Layout.row: index
+                        Layout.column: 1
+                        Layout.preferredWidth: label.width
+                        Layout.fillHeight: true
+                        Text {
+                            id: label
+                            height: parent.height
+                            anchors.right: parent.right
+                            text: modelData
+                            verticalAlignment: Text.AlignVCenter
+                            font.pointSize: 27
+                            leftPadding: 10
+                        }
+                    }
+                }
+            }
+        }
+        function test_replaceCell_QTBUG_65121() {
+            var layout = createTemporaryObject(replaceCell_QTBUG_65121, container)
+            verify(layout)
+            layout.categories = ["eleven", "twelve"]
+            layout.values = [11, 12]
+            verify(isPolishScheduled(layout))
+            verify(waitForItemPolished(layout))
+            // Shouldn't be any warnings, but no way to verify this currently: QTBUG-70029
         }
     }
 }

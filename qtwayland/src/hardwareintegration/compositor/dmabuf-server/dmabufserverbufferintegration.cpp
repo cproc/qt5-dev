@@ -5,7 +5,7 @@
 **
 ** This file is part of the QtWaylandCompositor module of the Qt Toolkit.
 **
-** $QT_BEGIN_LICENSE:LGPL$
+** $QT_BEGIN_LICENSE:GPL$
 ** Commercial License Usage
 ** Licensees holding valid commercial Qt licenses may use this file in
 ** accordance with the commercial license agreement provided with the
@@ -14,24 +14,14 @@
 ** and conditions see https://www.qt.io/terms-conditions. For further
 ** information use the contact form at https://www.qt.io/contact-us.
 **
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 3 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL3 included in the
-** packaging of this file. Please review the following information to
-** ensure the GNU Lesser General Public License version 3 requirements
-** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
-**
 ** GNU General Public License Usage
 ** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 2.0 or (at your option) the GNU General
-** Public license version 3 or any later version approved by the KDE Free
-** Qt Foundation. The licenses are as published by the Free Software
-** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
+** General Public License version 3 or (at your option) any later version
+** approved by the KDE Free Qt Foundation. The licenses are as published by
+** the Free Software Foundation and appearing in the file LICENSE.GPL3
 ** included in the packaging of this file. Please review the following
 ** information to ensure the GNU General Public License requirements will
-** be met: https://www.gnu.org/licenses/gpl-2.0.html and
-** https://www.gnu.org/licenses/gpl-3.0.html.
+** be met: https://www.gnu.org/licenses/gpl-3.0.html.
 **
 ** $QT_END_LICENSE$
 **
@@ -63,7 +53,7 @@ DmaBufServerBuffer::DmaBufServerBuffer(DmaBufServerBufferIntegration *integratio
 
     int err = eglGetError();
     if (err != EGL_SUCCESS || m_image == EGL_NO_IMAGE_KHR)
-        qCWarning(qLcWaylandCompositorHardwareIntegration) << "DmaBufServerBuffer error creating EGL image" << hex << err;
+        qCWarning(qLcWaylandCompositorHardwareIntegration) << "DmaBufServerBuffer error creating EGL image" << Qt::hex << err;
 
     // TODO: formats with more than one plane
 
@@ -71,7 +61,7 @@ DmaBufServerBuffer::DmaBufServerBuffer(DmaBufServerBufferIntegration *integratio
 
     if (!m_integration->eglExportDMABUFImageQueryMESA(m_image, &m_fourcc_format, &num_planes, nullptr)) {
         qCWarning(qLcWaylandCompositorHardwareIntegration) << "DmaBufServerBuffer: Failed to query egl image";
-        qCDebug(qLcWaylandCompositorHardwareIntegration) << "error" << hex << eglGetError();
+        qCDebug(qLcWaylandCompositorHardwareIntegration) << "error" << Qt::hex << eglGetError();
     } else {
         qCDebug(qLcWaylandCompositorHardwareIntegration) << "num_planes" << num_planes << "fourcc_format" << m_fourcc_format;
         if (num_planes != 1) {
@@ -85,7 +75,7 @@ DmaBufServerBuffer::DmaBufServerBuffer(DmaBufServerBufferIntegration *integratio
     }
 
     if (!m_integration->eglExportDMABUFImageMESA(m_image, &m_fd, &m_stride, &m_offset)) {
-        qCWarning(qLcWaylandCompositorHardwareIntegration) << "DmaBufServerBuffer: Failed to export egl image. Error code" << hex << eglGetError();
+        qCWarning(qLcWaylandCompositorHardwareIntegration) << "DmaBufServerBuffer: Failed to export egl image. Error code" << Qt::hex << eglGetError();
     } else {
         qCDebug(qLcWaylandCompositorHardwareIntegration) << "DmaBufServerBuffer exported egl image: fd" << m_fd << "stride" << m_stride << "offset" << m_offset;
         m_texture->release();
@@ -99,7 +89,7 @@ DmaBufServerBuffer::~DmaBufServerBuffer()
     int err;
     m_integration->eglDestroyImageKHR(m_image);
     if ((err = eglGetError()) != EGL_SUCCESS)
-        qCWarning(qLcWaylandCompositorHardwareIntegration) << "~DmaBufServerBuffer: eglDestroyImageKHR error" << hex << err;
+        qCWarning(qLcWaylandCompositorHardwareIntegration) << "~DmaBufServerBuffer: eglDestroyImageKHR error" << Qt::hex << err;
 
     err = ::close(m_fd);
     if (err)
@@ -147,48 +137,49 @@ DmaBufServerBufferIntegration::~DmaBufServerBufferIntegration()
 {
 }
 
-void DmaBufServerBufferIntegration::initializeHardware(QWaylandCompositor *compositor)
+bool DmaBufServerBufferIntegration::initializeHardware(QWaylandCompositor *compositor)
 {
     Q_ASSERT(QGuiApplication::platformNativeInterface());
 
     m_egl_display = static_cast<EGLDisplay>(QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("egldisplay"));
     if (!m_egl_display) {
         qCWarning(qLcWaylandCompositorHardwareIntegration) << "Cannot initialize dmabuf server buffer integration. Missing egl display from platform plugin";
-        return;
+        return false;
     }
 
     const char *extensionString = eglQueryString(m_egl_display, EGL_EXTENSIONS);
     if (!extensionString || !strstr(extensionString, "EGL_KHR_image")) {
         qCWarning(qLcWaylandCompositorHardwareIntegration) << "Failed to initialize dmabuf server buffer integration. There is no EGL_KHR_image extension.";
-        return;
+        return false;
     }
 
     m_egl_create_image = reinterpret_cast<PFNEGLCREATEIMAGEKHRPROC>(eglGetProcAddress("eglCreateImageKHR"));
     m_egl_destroy_image = reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImageKHR"));
     if (!m_egl_create_image || !m_egl_destroy_image) {
         qCWarning(qLcWaylandCompositorHardwareIntegration) << "Failed to initialize dmabuf server buffer integration. Could not resolve eglCreateImageKHR or eglDestroyImageKHR";
-        return;
+        return false;
     }
 
     m_gl_egl_image_target_texture_2d = reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(eglGetProcAddress("glEGLImageTargetTexture2DOES"));
     if (!m_gl_egl_image_target_texture_2d) {
         qCWarning(qLcWaylandCompositorHardwareIntegration) << "Failed to initialize dmabuf server buffer integration. Could not find glEGLImageTargetTexture2DOES.";
-        return;
+        return false;
     }
 
     m_egl_export_dmabuf_image_query = reinterpret_cast<PFNEGLEXPORTDMABUFIMAGEQUERYMESAPROC>(eglGetProcAddress("eglExportDMABUFImageQueryMESA"));
     if (!m_egl_export_dmabuf_image_query) {
         qCWarning(qLcWaylandCompositorHardwareIntegration) << "Failed to initialize dmabuf server buffer integration. Could not find eglExportDMABUFImageQueryMESA.";
-        return;
+        return false;
     }
 
     m_egl_export_dmabuf_image = reinterpret_cast<PFNEGLEXPORTDMABUFIMAGEMESAPROC>(eglGetProcAddress("eglExportDMABUFImageMESA"));
     if (!m_egl_export_dmabuf_image) {
         qCWarning(qLcWaylandCompositorHardwareIntegration) << "Failed to initialize dmabuf server buffer integration. Could not find eglExportDMABUFImageMESA.";
-        return;
+        return false;
     }
 
     QtWaylandServer::qt_dmabuf_server_buffer::init(compositor->display(), 1);
+    return true;
 }
 
 bool DmaBufServerBufferIntegration::supportsFormat(QtWayland::ServerBuffer::Format format) const

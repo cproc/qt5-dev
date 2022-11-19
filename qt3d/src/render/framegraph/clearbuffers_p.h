@@ -62,12 +62,10 @@ namespace Render {
 
 class FrameGraphManager;
 
-class ClearBuffers : public FrameGraphNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ClearBuffers : public FrameGraphNode
 {
 public:
     ClearBuffers();
-
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
 
     QClearBuffers::BufferType type() const;
     float clearDepthValue() const;
@@ -85,13 +83,12 @@ public:
     QColor clearColorAsColor() const;
 
     bool clearsAllColorBuffers() const;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     QClearBuffers::BufferType m_type;
-    QVector4D m_clearColor;
     QColor m_clearColorAsColor;
+    QVector4D m_clearColor;
     float m_clearDepthValue;
     int m_clearStencilValue;
     Qt3DCore::QNodeId m_colorBufferId;

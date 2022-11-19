@@ -192,7 +192,7 @@ public:
     }
     void blit(QWaylandEglWindow *window)
     {
-        Q_ASSERT(window->wl_surface::isInitialized());
+        Q_ASSERT(window->wlSurface());
         QOpenGLTextureCache *cache = QOpenGLTextureCache::cacheForContext(m_context->context());
 
         QSize surfaceSize = window->surfaceSize();
@@ -312,7 +312,7 @@ QWaylandGLContext::QWaylandGLContext(EGLDisplay eglDisplay, QWaylandDisplay *dis
 
     // Create an EGL context for the decorations blitter. By using a dedicated context we don't need to make sure to not
     // change the context state and we also use OpenGL ES 2 API independently to what the app is using to draw.
-    QVector<EGLint> eglDecorationsContextAttrs = { EGL_CONTEXT_CLIENT_VERSION, 1, EGL_NONE };
+    QVector<EGLint> eglDecorationsContextAttrs = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
     m_decorationsContext = eglCreateContext(m_eglDisplay, m_config, m_context, eglDecorationsContextAttrs.constData());
     if (m_decorationsContext == EGL_NO_CONTEXT)
         qWarning("QWaylandGLContext: Failed to create the decorations EGLContext. Decorations will not be drawn.");
@@ -322,9 +322,15 @@ QWaylandGLContext::QWaylandGLContext(EGLDisplay eglDisplay, QWaylandDisplay *dis
     if (!eglGetConfigAttrib(m_eglDisplay, m_config, a, &a) ||
         !eglGetConfigAttrib(m_eglDisplay, m_config, b, &b) ||
         a > 0) {
-       mSupportNonBlockingSwap = false;
+       m_supportNonBlockingSwap = false;
     }
-    if (!mSupportNonBlockingSwap) {
+    {
+        bool ok;
+        int supportNonBlockingSwap = qEnvironmentVariableIntValue("QT_WAYLAND_FORCE_NONBLOCKING_SWAP_SUPPORT", &ok);
+        if (ok)
+            m_supportNonBlockingSwap = supportNonBlockingSwap != 0;
+    }
+    if (!m_supportNonBlockingSwap) {
         qWarning(lcQpaWayland) << "Non-blocking swap buffers not supported."
                                << "Subsurface rendering can be affected."
                                << "It may also cause the event loop to freeze in some situations";
@@ -346,7 +352,11 @@ void QWaylandGLContext::updateGLFormat()
 
     wl_surface *wlSurface = m_display->createSurface(nullptr);
     wl_egl_window *eglWindow = wl_egl_window_create(wlSurface, 1, 1);
-    EGLSurface eglSurface = eglCreateWindowSurface(m_eglDisplay, m_config, eglWindow, 0);
+#if QT_CONFIG(egl_extension_platform_wayland)
+    EGLSurface eglSurface = eglCreatePlatformWindowSurface(m_eglDisplay, m_config, eglWindow, nullptr);
+#else
+    EGLSurface eglSurface = eglCreateWindowSurface(m_eglDisplay, m_config, eglWindow, nullptr);
+#endif
 
     if (eglMakeCurrent(m_eglDisplay, eglSurface, eglSurface, m_context)) {
         if (m_format.renderableType() == QSurfaceFormat::OpenGL
@@ -474,7 +484,7 @@ void QWaylandGLContext::swapBuffers(QPlatformSurface *surface)
         eglMakeCurrent(currentDisplay, currentSurfaceDraw, currentSurfaceRead, currentContext);
     }
 
-    int swapInterval = mSupportNonBlockingSwap ? 0 : m_format.swapInterval();
+    int swapInterval = m_supportNonBlockingSwap ? 0 : m_format.swapInterval();
     eglSwapInterval(m_eglDisplay, swapInterval);
     if (swapInterval == 0 && m_format.swapInterval() > 0) {
         // Emulating a blocking swap

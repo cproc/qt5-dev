@@ -52,7 +52,6 @@
 //
 
 #include <Qt3DRender/private/backendnode_p.h>
-#include <Qt3DRender/private/shadervariables_p.h>
 #include <Qt3DRender/qshaderdata.h>
 #include <QMutex>
 #include <Qt3DCore/private/matrix4x4_p.h>
@@ -67,7 +66,7 @@ class GraphicsContext;
 class GLBuffer;
 class NodeManagers;
 
-class Q_AUTOTEST_EXPORT ShaderData : public BackendNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ShaderData : public BackendNode
 {
 public:
     enum TransformType {
@@ -76,49 +75,44 @@ public:
         ModelToWorld,
         ModelToWorldDirection
     };
+    struct PropertyValue {
+        QVariant value;
+        bool isNested;
+        bool isTransformed;
+    };
 
     ShaderData();
     ~ShaderData();
 
-    QHash<QString, QVariant> properties() const { return m_originalProperties; }
+    QHash<QString, PropertyValue> properties() const { return m_originalProperties; }
 
     // Called by FramePreparationJob
     void updateWorldTransform(const Matrix4x4 &worldMatrix);
 
-    // Call by RenderViewJob
-    void markDirty();
+    QVariant getTransformedProperty(const QString &name, const Matrix4x4 &viewMatrix) const noexcept;
 
+    // Unit tests purposes only
     TransformType propertyTransformType(const QString &name) const;
-    QVariant getTransformedProperty(const QString &name, const Matrix4x4 &viewMatrix);
-
-    // Called by FrameCleanupJob
-    static void cleanup(NodeManagers *managers);
 
     void setManagers(NodeManagers *managers);
 
-protected:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) override;
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
+#ifdef Q_OS_WIN
+    // To get MSVC to compile even though we don't need any cleanup
+    void cleanup() {}
+#endif
+
+protected:
     PropertyReaderInterfacePtr m_propertyReader;
 
-    // 1 to 1 match with frontend properties, modified only by sceneChangeEvent
-    QHash<QString, QVariant> m_originalProperties;
 
-    // Contains properties thar are of type ShaderData
-    QHash<QString, QVariant> m_nestedShaderDataProperties;
+    // 1 to 1 match with frontend properties
+    QHash<QString, PropertyValue> m_originalProperties;
 
-    // Contains property that are defined like: postionTransformed: ModelToEye
-    QHash<QString, TransformType> m_transformedProperties;
-
-
-    QMutex m_mutex;
-    static QVector<Qt3DCore::QNodeId> m_updatedShaderData;
     Matrix4x4 m_worldMatrix;
-    Matrix4x4 m_viewMatrix;
     NodeManagers *m_managers;
 
-    void clearUpdatedProperties();
     static ShaderData *lookupResource(NodeManagers *managers, Qt3DCore::QNodeId id);
     ShaderData *lookupResource(Qt3DCore::QNodeId id);
 

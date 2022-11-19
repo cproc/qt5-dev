@@ -70,7 +70,7 @@ class QHandle;
 
 namespace Render {
 
-class TechniqueFilter
+class Q_3DRENDERSHARED_PRIVATE_EXPORT TechniqueFilter
         : public FrameGraphNode
 {
 public:
@@ -79,11 +79,9 @@ public:
     QVector<Qt3DCore::QNodeId> parameters() const;
 
     QVector<Qt3DCore::QNodeId> filters() const;
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     void appendFilter(Qt3DCore::QNodeId criterionId);
     void removeFilter(Qt3DCore::QNodeId criterionId);
 

@@ -94,7 +94,7 @@ private Q_SLOTS:
         {
             Qt3DRender::QFrameGraphNode *nodeWithNestedChildren = new MyFrameGraphNode();
             Qt3DRender::QFrameGraphNode *child = new MyFrameGraphNode(nodeWithNestedChildren);
-            Qt3DCore::QNode *dummy = new Qt3DCore::QNode(nodeWithNestedChildren);
+            new Qt3DCore::QNode(nodeWithNestedChildren);
             Qt3DRender::QFrameGraphNode *grandChild = new MyFrameGraphNode(nodeWithNestedChildren);
             QVector<Qt3DCore::QNodeId> childIds = {child->id(), grandChild->id()};
             QTest::newRow("nodeWithNestedChildren") << nodeWithNestedChildren << childIds << true << 4;
@@ -181,14 +181,11 @@ private Q_SLOTS:
         QCoreApplication::processEvents();
 
         // THEN
-        QCOMPARE(arbiter.events.size(), 1);
-        Qt3DCore::QPropertyUpdatedChangePtr change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-        QCOMPARE(change->propertyName(), "enabled");
-        QCOMPARE(change->subjectId(), frameGraphNode->id());
-        QCOMPARE(change->value().toBool(), false);
-        QCOMPARE(change->type(), Qt3DCore::PropertyUpdated);
+        QCOMPARE(arbiter.events.size(), 0);
+        QCOMPARE(arbiter.dirtyNodes.size(), 1);
+        QCOMPARE(arbiter.dirtyNodes.front(), frameGraphNode.data());
 
-        arbiter.events.clear();
+        arbiter.dirtyNodes.clear();
 
         // WHEN
         frameGraphNode->setEnabled(false);
@@ -196,20 +193,18 @@ private Q_SLOTS:
 
         // THEN
         QCOMPARE(arbiter.events.size(), 0);
+        QCOMPARE(arbiter.dirtyNodes.size(), 0);
 
         // WHEN
         frameGraphNode->setEnabled(true);
         QCoreApplication::processEvents();
 
         // THEN
-        QCOMPARE(arbiter.events.size(), 1);
-        change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-        QCOMPARE(change->propertyName(), "enabled");
-        QCOMPARE(change->subjectId(), frameGraphNode->id());
-        QCOMPARE(change->value().toBool(), true);
-        QCOMPARE(change->type(), Qt3DCore::PropertyUpdated);
+        QCOMPARE(arbiter.events.size(), 0);
+        QCOMPARE(arbiter.dirtyNodes.size(), 1);
+        QCOMPARE(arbiter.dirtyNodes.front(), frameGraphNode.data());
 
-        arbiter.events.clear();
+        arbiter.dirtyNodes.clear();
     }
 
     void checkParentFrameNodeRetrieval()

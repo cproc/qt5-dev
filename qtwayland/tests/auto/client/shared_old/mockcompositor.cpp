@@ -221,8 +221,8 @@ QSharedPointer<MockSurface> MockCompositor::surface()
     QSharedPointer<MockSurface> result;
     lock();
     {
-        QVector<Impl::Surface *> surfaces = m_compositor->surfaces();
-        foreach (Impl::Surface *surface, surfaces) {
+        const QVector<Impl::Surface *> surfaces = m_compositor->surfaces();
+        for (Impl::Surface *surface : surfaces) {
             // we don't want to mistake the cursor surface for a window surface
             if (surface->isMapped()) {
                 result = surface->mockSurface();
@@ -312,9 +312,9 @@ void *MockCompositor::run(void *data)
     Impl::Compositor compositor(controller);
 
     controller->m_compositor = &compositor;
-    controller->m_waitCondition.wakeOne();
 
     while (!controller->m_ready) {
+        controller->m_waitCondition.wakeOne();
         controller->dispatchCommands();
         compositor.dispatchEvents(20);
     }
@@ -382,9 +382,9 @@ static void compositor_create_surface(wl_client *client, wl_resource *compositor
 
 static void compositor_create_region(wl_client *client, wl_resource *compositorResource, uint32_t id)
 {
-    Q_UNUSED(client);
-    Q_UNUSED(compositorResource);
-    Q_UNUSED(id);
+    Compositor *compositor =
+            static_cast<Compositor *>(wl_resource_get_user_data(compositorResource));
+    new Region(client, id, wl_resource_get_version(compositorResource), compositor);
 }
 
 void Compositor::bindCompositor(wl_client *client, void *compositorData, uint32_t version, uint32_t id)

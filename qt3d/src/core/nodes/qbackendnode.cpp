@@ -95,6 +95,26 @@ QBackendNodePrivate *QBackendNodePrivate::get(QBackendNode *n)
     return n->d_func();
 }
 
+void QBackendNodePrivate::addedToEntity(QNode *frontend)
+{
+    Q_UNUSED(frontend)
+}
+
+void QBackendNodePrivate::removedFromEntity(QNode *frontend)
+{
+    Q_UNUSED(frontend)
+}
+
+void QBackendNodePrivate::componentAdded(QNode *frontend)
+{
+    Q_UNUSED(frontend)
+}
+
+void QBackendNodePrivate::componentRemoved(QNode *frontend)
+{
+    Q_UNUSED(frontend)
+}
+
 /*!
  * \class Qt3DCore::QBackendNodeMapper
  * \inheaderfile Qt3DCore/QBackendNodeMapper
@@ -200,6 +220,7 @@ QBackendNode::QBackendNode(QBackendNodePrivate &dd)
 
 /*!
  * Notifies observers of scene change \a e.
+ * \obsolete
  */
 void QBackendNode::notifyObservers(const QSceneChangePtr &e)
 {
@@ -208,6 +229,8 @@ void QBackendNode::notifyObservers(const QSceneChangePtr &e)
 }
 
 /*!
+    \obsolete
+
     Send the command named \a name with contents \a data,
     and specify \a replyTo as the command id to which the
     reply needs to be sent.
@@ -227,6 +250,7 @@ QNodeCommand::CommandId QBackendNode::sendCommand(const QString &name,
 
 /*!
     Send the reply to \a command.
+    \obsolete
 */
 void QBackendNode::sendReply(const QNodeCommandPtr &command)
 {
@@ -234,9 +258,12 @@ void QBackendNode::sendReply(const QNodeCommandPtr &command)
     notifyObservers(command);
 }
 
+/*!
+ * \obsolete
+ */
 void QBackendNode::initializeFromPeer(const QNodeCreatedChangeBasePtr &change)
 {
-    Q_UNUSED(change);
+    Q_UNUSED(change)
     qCDebug(Nodes) << Q_FUNC_INFO << change->metaObject()->className() << "does not override";
 }
 
@@ -250,22 +277,21 @@ void QBackendNode::setEnabled(bool enabled) Q_DECL_NOTHROW
 }
 
 /*!
- * TODO
- * \a e
+ * \obsolete
  */
 void QBackendNode::sceneChangeEvent(const QSceneChangePtr &e)
 {
     Q_D(QBackendNode);
-    auto propertyChange = qSharedPointerCast<QPropertyUpdatedChange>(e);
 
     switch (e->type()) {
-        case PropertyUpdated: {
-            if (propertyChange->propertyName() == QByteArrayLiteral("enabled"))
-                d->m_enabled = propertyChange->value().toBool();
-            break;
-        }
-        default:
-            break;
+    case PropertyUpdated: {
+        auto propertyChange = qSharedPointerCast<QPropertyUpdatedChange>(e);
+        if (propertyChange->propertyName() == QByteArrayLiteral("enabled"))
+            d->m_enabled = propertyChange->value().toBool();
+        break;
+    }
+    default:
+        break;
     }
 }
 

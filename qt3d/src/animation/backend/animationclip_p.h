@@ -72,7 +72,7 @@ public:
     QUrl source() const { return m_source; }
     void setStatus(QAnimationClipLoader::Status status);
     QAnimationClipLoader::Status status() const { return m_status; }
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
     void addDependingClipAnimator(const Qt3DCore::QNodeId &id);
     void addDependingBlendedClipAnimator(const Qt3DCore::QNodeId &id);
@@ -103,7 +103,6 @@ public:
 #endif
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
     void loadAnimationFromUrl();
     void loadAnimationFromData();
     void clearData();
@@ -130,10 +129,10 @@ private:
 inline QDebug operator<<(QDebug dbg, const AnimationClip &animationClip)
 {
     QDebugStateSaver saver(dbg);
-    dbg << "QNodeId =" << animationClip.peerId() << endl
-        << "Name =" << animationClip.name() << endl
-        << "Duration: " << animationClip.duration() << endl
-        << "Channels:" << endl;
+    dbg << "QNodeId =" << animationClip.peerId() << Qt::endl
+        << "Name =" << animationClip.name() << Qt::endl
+        << "Duration: " << animationClip.duration() << Qt::endl
+        << "Channels:" << Qt::endl;
 
     const QVector<Channel> channels = animationClip.channels();
     for (const auto &channel : channels) {

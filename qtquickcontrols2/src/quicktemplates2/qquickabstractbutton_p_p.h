@@ -50,7 +50,9 @@
 
 #include <QtQuickTemplates2/private/qquickabstractbutton_p.h>
 #include <QtQuickTemplates2/private/qquickcontrol_p_p.h>
-#include <QtGui/qkeysequence.h>
+#if QT_CONFIG(shortcut)
+#  include <QtGui/qkeysequence.h>
+#endif
 
 QT_BEGIN_NAMESPACE
 
@@ -122,6 +124,7 @@ public:
     bool autoExclusive = false;
     bool autoRepeat = false;
     bool wasHeld = false;
+    bool wasDoubleClick = false;
     int holdTimer = 0;
     int delayTimer = 0;
     int repeatTimer = 0;

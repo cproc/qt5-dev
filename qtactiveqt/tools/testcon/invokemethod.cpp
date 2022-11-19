@@ -30,13 +30,18 @@
 
 #include <qt_windows.h>
 #include <ActiveQt/ActiveQt>
+#include <QtWidgets/QCompleter>
 
 QT_BEGIN_NAMESPACE
 
 InvokeMethod::InvokeMethod(QWidget *parent)
-: QDialog(parent), activex(0)
+: QDialog(parent), activex(nullptr)
 {
     setupUi(this);
+    auto completer = new QCompleter(comboMethods->model(), comboMethods);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    completer->setCompletionMode(QCompleter::InlineCompletion);
+    comboMethods->setCompleter(completer);
 
     listParameters->setColumnCount(3);
     listParameters->headerItem()->setText(0, tr("Parameter"));
@@ -70,7 +75,7 @@ void InvokeMethod::setControl(QAxBase *ax)
         }
         comboMethods->model()->sort(0);
 
-        on_comboMethods_activated(comboMethods->currentText());
+        on_comboMethods_textActivated(comboMethods->currentText());
     }
 }
 
@@ -81,7 +86,7 @@ void InvokeMethod::on_buttonInvoke_clicked()
 
     on_buttonSet_clicked();
     QString method = comboMethods->currentText();
-    QList<QVariant> vars;
+    QVariantList vars;
 
     int itemCount = listParameters->topLevelItemCount();
     for (int i = 0; i < itemCount; ++i) {
@@ -100,7 +105,7 @@ void InvokeMethod::on_buttonInvoke_clicked()
                         + QLatin1Char(' ') + result.toString());
 }
 
-void InvokeMethod::on_comboMethods_activated(const QString &method)
+void InvokeMethod::on_comboMethods_textActivated(const QString &method)
 {
     if (!activex)
         return;
@@ -112,8 +117,8 @@ void InvokeMethod::on_comboMethods_activated(const QString &method)
     signature.remove(0, signature.indexOf(QLatin1Char('(')) + 1);
     signature.truncate(signature.length()-1);
 
-    QList<QByteArray> pnames = slot.parameterNames();
-    QList<QByteArray> ptypes = slot.parameterTypes();
+    const auto pnames = slot.parameterNames();
+    const auto ptypes = slot.parameterTypes();
 
     for (int p = 0; p < ptypes.count(); ++p) {
         QString ptype(QString::fromLatin1(ptypes.at(p)));
@@ -136,8 +141,8 @@ void InvokeMethod::on_listParameters_currentItemChanged(QTreeWidgetItem *item)
 {
     if (!activex)
         return;
-    editValue->setEnabled(item != 0);
-    buttonSet->setEnabled(item != 0);
+    editValue->setEnabled(item != nullptr);
+    buttonSet->setEnabled(item != nullptr);
     if (!item)
         return;
     editValue->setText(item->text(2));

@@ -54,7 +54,7 @@
   Communication (IPC). Qt provides the APIs that can be used to develop the
   remaining parts of an application manager in other modules. The
   \l {https://www.qt.io/qt-automotive-suite/}{Qt Automotive Suite} provides
-  \l{Qt Application Manager}, which is a complete application manager that
+  \l{https://doc.qt.io/QtApplicationManager}{Qt Application Manager}, which is a complete application manager that
   includes a compositor developed using Qt Wayland Compositor.
 
   For more information on Wayland, see \l{Wayland and Qt}.
@@ -111,9 +111,13 @@
 
   Qt Wayland Compositor and the Qt Wayland integration plugin
   are available under commercial licenses from \l{The Qt Company}.
-  In addition, they are available under the
-  \l{GNU Lesser General Public License, version 3}, or
-  the \l{GNU General Public License, version 2}.
+
+  In addition, Qt Wayland Compositor is available under the
+  \l{GNU General Public License, version 3}, while
+  the Qt Wayland integration plugin is available under the
+  \l{GNU General Public License, version 3} or the
+  \l{GNU General Public License, version 2}.
+
   See \l{Qt Licensing} for further details.
 
   Qt Wayland Compositor and the Qt Wayland integration plugin

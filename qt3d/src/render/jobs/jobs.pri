@@ -4,7 +4,6 @@ HEADERS += \
     $$PWD/updateworldtransformjob_p.h \
     $$PWD/loadscenejob_p.h \
     $$PWD/framecleanupjob_p.h \
-    $$PWD/loadtexturedatajob_p.h \
     $$PWD/loadbufferjob_p.h \
     $$PWD/loadgeometryjob_p.h \
     $$PWD/calcboundingvolumejob_p.h \
@@ -19,7 +18,6 @@ HEADERS += \
     $$PWD/lightgatherer_p.h \
     $$PWD/expandboundingvolumejob_p.h \
     $$PWD/updateworldboundingvolumejob_p.h \
-    $$PWD/sendrendercapturejob_p.h \
     $$PWD/updateshaderdatatransformjob_p.h \
     $$PWD/updatelevelofdetailjob_p.h \
     $$PWD/updatemeshtrianglelistjob_p.h \
@@ -31,14 +29,12 @@ HEADERS += \
     $$PWD/filterproximitydistancejob_p.h \
     $$PWD/abstractpickingjob_p.h \
     $$PWD/raycastingjob_p.h \
-    $$PWD/updateentityhierarchyjob_p.h \
     $$PWD/updateentitylayersjob_p.h
 
 SOURCES += \
     $$PWD/updateworldtransformjob.cpp \
     $$PWD/loadscenejob.cpp \
     $$PWD/framecleanupjob.cpp \
-    $$PWD/loadtexturedatajob.cpp \
     $$PWD/loadbufferjob.cpp \
     $$PWD/loadgeometryjob.cpp \
     $$PWD/calcboundingvolumejob.cpp \
@@ -50,7 +46,6 @@ SOURCES += \
     $$PWD/lightgatherer.cpp \
     $$PWD/expandboundingvolumejob.cpp \
     $$PWD/updateworldboundingvolumejob.cpp \
-    $$PWD/sendrendercapturejob.cpp \
     $$PWD/updateshaderdatatransformjob.cpp \
     $$PWD/updatemeshtrianglelistjob.cpp \
     $$PWD/updatelevelofdetailjob.cpp \
@@ -62,6 +57,5 @@ SOURCES += \
     $$PWD/filterproximitydistancejob.cpp \
     $$PWD/abstractpickingjob.cpp \
     $$PWD/raycastingjob.cpp \
-    $$PWD/updateentityhierarchyjob.cpp \
     $$PWD/updateentitylayersjob.cpp
 

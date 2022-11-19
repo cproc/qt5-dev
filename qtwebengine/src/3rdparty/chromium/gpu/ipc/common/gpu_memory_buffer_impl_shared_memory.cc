@@ -5,6 +5,7 @@
 #include "gpu/ipc/common/gpu_memory_buffer_impl_shared_memory.h"
 
 #include <stdint.h>
+
 #include <utility>
 
 #include "base/bind.h"
@@ -113,7 +114,7 @@ GpuMemoryBufferImplSharedMemory::CreateFromHandle(
 
   size_t min_buffer_size = 0;
 
-  if (gfx::NumberOfPlanesForBufferFormat(format) == 1) {
+  if (gfx::NumberOfPlanesForLinearBufferFormat(format) == 1) {
     if (static_cast<size_t>(handle.stride) < minimum_stride)
       return nullptr;
 
@@ -156,13 +157,13 @@ bool GpuMemoryBufferImplSharedMemory::IsUsageSupported(gfx::BufferUsage usage) {
   switch (usage) {
     case gfx::BufferUsage::GPU_READ:
     case gfx::BufferUsage::GPU_READ_CPU_READ_WRITE:
-    case gfx::BufferUsage::GPU_READ_CPU_READ_WRITE_PERSISTENT:
     case gfx::BufferUsage::SCANOUT_CPU_READ_WRITE:
       return true;
     case gfx::BufferUsage::SCANOUT:
     case gfx::BufferUsage::SCANOUT_CAMERA_READ_WRITE:
     case gfx::BufferUsage::CAMERA_AND_CPU_READ_WRITE:
     case gfx::BufferUsage::SCANOUT_VDA_WRITE:
+    case gfx::BufferUsage::SCANOUT_VEA_READ_CAMERA_AND_CPU_READ_WRITE:
       return false;
   }
   NOTREACHED();
@@ -190,13 +191,14 @@ bool GpuMemoryBufferImplSharedMemory::IsSizeValidForFormat(
     case gfx::BufferFormat::RGBX_8888:
     case gfx::BufferFormat::BGRA_8888:
     case gfx::BufferFormat::BGRX_8888:
-    case gfx::BufferFormat::BGRX_1010102:
-    case gfx::BufferFormat::RGBX_1010102:
+    case gfx::BufferFormat::BGRA_1010102:
+    case gfx::BufferFormat::RGBA_1010102:
     case gfx::BufferFormat::RGBA_F16:
       return true;
     case gfx::BufferFormat::YVU_420:
-    case gfx::BufferFormat::YUV_420_BIPLANAR: {
-      size_t num_planes = gfx::NumberOfPlanesForBufferFormat(format);
+    case gfx::BufferFormat::YUV_420_BIPLANAR:
+    case gfx::BufferFormat::P010: {
+      size_t num_planes = gfx::NumberOfPlanesForLinearBufferFormat(format);
       for (size_t i = 0; i < num_planes; ++i) {
         size_t factor = gfx::SubsamplingFactorForBufferFormat(format, i);
         if (size.width() % factor || size.height() % factor)
@@ -204,8 +206,6 @@ bool GpuMemoryBufferImplSharedMemory::IsSizeValidForFormat(
       }
       return true;
     }
-    case gfx::BufferFormat::UYVY_422:
-      return size.width() % 2 == 0;
   }
 
   NOTREACHED();
@@ -244,7 +244,7 @@ bool GpuMemoryBufferImplSharedMemory::Map() {
 
 void* GpuMemoryBufferImplSharedMemory::memory(size_t plane) {
   DCHECK(mapped_);
-  DCHECK_LT(plane, gfx::NumberOfPlanesForBufferFormat(format_));
+  DCHECK_LT(plane, gfx::NumberOfPlanesForLinearBufferFormat(format_));
   return static_cast<uint8_t*>(shared_memory_mapping_.memory()) + offset_ +
          gfx::BufferOffsetForBufferFormat(size_, format_, plane);
 }
@@ -255,7 +255,7 @@ void GpuMemoryBufferImplSharedMemory::Unmap() {
 }
 
 int GpuMemoryBufferImplSharedMemory::stride(size_t plane) const {
-  DCHECK_LT(plane, gfx::NumberOfPlanesForBufferFormat(format_));
+  DCHECK_LT(plane, gfx::NumberOfPlanesForLinearBufferFormat(format_));
   return gfx::RowSizeForBufferFormat(size_.width(), format_, plane);
 }
 

@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \qmltype Drawer
     \inherits Popup
-    \instantiates QQuickDrawer
+//!     \instantiates QQuickDrawer
     \inqmlmodule QtQuick.Controls
     \since 5.7
     \ingroup qtquickcontrols2-navigation
@@ -482,6 +482,8 @@ bool QQuickDrawerPrivate::handleMove(QQuickItem *item, const QPointF &point, ulo
 
 bool QQuickDrawerPrivate::handleRelease(QQuickItem *item, const QPointF &point, ulong timestamp)
 {
+    if (pressPoint.isNull())
+        return false;
     if (!popupItem->keepMouseGrab() && !popupItem->keepTouchGrab()) {
         velocityCalculator.reset();
         return QQuickPopupPrivate::handleRelease(item, point, timestamp);

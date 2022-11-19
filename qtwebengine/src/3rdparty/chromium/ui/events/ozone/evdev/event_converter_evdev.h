@@ -8,14 +8,16 @@
 #include <stdint.h>
 
 #include <set>
+#include <vector>
 
 #include "base/callback.h"
+#include "base/component_export.h"
 #include "base/files/file_path.h"
 #include "base/macros.h"
 #include "base/message_loop/message_loop_current.h"
+#include "ui/events/devices/gamepad_device.h"
 #include "ui/events/devices/input_device.h"
 #include "ui/events/ozone/evdev/event_dispatch_callback.h"
-#include "ui/events/ozone/evdev/events_ozone_evdev_export.h"
 #include "ui/gfx/geometry/size.h"
 
 struct input_event;
@@ -23,7 +25,7 @@ struct input_event;
 namespace ui {
 enum class DomCode;
 
-class EVENTS_OZONE_EVDEV_EXPORT EventConverterEvdev
+class COMPONENT_EXPORT(EVDEV) EventConverterEvdev
     : public base::MessagePumpForUI::FdWatcher {
  public:
   EventConverterEvdev(int fd,
@@ -33,7 +35,8 @@ class EVENTS_OZONE_EVDEV_EXPORT EventConverterEvdev
                       const std::string& name,
                       const std::string& phys,
                       uint16_t vendor_id,
-                      uint16_t product_id);
+                      uint16_t product_id,
+                      uint16_t version);
   ~EventConverterEvdev() override;
 
   int id() const { return input_device_.id; }
@@ -97,6 +100,10 @@ class EVENTS_OZONE_EVDEV_EXPORT EventConverterEvdev
   // called unless HasTouchscreen() returns true
   virtual int GetTouchPoints() const;
 
+  // Returns information for all axes if the converter is used for a gamepad
+  // device.
+  virtual std::vector<ui::GamepadDevice::Axis> GetGamepadAxes() const;
+
   // Sets which keyboard keys should be processed. If |enable_filter| is
   // false, all keys are allowed and |allowed_keys| is ignored.
   virtual void SetKeyFilter(bool enable_filter,
@@ -120,10 +127,10 @@ class EVENTS_OZONE_EVDEV_EXPORT EventConverterEvdev
   void OnFileCanWriteWithoutBlocking(int fd) override;
 
   // File descriptor to read.
-  int fd_;
+  const int fd_;
 
   // Path to input device.
-  base::FilePath path_;
+  const base::FilePath path_;
 
   // Input device information, including id (which uniquely identifies an
   // event converter) and type.

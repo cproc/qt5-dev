@@ -54,6 +54,7 @@
 #include <Qt3DCore/private/qcomponent_p.h>
 #include <Qt3DRender/qrendersettings.h>
 #include <Qt3DRender/qpickingsettings.h>
+#include <Qt3DRender/qrendercapabilities.h>
 #include <Qt3DRender/private/qt3drender_global_p.h>
 
 QT_BEGIN_NAMESPACE
@@ -70,6 +71,9 @@ public:
     QPickingSettings m_pickingSettings;
     QFrameGraphNode *m_activeFrameGraph;
     QRenderSettings::RenderPolicy m_renderPolicy;
+    QRenderCapabilities m_renderCapabilities;
+
+    void invalidateFrame();
 
     void _q_onPickingMethodChanged(QPickingSettings::PickMethod pickMethod);
     void _q_onPickResultModeChanged(QPickingSettings::PickResultMode pickResultMode);

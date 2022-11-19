@@ -1,4 +1,4 @@
-QT.qml.VERSION = 5.13.2
+QT.qml.VERSION = 5.15.2
 QT.qml.name = QtQml
 QT.qml.module = Qt5Qml
 QT.qml.libs = $$QT_MODULE_LIB_BASE

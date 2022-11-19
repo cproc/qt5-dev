@@ -60,7 +60,7 @@ namespace Qt3DRender {
 
 namespace Render {
 
-class Q_AUTOTEST_EXPORT Geometry : public BackendNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT Geometry : public BackendNode
 {
 public:
     Geometry();
@@ -68,7 +68,7 @@ public:
 
     void cleanup();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
     inline QVector<Qt3DCore::QNodeId> attributes() const { return m_attributes; }
     inline bool isDirty() const { return m_geometryDirty; }
@@ -82,8 +82,6 @@ public:
     void notifyExtentChanged();
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     QVector<Qt3DCore::QNodeId> m_attributes;
     bool m_geometryDirty;
     Qt3DCore::QNodeId m_boundingPositionAttribute;

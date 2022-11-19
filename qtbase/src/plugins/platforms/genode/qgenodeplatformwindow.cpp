@@ -54,10 +54,10 @@ void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &eve
 {
 	if (events.empty()) return;
 
-	QList<QWindowSystemInterface::TouchPoint> touch_points;
 	for (QList<Input::Event>::const_iterator i = events.begin(); i != events.end(); ++i) {
 
 		i->handle_touch([&] (Input::Touch_id id, int x, int y) {
+			QList<QWindowSystemInterface::TouchPoint> touch_points;
 
 			if (id.value >= _touch_points.size()) {
 				Genode::warning("drop touch input, out of bounds");
@@ -79,9 +79,11 @@ void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &eve
 
 			otp = tp;
 			touch_points.push_back(tp);
+			QWindowSystemInterface::handleTouchEvent(0, _touch_device, touch_points);
 		});
 
 		i->handle_touch_release([&] (Input::Touch_id id) {
+			QList<QWindowSystemInterface::TouchPoint> touch_points;
 
 			if (id.value >= _touch_points.size()) {
 				Genode::warning("drop touch input, out of bounds");
@@ -98,10 +100,9 @@ void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &eve
 
 			otp = tp;
 			touch_points.push_back(tp);
+			QWindowSystemInterface::handleTouchEvent(0, _touch_device, touch_points);
 		});
 	}
-
-	QWindowSystemInterface::handleTouchEvent(0, _touch_device, touch_points);
 }
 
 
@@ -396,7 +397,7 @@ void QGenodePlatformWindow::_mode_changed()
 
 	if ((mode.area.w() == 0) && (mode.area.h() == 0)) {
 		/* interpret a size of 0x0 as indication to close the window */
-		QWindowSystemInterface::handleCloseEvent(window(), 0);
+		QWindowSystemInterface::handleCloseEvent(window());
 		/* don't actually set geometry to 0x0; either close or remain open */
 		return;
 	}
@@ -849,11 +850,11 @@ bool QGenodePlatformWindow::windowEvent(QEvent *event)
 	return QPlatformWindow::windowEvent(event);
 }
 
-bool QGenodePlatformWindow::startSystemResize(const QPoint &pos, Qt::Corner corner)
+bool QGenodePlatformWindow::startSystemResize(Qt::Edges edges)
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::startSystemResize()";
-	return QPlatformWindow::startSystemResize(pos, corner);
+	return QPlatformWindow::startSystemResize(edges);
 }
 
 void QGenodePlatformWindow::setFrameStrutEventsEnabled(bool enabled)

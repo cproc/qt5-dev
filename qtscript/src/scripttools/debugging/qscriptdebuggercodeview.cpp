@@ -68,7 +68,7 @@ QScriptDebuggerCodeViewPrivate::~QScriptDebuggerCodeViewPrivate()
 }
 
 QScriptDebuggerCodeView::QScriptDebuggerCodeView(QWidget *parent)
-    : QScriptDebuggerCodeViewInterface(*new QScriptDebuggerCodeViewPrivate, parent, 0)
+    : QScriptDebuggerCodeViewInterface(*new QScriptDebuggerCodeViewPrivate, parent, {})
 {
     Q_D(QScriptDebuggerCodeView);
     d->editor = new QScriptEdit();
@@ -79,7 +79,7 @@ QScriptDebuggerCodeView::QScriptDebuggerCodeView(QWidget *parent)
     QObject::connect(d->editor, SIGNAL(breakpointEnableRequest(int,bool)),
                      this, SIGNAL(breakpointEnableRequest(int,bool)));
     QVBoxLayout *vbox = new QVBoxLayout(this);
-    vbox->setMargin(0);
+    vbox->setContentsMargins(0, 0, 0, 0);
     vbox->addWidget(d->editor);
 }
 

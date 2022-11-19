@@ -411,17 +411,6 @@ Reason:
     </message>
 </context>
 <context>
-    <name>FilterNameDialogClass</name>
-    <message>
-        <source>Filter Name:</source>
-        <translation>Название фильтра:</translation>
-    </message>
-    <message>
-        <source>Add Filter Name</source>
-        <translation>Добавление фильтра</translation>
-    </message>
-</context>
-<context>
     <name>FindWidget</name>
     <message>
         <source>Previous</source>
@@ -507,10 +496,37 @@ Reason:
     </message>
 </context>
 <context>
-    <name>HelpEngineWrapper</name>
+    <name>HelpDocSettingsWidget</name>
     <message>
-        <source>Unfiltered</source>
-        <translation>Вся документация</translation>
+        <source>Form</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Registered Documentation</source>
+        <translation>Зарегистрированная документация</translation>
+    </message>
+    <message>
+        <source>&lt;Filter&gt;</source>
+        <translation>&lt;Фильтр&gt;</translation>
+    </message>
+    <message>
+        <source>Add...</source>
+        <translation>Добавить...</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+</context>
+<context>
+    <name>HelpDocSettingsWidgetPrivate</name>
+    <message>
+        <source>Add Documentation</source>
+        <translation>Добавить документацию</translation>
+    </message>
+    <message>
+        <source>Qt Compressed Help Files (*.qch)</source>
+        <translation>Сжатые файлы справки Qt (*.qch)</translation>
     </message>
 </context>
 <context>
@@ -790,6 +806,10 @@ Reason:
         <translation>О %1</translation>
     </message>
     <message>
+        <source>Unfiltered</source>
+        <translation>Вся документация</translation>
+    </message>
+    <message>
         <source>Updating search index</source>
         <translation>Обновление индекса полнотекстового поиска</translation>
     </message>
@@ -807,38 +827,6 @@ Reason:
 </context>
 <context>
     <name>PreferencesDialog</name>
-    <message>
-        <source>Add Documentation</source>
-        <translation>Добавить документацию</translation>
-    </message>
-    <message>
-        <source>Qt Compressed Help Files (*.qch)</source>
-        <translation>Сжатые файлы справки Qt (*.qch)</translation>
-    </message>
-    <message>
-        <source>The namespace %1 is already registered!</source>
-        <translation>Пространство имён «%1» уже зарегистрировано!</translation>
-    </message>
-    <message>
-        <source>The specified file is not a valid Qt Help File!</source>
-        <translation>Указанный файл не является корректным файлом справки Qt!</translation>
-    </message>
-    <message>
-        <source>Remove Documentation</source>
-        <translation>Удалить документацию</translation>
-    </message>
-    <message>
-        <source>Some documents currently opened in Assistant reference the documentation you are attempting to remove. Removing the documentation will close those documents.</source>
-        <translation>Некоторые открытые в Qt Assistant документы ссылаются на документацию, которую вы пытаетесь удалить. Её удаление приведёт к закрытию этих документов.</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Отмена</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation>Удалить</translation>
-    </message>
     <message>
         <source>Use custom settings</source>
         <translation>Использовать индивидуальные настройки</translation>
@@ -871,24 +859,8 @@ Reason:
         <translation>Фильтры</translation>
     </message>
     <message>
-        <source>Filter:</source>
-        <translation>Фильтр:</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>Удалить</translation>
-    </message>
-    <message>
         <source>Documentation</source>
         <translation>Документация</translation>
-    </message>
-    <message>
-        <source>Registered Documentation:</source>
-        <translation>Зарегистрированная документация:</translation>
-    </message>
-    <message>
-        <source>Add...</source>
-        <translation>Добавить...</translation>
     </message>
     <message>
         <source>Options</source>
@@ -933,22 +905,6 @@ Reason:
     <message>
         <source>Show tabs for each individual page</source>
         <translation>Показывать вкладки для каждой страницы</translation>
-    </message>
-    <message>
-        <source>&lt;Filter&gt;</source>
-        <translation>&lt;Фильтр&gt;</translation>
-    </message>
-    <message>
-        <source>Attributes:</source>
-        <translation>Атрибуты:</translation>
-    </message>
-    <message>
-        <source>1</source>
-        <translation>1</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Добавить</translation>
     </message>
 </context>
 <context>

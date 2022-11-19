@@ -77,7 +77,7 @@ struct PixmapEntry {
     QPixmap pixmap;
 };
 
-typedef QList<PixmapEntry> PixmapEntryList;
+using PixmapEntryList = QVector<PixmapEntry>;
 
 static std::wostream &operator<<(std::wostream &str, const QString &s)
 {
@@ -91,15 +91,15 @@ static std::wostream &operator<<(std::wostream &str, const QString &s)
 
 static QString formatSize(const QSize &size)
 {
-    return QString::number(size.width()) + QLatin1Char('x') + QString::number(size.height());
+    return QString::number(size.width()) + u'x' + QString::number(size.height());
 }
 
 // Extract icons contained in executable or DLL using the Win32 API ExtractIconEx()
 static PixmapEntryList extractIcons(const QString &sourceFile, bool large)
 {
     const QString nativeName = QDir::toNativeSeparators(sourceFile);
-    const wchar_t *sourceFileC = reinterpret_cast<const wchar_t *>(nativeName.utf16());
-    const UINT iconCount = ExtractIconEx(sourceFileC, -1, 0, 0, 0);
+    const auto *sourceFileC = reinterpret_cast<const wchar_t *>(nativeName.utf16());
+    const UINT iconCount = ExtractIconEx(sourceFileC, -1, nullptr, nullptr, 0);
     if (!iconCount) {
         std::wcerr << sourceFile << " does not appear to contain icons.\n";
         return PixmapEntryList();
@@ -107,8 +107,8 @@ static PixmapEntryList extractIcons(const QString &sourceFile, bool large)
 
     QScopedArrayPointer<HICON> icons(new HICON[iconCount]);
     const UINT extractedIconCount = large ?
-        ExtractIconEx(sourceFileC, 0, icons.data(), 0, iconCount) :
-        ExtractIconEx(sourceFileC, 0, 0, icons.data(), iconCount);
+        ExtractIconEx(sourceFileC, 0, icons.data(), nullptr, iconCount) :
+        ExtractIconEx(sourceFileC, 0, nullptr, icons.data(), iconCount);
     if (!extractedIconCount) {
         qErrnoWarning("Failed to extract icons from %s", qPrintable(sourceFile));
         return PixmapEntryList();
@@ -145,7 +145,7 @@ static QPixmap pixmapFromShellImageList(int iImageList, const SHFILEINFO &info)
     if (FAILED(SHGetImageList(iImageList, iID_IImageList, reinterpret_cast<void **>(&imageList))))
         return result;
 
-    HICON hIcon = 0;
+    HICON hIcon = nullptr;
     if (SUCCEEDED(imageList->GetIcon(info.iIcon, ILD_TRANSPARENT, &hIcon))) {
         result = QtWin::fromHICON(hIcon);
         DestroyIcon(hIcon);
@@ -180,7 +180,7 @@ static PixmapEntryList extractShellIcons(const QString &sourceFile, bool addOver
     };
 
     const QString nativeName = QDir::toNativeSeparators(sourceFile);
-    const wchar_t *sourceFileC = reinterpret_cast<const wchar_t *>(nativeName.utf16());
+    const auto *sourceFileC = reinterpret_cast<const wchar_t *>(nativeName.utf16());
 
     SHFILEINFO info;
     unsigned int baseFlags = SHGFI_ICON | SHGFI_SYSICONINDEX | SHGFI_ICONLOCATION;
@@ -194,11 +194,11 @@ static PixmapEntryList extractShellIcons(const QString &sourceFile, bool addOver
         const unsigned modeFlags = baseFlags | modeEntry.flags;
         QString modePrefix = QLatin1String("_shell_");
         if (modeEntry.name[0])
-            modePrefix += QLatin1String(modeEntry.name) + QLatin1Char('_');
+            modePrefix += QLatin1String(modeEntry.name) + u'_';
         for (auto standardSizeEntry : standardSizeEntries) {
             const unsigned flags = modeFlags | standardSizeEntry.flags;
             const QString prefix = modePrefix + QLatin1String(standardSizeEntry.name)
-                + QLatin1Char('_');
+                + u'_';
             ZeroMemory(&info, sizeof(SHFILEINFO));
             const HRESULT hr = SHGetFileInfo(sourceFileC, 0, &info, sizeof(SHFILEINFO), flags);
             if (FAILED(hr)) {
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     const QString &sourceFile = positionalArguments.constFirst();
-    imageFileRoot = imageFileRootInfo.absoluteFilePath() + QLatin1Char('/') + QFileInfo(sourceFile).baseName();
+    imageFileRoot = imageFileRootInfo.absoluteFilePath() + u'/' + QFileInfo(sourceFile).baseName();
 
     const PixmapEntryList pixmaps = parser.isSet(shellIconOption)
         ? extractShellIcons(sourceFile, parser.isSet(shellOverlayOption))

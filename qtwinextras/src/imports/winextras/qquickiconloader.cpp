@@ -40,21 +40,23 @@
 
 #include "qquickiconloader_p.h"
 
-#include <QQmlEngine>
-#include <QNetworkAccessManager>
-#include <QFileInfo>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QQuickImageProvider>
-#include <QQmlFile>
-#include <qt_windows.h>
+#include <QtQuick/QQuickImageProvider>
+#include <QtQml/QQmlEngine>
+#include <QtQml/QQmlFile>
+#if QT_CONFIG(qml_network)
+#  include <QtNetwork/QNetworkAccessManager>
+#  include <QtNetwork/QNetworkRequest>
+#  include <QtNetwork/QNetworkReply>
+#endif
+#include <QtCore/QFileInfo>
+#include <QtCore/qt_windows.h>
 
 QT_BEGIN_NAMESPACE
 
 QVariant QQuickIconLoader::loadFromFile(const QUrl &url, QVariant::Type type)
 {
     const QString path = QQmlFile::urlToLocalFileOrQrc(url);
-    if (QFileInfo(path).exists()) {
+    if (QFileInfo::exists(path)) {
         switch (type) {
         case QMetaType::QIcon:
             return QVariant(QIcon(path));
@@ -68,10 +70,12 @@ QVariant QQuickIconLoader::loadFromFile(const QUrl &url, QVariant::Type type)
     return QVariant();
 }
 
+#if QT_CONFIG(qml_network)
 QNetworkReply *QQuickIconLoader::loadFromNetwork(const QUrl &url, const QQmlEngine *engine)
 {
     return engine->networkAccessManager()->get(QNetworkRequest(url));
 }
+#endif // qml_network
 
 QVariant QQuickIconLoader::loadFromImageProvider(const QUrl &url, const QQmlEngine *engine,
                                                   QVariant::Type type, QSize requestedSize)
@@ -79,7 +83,7 @@ QVariant QQuickIconLoader::loadFromImageProvider(const QUrl &url, const QQmlEngi
     const QString providerId = url.host();
     const QString imageId = url.toString(QUrl::RemoveScheme | QUrl::RemoveAuthority).mid(1);
     QQuickImageProvider::ImageType imageType = QQuickImageProvider::Invalid;
-    QQuickImageProvider *provider = static_cast<QQuickImageProvider *>(engine->imageProvider(providerId));
+    auto *provider = static_cast<QQuickImageProvider *>(engine->imageProvider(providerId));
     QSize size;
     if (!requestedSize.isValid())
         requestedSize = QSize(GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON));
@@ -113,6 +117,7 @@ QVariant QQuickIconLoader::loadFromImageProvider(const QUrl &url, const QQmlEngi
     return QVariant();
 }
 
+#if QT_CONFIG(qml_network)
 QQuickIconLoaderNetworkReplyHandler::QQuickIconLoaderNetworkReplyHandler(QNetworkReply *reply, QVariant::Type type)
     : QObject(reply)
     , m_type(type)
@@ -122,7 +127,7 @@ QQuickIconLoaderNetworkReplyHandler::QQuickIconLoaderNetworkReplyHandler(QNetwor
 
 void QQuickIconLoaderNetworkReplyHandler::onRequestFinished()
 {
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
     Q_ASSERT(reply);
     if (reply->error() != QNetworkReply::NoError) {
         qWarning() << Q_FUNC_INFO << reply->url() << "failed:" << reply->errorString();
@@ -145,5 +150,6 @@ void QQuickIconLoaderNetworkReplyHandler::onRequestFinished()
     }
     reply->deleteLater();
 }
+#endif // qml_network
 
 QT_END_NAMESPACE

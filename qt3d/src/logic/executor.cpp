@@ -58,50 +58,20 @@ Executor::Executor(QObject *parent)
 {
 }
 
-void Executor::clearQueueAndProceed()
-{
-    // Clear the queue of nodes to process frame updates for (throw the work away).
-    // If the semaphore is acquired, release it to allow the logic job and hence the
-    // manager and frame to complete and shutdown to continue.
-    m_nodeIds.clear();
-    if (m_semaphore->available() == 0)
-        m_semaphore->release();
-}
-
-void Executor::enqueueLogicFrameUpdates(const QVector<Qt3DCore::QNodeId> &nodeIds)
-{
-    m_nodeIds = nodeIds;
-}
-
-bool Executor::event(QEvent *e)
-{
-    if (e->type() == QEvent::User) {
-        FrameUpdateEvent *ev = static_cast<FrameUpdateEvent *>(e);
-        processLogicFrameUpdates(ev->deltaTime());
-        e->setAccepted(true);
-        return true;
-    }
-    return false;
-}
-
 /*!
-   \internal
-
    Called from context of main thread
 */
-void Executor::processLogicFrameUpdates(float dt)
+void Executor::processLogicFrameUpdates(const QVector<QNodeId> &nodeIds, float dt)
 {
-    Q_ASSERT(m_scene);
-    Q_ASSERT(m_semaphore);
-    const QVector<QNode *> nodes = m_scene->lookupNodes(m_nodeIds);
+    if (!m_scene || nodeIds.isEmpty())
+        return;
+
+    const QVector<QNode *> nodes = m_scene->lookupNodes(nodeIds);
     for (QNode *node : nodes) {
         QFrameAction *frameAction = qobject_cast<QFrameAction *>(node);
         if (frameAction && frameAction->isEnabled())
             frameAction->onTriggered(dt);
     }
-
-    // Release the semaphore so the calling Manager can continue
-    m_semaphore->release();
 }
 
 } // namespace Logic

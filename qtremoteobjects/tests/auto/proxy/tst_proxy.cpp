@@ -36,7 +36,10 @@
 
 const QUrl localHostUrl = QUrl(QLatin1String("local:testHost"));
 const QUrl tcpHostUrl = QUrl(QLatin1String("tcp://127.0.0.1:9989"));
+const QUrl proxyNodeUrl = QUrl(QLatin1String("tcp://127.0.0.1:12123"));
+const QUrl remoteNodeUrl = QUrl(QLatin1String("tcp://127.0.0.1:23234"));
 const QUrl registryUrl = QUrl(QLatin1String("local:testRegistry"));
+const QUrl proxyHostUrl = QUrl(QLatin1String("local:fromProxy"));
 
 #define SET_NODE_NAME(obj) (obj).setName(QLatin1String(#obj))
 
@@ -52,6 +55,8 @@ private Q_SLOTS:
 
     void testProxy_data();
     void testProxy();
+    void testForwardProxy();
+    void testReverseProxy();
     // The following should fail to compile, verifying the SourceAPI templates work
     // for subclasses
     /*
@@ -221,8 +226,15 @@ void ProxyTest::testProxy()
         if (!useProxy)
             QCOMPARE(rep->tracks()->availableRoles(), QVector<int>{Qt::DisplayRole});
         else {
-            QCOMPARE(QSet<int>::fromList(rep->tracks()->availableRoles().toList()),
-                     QSet<int>::fromList(model.roleNames().keys()));
+            const auto &availableRolesVec = rep->tracks()->availableRoles();
+            QSet<int> availableRoles;
+            for (int r : availableRolesVec)
+                availableRoles.insert(r);
+            const auto &rolesHash = model.roleNames();
+            QSet<int> roles;
+            for (auto it = rolesHash.cbegin(), end = rolesHash.cend(); it != end; ++it)
+                roles.insert(it.key());
+            QCOMPARE(availableRoles, roles);
         }
         QSignalSpy dataSpy(rep->tracks(), SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)));
         QVector<QModelIndex> pending;
@@ -290,8 +302,15 @@ void ProxyTest::testProxy()
         if (!useProxy)
             QCOMPARE(tracksReplica->availableRoles(), QVector<int>{Qt::DisplayRole});
         else {
-            QCOMPARE(QSet<int>::fromList(tracksReplica->availableRoles().toList()),
-                     QSet<int>::fromList(model.roleNames().keys()));
+            const auto &availableRolesVec = tracksReplica->availableRoles();
+            QSet<int> availableRoles;
+            for (int r : availableRolesVec)
+                availableRoles.insert(r);
+            const auto &rolesHash = model.roleNames();
+            QSet<int> roles;
+            for (auto it = rolesHash.cbegin(), end = rolesHash.cend(); it != end; ++it)
+                roles.insert(it.key());
+            QCOMPARE(availableRoles, roles);
         }
         QTRY_COMPARE(tracksReplica->isInitialized(), true);
         QSignalSpy dataSpy(tracksReplica, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)));
@@ -333,6 +352,80 @@ void ProxyTest::testProxy()
         QCOMPARE(pod, parent.subClass()->myPOD());
     }
     replica.reset();
+}
+
+void ProxyTest::testForwardProxy()
+{
+    // Setup Local Registry
+    QRemoteObjectRegistryHost registry(registryUrl);
+    SET_NODE_NAME(registry);
+
+    // Setup Local Host
+    QRemoteObjectHost host(localHostUrl, registryUrl);
+    SET_NODE_NAME(host);
+
+    // Setup Proxy
+    QRemoteObjectRegistryHost proxyNode(proxyNodeUrl);
+    SET_NODE_NAME(proxyNode);
+    proxyNode.proxy(registryUrl, proxyHostUrl);
+    // Include the reverseProxy to make sure we don't try to send back
+    // proxied objects.
+    proxyNode.reverseProxy();
+
+    // Setup Source
+    EngineSimpleSource engine;
+    engine.setRpm(1234);
+
+    // Setup Remote Node
+    QRemoteObjectHost remoteNode(remoteNodeUrl);
+    SET_NODE_NAME(remoteNode);
+    remoteNode.connectToNode(proxyNodeUrl);
+
+    // Add source
+    host.enableRemoting(&engine);
+
+    // Setup Replica
+    const QScopedPointer<EngineReplica> replica(remoteNode.acquire<EngineReplica>());
+    QVERIFY(replica->waitForSource(1000));
+
+    // Compare Replica to Source
+    QCOMPARE(replica->rpm(), engine.rpm());
+}
+
+void ProxyTest::testReverseProxy()
+{
+    // Setup Local Registry
+    QRemoteObjectRegistryHost registry(registryUrl);
+    SET_NODE_NAME(registry);
+
+    // Setup Local Host
+    QRemoteObjectHost host(localHostUrl, registryUrl);
+    SET_NODE_NAME(host);
+
+    // Setup Proxy
+    // QRemoteObjectRegistryHost proxyNode(proxyNodeUrl);
+    QRemoteObjectRegistryHost proxyNode(proxyNodeUrl);
+    SET_NODE_NAME(proxyNode);
+    proxyNode.proxy(registryUrl, proxyHostUrl);
+    proxyNode.reverseProxy();
+
+    // Setup Source
+    EngineSimpleSource engine;
+    engine.setRpm(1234);
+
+    // Setup Remote Node
+    QRemoteObjectHost remoteNode(remoteNodeUrl, proxyNodeUrl);
+    SET_NODE_NAME(remoteNode);
+
+    // Add source
+    remoteNode.enableRemoting(&engine);
+
+    // Setup Replica
+    const QScopedPointer<EngineReplica> replica(host.acquire<EngineReplica>());
+    QVERIFY(replica->waitForSource(1000));
+
+    //Compare Replica to Source
+    QCOMPARE(replica->rpm(), engine.rpm());
 }
 
 void ProxyTest::testTopLevelModel()

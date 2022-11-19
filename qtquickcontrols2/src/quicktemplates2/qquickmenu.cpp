@@ -53,7 +53,7 @@
 #include <QtQml/private/qv4scopedvalue_p.h>
 #include <QtQml/private/qv4variantobject_p.h>
 #include <QtQml/private/qv4qobjectwrapper_p.h>
-#include <QtQml/private/qqmlobjectmodel_p.h>
+#include <private/qqmlobjectmodel_p.h>
 #include <QtQuick/private/qquickitem_p.h>
 #include <QtQuick/private/qquickitemchangelistener_p.h>
 #include <QtQuick/private/qquickitemview_p.h>
@@ -68,7 +68,7 @@ static const int SUBMENU_DELAY = 225;
 /*!
     \qmltype Menu
     \inherits Popup
-    \instantiates QQuickMenu
+//!     \instantiates QQuickMenu
     \inqmlmodule QtQuick.Controls
     \since 5.7
     \ingroup qtquickcontrols2-menus
@@ -170,6 +170,14 @@ static const int SUBMENU_DELAY = 225;
     Although \l {MenuItem}{MenuItems} are most commonly used with Menu, it can
     contain any type of item.
 
+    \section1 Margins
+
+    As it is inherited from Popup, Menu supports \l {Popup::}{margins}. By
+    default, all of the built-in styles specify \c 0 for Menu's margins to
+    ensure that the menu is kept within the bounds of the window. To allow a
+    menu to go outside of the window (to animate it moving into view, for
+    example), set the margins property to \c -1.
+
     \sa {Customizing Menu}, MenuItem, {Menu Controls}, {Popup Controls}
 */
 
@@ -178,8 +186,9 @@ static const int SUBMENU_DELAY = 225;
 
     This property holds whether the popup wants focus.
 
-    When the popup actually receives focus, \l activeFocus will be \c true.
-    For more information, see \l {Keyboard Focus in Qt Quick}.
+    When the popup actually receives focus, \l{Popup::}{activeFocus}
+    will be \c true. For more information, see
+    \l {Keyboard Focus in Qt Quick}.
 
     The default value is \c false.
 
@@ -207,8 +216,12 @@ public:
 
 QQuickMenuPrivate::QQuickMenuPrivate()
 {
-    Q_Q(QQuickMenu);
     cascade = shouldCascade();
+}
+
+void QQuickMenuPrivate::init()
+{
+    Q_Q(QQuickMenu);
     contentModel = new QQmlObjectModel(q);
 }
 
@@ -712,7 +725,18 @@ QQuickMenu::QQuickMenu(QObject *parent)
 {
     Q_D(QQuickMenu);
     setFocus(true);
+    d->init();
     connect(d->contentModel, &QQmlObjectModel::countChanged, this, &QQuickMenu::countChanged);
+}
+
+QQuickMenu::~QQuickMenu()
+{
+    Q_D(QQuickMenu);
+    // We have to do this to ensure that the change listeners are removed.
+    // It's too late to do this in ~QQuickMenuPrivate, as contentModel has already
+    // been destroyed before that is called.
+    while (d->contentModel->count() > 0)
+        d->removeItem(0, d->itemAt(0));
 }
 
 /*!

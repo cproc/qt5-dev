@@ -57,12 +57,12 @@
 #ifndef GLBOX_H
 #define GLBOX_H
 
-#include <QtOpenGL>
+#include <QOpenGLWidget>
 #include <QOpenGLFunctions_1_1>
 //! [0]
 #include <QAxBindable>
 
-class GLBox : public QGLWidget,
+class GLBox : public QOpenGLWidget,
               public QOpenGLFunctions_1_1,
               public QAxBindable
 {
@@ -75,7 +75,7 @@ class GLBox : public QGLWidget,
 public:
     explicit GLBox(QWidget *parent, const char *name = nullptr);
     virtual ~GLBox();
-    QAxAggregated *createAggregate();
+    QAxAggregated *createAggregate() override;
 
 public slots:
     void                setXRotation(int degrees);
@@ -84,17 +84,17 @@ public slots:
     void                setZRotation(int degrees);
 
 protected:
-    void                initializeGL();
-    void                paintGL();
-    void                resizeGL(int w, int h);
+    void                initializeGL() override;
+    void                paintGL() override;
+    void                resizeGL(int w, int h) override;
     virtual GLuint      makeObject();
 
 private:
-    GLuint  m_object;
-    GLfloat m_xRot;
-    GLfloat m_yRot;
-    GLfloat m_zRot;
-    GLfloat m_scale;
+    GLuint  m_object = 0;
+    GLdouble m_xRot = 0;
+    GLdouble m_yRot = 0;
+    GLdouble m_zRot = 0;
+    GLdouble m_scale = 1.25;
 };
 
 #endif // GLBOX_H

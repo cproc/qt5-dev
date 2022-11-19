@@ -58,7 +58,8 @@ static QString utf8Text()
 
 QWaylandDataOffer::QWaylandDataOffer(QWaylandDisplay *display, struct ::wl_data_offer *offer)
     : QtWayland::wl_data_offer(offer)
-    , m_mimeData(new QWaylandMimeData(this, display))
+    , m_display(display)
+    , m_mimeData(new QWaylandMimeData(this))
 {
 }
 
@@ -81,14 +82,19 @@ QMimeData *QWaylandDataOffer::mimeData()
     return m_mimeData.data();
 }
 
+void QWaylandDataOffer::startReceiving(const QString &mimeType, int fd)
+{
+    receive(mimeType, fd);
+    wl_display_flush(m_display->wl_display());
+}
+
 void QWaylandDataOffer::data_offer_offer(const QString &mime_type)
 {
     m_mimeData->appendFormat(mime_type);
 }
 
-QWaylandMimeData::QWaylandMimeData(QWaylandDataOffer *dataOffer, QWaylandDisplay *display)
+QWaylandMimeData::QWaylandMimeData(QWaylandAbstractDataOffer *dataOffer)
     : m_dataOffer(dataOffer)
-    , m_display(display)
 {
 }
 
@@ -140,8 +146,7 @@ QVariant QWaylandMimeData::retrieveData_sys(const QString &mimeType, QVariant::T
         return QVariant();
     }
 
-    m_dataOffer->receive(mime, pipefd[1]);
-    wl_display_flush(m_display->wl_display());
+    m_dataOffer->startReceiving(mime, pipefd[1]);
 
     close(pipefd[1]);
 
@@ -165,24 +170,27 @@ int QWaylandMimeData::readData(int fd, QByteArray &data) const
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
 
-    int ready = select(FD_SETSIZE, &readset, nullptr, nullptr, &timeout);
-    if (ready < 0) {
-        qWarning() << "QWaylandDataOffer: select() failed";
-        return -1;
-    } else if (ready == 0) {
-        qWarning("QWaylandDataOffer: timeout reading from pipe");
-        return -1;
-    } else {
-        char buf[4096];
-        int n = QT_READ(fd, buf, sizeof buf);
+    Q_FOREVER {
+        int ready = select(FD_SETSIZE, &readset, nullptr, nullptr, &timeout);
+        if (ready < 0) {
+            qWarning() << "QWaylandDataOffer: select() failed";
+            return -1;
+        } else if (ready == 0) {
+            qWarning("QWaylandDataOffer: timeout reading from pipe");
+            return -1;
+        } else {
+            char buf[4096];
+            int n = QT_READ(fd, buf, sizeof buf);
 
-        if (n > 0) {
-            data.append(buf, n);
-            n = readData(fd, data);
-        } else if (n < 0) {
-            qWarning("QWaylandDataOffer: read() failed");
+            if (n < 0) {
+                qWarning("QWaylandDataOffer: read() failed");
+                return -1;
+            } else if (n == 0) {
+                return 0;
+            } else if (n > 0) {
+                data.append(buf, n);
+            }
         }
-        return n;
     }
 }
 

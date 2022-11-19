@@ -30,6 +30,7 @@
 #define MAINWINDOW_H
 
 #include <ActiveQt/QAxSelect>
+#include <QVector>
 
 #include "ui_mainwindow.h"
 
@@ -56,7 +57,7 @@ class MainWindow : public QMainWindow, public Ui::MainWindow
     Q_CLASSINFO("EventsID", "{02a268cd-24b4-4fd9-88ff-b01b683ef39d}")
 
 public:
-    MainWindow(QWidget *parent = 0);
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
     static MainWindow *instance() { return m_instance; }
@@ -96,17 +97,15 @@ protected slots:
 
 private:
     QAxWidget *activeAxWidget() const;
-    QList<QAxWidget *> axWidgets() const;
+    QVector<QAxWidget *> axWidgets() const;
 
     static MainWindow *m_instance;
 
-    InvokeMethod *m_dlgInvoke;
-    ChangeProperties *m_dlgProperties;
-    AmbientProperties *m_dlgAmbient;
-    QAxScriptManager *m_scripts;
-    QMdiArea *m_mdiArea;
-
-    QtMessageHandler m_oldDebugHandler;
+    InvokeMethod *m_dlgInvoke = nullptr;
+    ChangeProperties *m_dlgProperties = nullptr;
+    AmbientProperties *m_dlgAmbient = nullptr;
+    QAxScriptManager *m_scripts = nullptr;
+    QMdiArea *m_mdiArea = nullptr;
 
 private slots:
     void updateGUI();

@@ -126,21 +126,14 @@ void QDeclarativeGeoMapItemBase::setMap(QDeclarativeGeoMap *quickMap, QGeoMap *m
         return;
     if (quickMap && quickMap_)
         return; // don't allow association to more than one map
-    if (quickMap_)
-        quickMap_->disconnect(this);
-    if (map_)
-        map_->disconnect(this);
 
     quickMap_ = quickMap;
     map_ = map;
 
     if (map_ && quickMap_) {
-        connect(map_, SIGNAL(cameraDataChanged(QGeoCameraData)),
-                this, SLOT(baseCameraDataChanged(QGeoCameraData)));
-        connect(map_, SIGNAL(visibleAreaChanged()),
-                this, SLOT(visibleAreaChanged()));
-        connect(quickMap, SIGNAL(heightChanged()), this, SLOT(polishAndUpdate()));
-        connect(quickMap, SIGNAL(widthChanged()), this, SLOT(polishAndUpdate()));
+        // For performance reasons we're not connecting map_'s and quickMap_'s signals to this.
+        // Rather, the handling of cameraDataChanged, visibleAreaChanged, heightChanged and widthChanged is done explicitly in QDeclarativeGeoMap by directly calling methods on the items.
+        // See QTBUG-76950
         lastSize_ = QSizeF(quickMap_->width(), quickMap_->height());
         lastCameraData_ = map_->cameraData();
     }
@@ -208,14 +201,58 @@ void QDeclarativeGeoMapItemBase::setPositionOnMap(const QGeoCoordinate &coordina
     setPosition(topLeft);
 }
 
+bool QDeclarativeGeoMapItemBase::autoFadeIn() const
+{
+    return m_autoFadeIn;
+}
+
 static const double opacityRampMin = 1.5;
 static const double opacityRampMax = 2.5;
+
+void QDeclarativeGeoMapItemBase::setAutoFadeIn(bool fadeIn)
+{
+    if (fadeIn == m_autoFadeIn)
+        return;
+    m_autoFadeIn = fadeIn;
+    if (quickMap_ && quickMap_->zoomLevel() < opacityRampMax)
+        polishAndUpdate();
+}
+
+int QDeclarativeGeoMapItemBase::lodThreshold() const
+{
+    return m_lodThreshold;
+}
+
+void QDeclarativeGeoMapItemBase::setLodThreshold(int lt)
+{
+    if (lt == m_lodThreshold)
+        return;
+    m_lodThreshold = lt;
+    update();
+}
+
+/*!
+    \internal
+
+    This returns the zoom level to be used when requesting the LOD.
+    Essentially it clamps to m_lodThreshold, and if above, it selects
+    a ZL higher than the maximum LODable level.
+*/
+unsigned int QDeclarativeGeoMapItemBase::zoomForLOD(int zoom) const
+{
+    if (zoom >= m_lodThreshold)
+        return 30; // some arbitrarily large zoom
+    return uint(zoom);
+}
+
 /*!
     \internal
 */
 float QDeclarativeGeoMapItemBase::zoomLevelOpacity() const
 {
-    if (quickMap_->zoomLevel() > opacityRampMax)
+    if (!m_autoFadeIn) // Consider skipping the opacity node instead.
+        return 1.0;
+    else if (quickMap_->zoomLevel() > opacityRampMax)
         return 1.0;
     else if (quickMap_->zoomLevel() > opacityRampMin)
         return quickMap_->zoomLevel() - opacityRampMin;
@@ -312,6 +349,8 @@ bool QDeclarativeGeoMapItemBase::isPolishScheduled() const
 {
     return QQuickItemPrivate::get(this)->polishScheduled;
 }
+
+void QDeclarativeGeoMapItemBase::setMaterialDirty() {}
 
 void QDeclarativeGeoMapItemBase::polishAndUpdate()
 {

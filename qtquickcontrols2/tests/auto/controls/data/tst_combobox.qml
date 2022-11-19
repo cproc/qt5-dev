@@ -296,11 +296,29 @@ TestCase {
         ListElement { name: "Banana"; color: "yellow" }
     }
 
+    Component {
+        id: fruitModelComponent
+        ListModel {
+            ListElement { name: "Apple"; color: "red" }
+            ListElement { name: "Orange"; color: "orange" }
+            ListElement { name: "Banana"; color: "yellow" }
+        }
+    }
+
     property var fruitarray: [
         { name: "Apple", color: "red" },
         { name: "Orange", color: "orange" },
         { name: "Banana", color: "yellow" }
     ]
+
+    Component {
+        id: birdModelComponent
+        ListModel {
+            ListElement { name: "Galah"; color: "pink" }
+            ListElement { name: "Kookaburra"; color: "brown" }
+            ListElement { name: "Magpie"; color: "black" }
+        }
+    }
 
     function test_textRole_data() {
         return [
@@ -384,9 +402,104 @@ TestCase {
         compare(control.find(data.term, data.flags), data.index)
     }
 
+    function test_valueRole_data() {
+        return [
+            { tag: "ListModel", model: fruitmodel },
+            { tag: "ObjectArray", model: fruitarray }
+        ]
+    }
+
+    function test_valueRole(data) {
+        var control = createTemporaryObject(emptyBox, testCase,
+            { model: data.model, valueRole: "color" })
+        verify(control)
+        compare(control.count, 3)
+        compare(control.currentIndex, 0)
+        compare(control.currentValue, "red")
+
+        control.valueRole = "name"
+        compare(control.currentValue, "Apple")
+
+        control.currentIndex = 1
+        compare(control.currentIndex, 1)
+        compare(control.currentValue, "Orange")
+
+        control.valueRole = "color"
+        compare(control.currentValue, "orange")
+
+        control.model = null
+        compare(control.currentIndex, -1)
+        // An invalid QVariant is represented as undefined.
+        compare(control.currentValue, undefined)
+
+        control.valueRole = ""
+        compare(control.currentValue, undefined)
+    }
+
+    function test_valueAt() {
+        var control = createTemporaryObject(comboBox, testCase,
+            { model: fruitmodel, textRole: "name", valueRole: "color" })
+        verify(control)
+
+        compare(control.valueAt(0), "red")
+        compare(control.valueAt(1), "orange")
+        compare(control.valueAt(2), "yellow")
+        compare(control.valueAt(-1), undefined)
+        compare(control.valueAt(5), undefined)
+    }
+
+    function test_indexOfValue_data() {
+        return [
+            { tag: "red", expectedIndex: 0 },
+            { tag: "orange", expectedIndex: 1 },
+            { tag: "yellow", expectedIndex: 2 },
+            { tag: "brown", expectedIndex: -1 },
+        ]
+    }
+
+    function test_indexOfValue(data) {
+        var control = createTemporaryObject(comboBox, testCase,
+            { model: fruitmodel, textRole: "name", valueRole: "color" })
+        verify(control)
+
+        compare(control.indexOfValue(data.tag), data.expectedIndex)
+    }
+
+    function test_currentValueAfterModelChanged() {
+        let fruitModel = createTemporaryObject(fruitModelComponent, testCase)
+        verify(fruitModel)
+
+        let control = createTemporaryObject(comboBox, testCase,
+            { model: fruitModel, textRole: "name", valueRole: "color", currentIndex: 1 })
+        verify(control)
+        compare(control.currentText, "Orange")
+        compare(control.currentValue, "orange")
+
+        // Remove "Apple"; the current item should now be "Banana", so currentValue should be "yellow".
+        fruitModel.remove(0)
+        compare(control.currentText, "Banana")
+        compare(control.currentValue, "yellow")
+    }
+
+    function test_currentValueAfterNewModelSet() {
+        let control = createTemporaryObject(comboBox, testCase,
+            { model: fruitmodel, textRole: "name", valueRole: "color", currentIndex: 0 })
+        verify(control)
+        compare(control.currentText, "Apple")
+        compare(control.currentValue, "red")
+
+        // Swap the model out entirely. Since the currentIndex was 0 and
+        // is reset to 0 when a new model is set, it remains 0.
+        let birdModel = createTemporaryObject(birdModelComponent, testCase)
+        verify(birdModel)
+        control.model = birdModel
+        compare(control.currentText, "Galah")
+        compare(control.currentValue, "pink")
+    }
 
     function test_arrowKeys() {
-        var control = createTemporaryObject(comboBox, testCase, {model: 3})
+        var control = createTemporaryObject(comboBox, testCase,
+            { model: fruitmodel, textRole: "name", valueRole: "color" })
         verify(control)
 
         var activatedSpy = signalSpy.createObject(control, {target: control, signalName: "activated"})
@@ -797,6 +910,28 @@ TestCase {
         compare(control.pressed, false)
         compare(control.popup.visible, true)
         verify(control.popup.contentItem.y < control.y)
+
+
+        // Account for when a transition of a scale from 0.9-1.0 that it is placed above right away and not below
+        // first just because there is room at the 0.9 scale
+        if (control.popup.enter !== null) {
+            // hide
+            mouseClick(control)
+            compare(control.pressed, false)
+            tryCompare(control.popup, "visible", false)
+            control.y = control.Window.height - (control.popup.contentItem.height * 0.99)
+            var popupYSpy = createTemporaryObject(signalSpy, testCase, {target: control.popup, signalName: "yChanged"})
+            verify(popupYSpy.valid)
+            mousePress(control)
+            compare(control.pressed, true)
+            compare(control.popup.visible, false)
+            mouseRelease(control)
+            compare(control.pressed, false)
+            compare(control.popup.visible, true)
+            tryCompare(control.popup.enter, "running", false)
+            verify(control.popup.contentItem.y < control.y)
+            verify(popupYSpy.count === 1)
+        }
 
         // follow the control outside the horizontal window bounds
         control.x = -control.width / 2
@@ -1788,5 +1923,73 @@ TestCase {
         control.popup.close()
         closedSpy.wait()
         compare(closedSpy.count, 1)
+    }
+
+    function test_comboBoxSelectTextByMouse() {
+        let control = createTemporaryObject(comboBox, testCase,
+            { editable: true, selectTextByMouse: true, model: [ "Some text" ], width: parent.width })
+        verify(control)
+        waitForRendering(control)
+        control.forceActiveFocus()
+
+        // Position the text cursor at the beginning of the text.
+        mouseClick(control, control.leftPadding, control.height / 2)
+        // Select all of the text.
+        mousePress(control, control.leftPadding, control.height / 2)
+        mouseMove(control, control.leftPadding + control.contentItem.width, control.height / 2)
+        mouseRelease(control, control.leftPadding + control.contentItem.width, control.height / 2)
+        compare(control.contentItem.selectedText, "Some text")
+    }
+
+    // QTBUG-78885: When the edit text is changed on an editable ComboBox,
+    // and then that ComboBox loses focus, its currentIndex should change
+    // to the index of the edit text (assuming a match is found).
+    function test_currentIndexChangeOnLostFocus() {
+        if (Qt.styleHints.tabFocusBehavior !== Qt.TabFocusAllControls)
+            skip("This platform only allows tab focus for text controls")
+
+        let theModel = []
+        for (let i = 0; i < 10; ++i)
+            theModel.push("Item " + (i + 1))
+
+        let comboBox1 = createTemporaryObject(comboBox, testCase,
+            { objectName: "comboBox1", editable: true, model: theModel })
+        verify(comboBox1)
+        compare(comboBox1.currentIndex, 0)
+
+        let comboBox2 = createTemporaryObject(comboBox, testCase, { objectName: "comboBox2" })
+        verify(comboBox2)
+
+        // Give the first ComboBox focus and type in 0 to select "Item 10" (default is "Item 1").
+        waitForRendering(comboBox1)
+        comboBox1.forceActiveFocus()
+        verify(comboBox1.activeFocus)
+        keyClick(Qt.Key_0)
+        compare(comboBox1.editText, "Item 10")
+
+        let currentIndexSpy = signalSpy.createObject(comboBox1,
+            { target: comboBox1, signalName: "currentIndexChanged" })
+        verify(currentIndexSpy.valid)
+
+        // Give focus to the other ComboBox so that the first one loses it.
+        // The first ComboBox's currentIndex should change to that of "Item 10".
+        keyClick(Qt.Key_Tab)
+        verify(comboBox2.activeFocus)
+        compare(comboBox1.currentIndex, 9)
+        compare(currentIndexSpy.count, 1)
+
+        // Give focus back to the first ComboBox, and try the same thing except
+        // with non-existing text; the currentIndex should not change.
+        comboBox1.forceActiveFocus()
+        verify(comboBox1.activeFocus)
+        keySequence(StandardKey.SelectAll)
+        compare(comboBox1.contentItem.selectedText, "Item 10")
+        keyClick(Qt.Key_N)
+        keyClick(Qt.Key_O)
+        keyClick(Qt.Key_P)
+        keyClick(Qt.Key_E)
+        compare(comboBox1.editText, "nope")
+        compare(comboBox1.currentIndex, 9)
+        compare(currentIndexSpy.count, 1)
     }
 }

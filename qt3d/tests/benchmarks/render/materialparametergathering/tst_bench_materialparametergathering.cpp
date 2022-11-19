@@ -28,15 +28,16 @@
 
 #include <QtTest/QTest>
 #include <Qt3DCore/qentity.h>
-#include <Qt3DCore/private/qnodecreatedchangegenerator_p.h>
 #include <Qt3DCore/private/qaspectjobmanager_p.h>
+#include <Qt3DCore/private/qnodevisitor_p.h>
+#include <Qt3DCore/private/qnode_p.h>
 
 #include <Qt3DRender/private/nodemanagers_p.h>
 #include <Qt3DRender/private/managers_p.h>
 #include <Qt3DRender/private/entity_p.h>
 #include <Qt3DRender/qrenderaspect.h>
 #include <Qt3DRender/private/qrenderaspect_p.h>
-#include <Qt3DRender/private/materialparametergathererjob_p.h>
+#include <materialparametergathererjob_p.h>
 #include <Qt3DRender/private/technique_p.h>
 #include <Qt3DRender/private/techniquemanager_p.h>
 #include <Qt3DExtras/qphongmaterial.h>
@@ -55,11 +56,22 @@ public:
         Qt3DCore::QAbstractAspectPrivate::get(this)->m_jobManager = m_jobManager.data();
         QRenderAspect::onRegistered();
 
-        const Qt3DCore::QNodeCreatedChangeGenerator generator(root);
-        const QVector<Qt3DCore::QNodeCreatedChangeBasePtr> creationChanges = generator.creationChanges();
+        QVector<Qt3DCore::NodeTreeChange> nodes;
+        Qt3DCore::QNodeVisitor v;
+        v.traverse(root, [&nodes](Qt3DCore::QNode *node) {
+            Qt3DCore::QNodePrivate *d = Qt3DCore::QNodePrivate::get(node);
+            d->m_typeInfo = const_cast<QMetaObject*>(Qt3DCore::QNodePrivate::findStaticMetaObject(node->metaObject()));
+            d->m_hasBackendNode = true;
+            nodes.push_back({
+                node->id(),
+                Qt3DCore::QNodePrivate::get(node)->m_typeInfo,
+                Qt3DCore::NodeTreeChange::Added,
+                node
+            });
+        });
 
-        for (const Qt3DCore::QNodeCreatedChangeBasePtr change : creationChanges)
-            d_func()->createBackendNode(change);
+        for (const auto &node: nodes)
+            d_func()->createBackendNode(node);
 
         const auto handles = nodeManagers()->techniqueManager()->activeHandles();
         for (const auto handle: handles) {
@@ -78,9 +90,9 @@ public:
         return d_func()->m_renderer->nodeManagers();
     }
 
-    Render::MaterialParameterGathererJobPtr materialGathererJob() const
+    Render::OpenGL::MaterialParameterGathererJobPtr materialGathererJob() const
     {
-        Render::MaterialParameterGathererJobPtr job = Render::MaterialParameterGathererJobPtr::create();
+        Render::OpenGL::MaterialParameterGathererJobPtr job = Render::OpenGL::MaterialParameterGathererJobPtr::create();
         job->setNodeManagers(nodeManagers());
         return job;
     }
@@ -124,7 +136,7 @@ private Q_SLOTS:
         QScopedPointer<Qt3DRender::TestAspect> aspect(new Qt3DRender::TestAspect(buildTestScene(2000)));
 
         // WHEN
-        Qt3DRender::Render::MaterialParameterGathererJobPtr gatheringJob = aspect->materialGathererJob();
+        Qt3DRender::Render::OpenGL::MaterialParameterGathererJobPtr gatheringJob = aspect->materialGathererJob();
         gatheringJob->setHandles(aspect->nodeManagers()->materialManager()->activeHandles());
 
         QBENCHMARK {

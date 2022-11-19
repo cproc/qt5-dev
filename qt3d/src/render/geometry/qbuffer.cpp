@@ -49,6 +49,8 @@ using namespace Qt3DCore;
 
 namespace Qt3DRender {
 
+const char *QBufferPrivate::UpdateDataPropertyName = "QT3D_updateData";
+
 QBufferPrivate::QBufferPrivate()
     : QNodePrivate()
     , m_type(QBuffer::VertexBuffer)
@@ -56,6 +58,15 @@ QBufferPrivate::QBufferPrivate()
     , m_syncData(false)
     , m_access(QBuffer::Write)
 {
+}
+
+void QBufferPrivate::setData(const QByteArray &data)
+{
+    Q_Q(QBuffer);
+    const bool blocked = q->blockNotifications(true);
+    m_data = data;
+    emit q->dataChanged(data);
+    q->blockNotifications(blocked);
 }
 
 /*!
@@ -301,36 +312,14 @@ QBuffer::~QBuffer()
 }
 
 /*!
- * \internal
- */
-void QBuffer::sceneChangeEvent(const Qt3DCore::QSceneChangePtr &change)
-{
-    if (change->type() == PropertyUpdated) {
-        QPropertyUpdatedChangePtr e = qSharedPointerCast<QPropertyUpdatedChange>(change);
-        const QByteArray propertyName = e->propertyName();
-        if (propertyName == QByteArrayLiteral("data")) {
-            const bool blocked = blockNotifications(true);
-            setData(e->value().toByteArray());
-            blockNotifications(blocked);
-        } else if (propertyName == QByteArrayLiteral("downloadedData")) {
-            const bool blocked = blockNotifications(true);
-            setData(e->value().toByteArray());
-            blockNotifications(blocked);
-            Q_EMIT dataAvailable();
-        }
-    }
-}
-
-/*!
  * Sets \a bytes as data.
  */
 void QBuffer::setData(const QByteArray &bytes)
 {
     Q_D(QBuffer);
     if (bytes != d->m_data) {
-        d->m_data = bytes;
-        Qt3DCore::QNodePrivate::get(this)->notifyPropertyChange("data", QVariant::fromValue(d->m_data));
-        emit dataChanged(bytes);
+        d->setData(bytes);
+        d->update();
     }
 }
 
@@ -352,10 +341,14 @@ void QBuffer::updateData(int offset, const QByteArray &bytes)
     updateData.offset = offset;
     updateData.data = bytes;
 
-    auto e = QPropertyUpdatedChangePtr::create(id());
-    e->setPropertyName("updateData");
-    e->setValue(QVariant::fromValue(updateData));
-    notifyObservers(e);
+    QVariantList updateDataList;
+    const QVariant propertyData = property(QBufferPrivate::UpdateDataPropertyName);
+    if (propertyData.isValid())
+        updateDataList = propertyData.toList();
+    updateDataList.push_back(QVariant::fromValue(updateData));
+
+    setProperty(QBufferPrivate::UpdateDataPropertyName, updateDataList);
+    d->update();
 }
 
 /*!
@@ -409,12 +402,7 @@ void QBuffer::setDataGenerator(const QBufferDataGeneratorPtr &functor)
     if (functor && d->m_functor && *functor == *d->m_functor)
         return;
     d->m_functor = functor;
-    if (d->m_changeArbiter != nullptr) {
-        auto change = QPropertyUpdatedChangePtr::create(d->m_id);
-        change->setPropertyName("dataGenerator");
-        change->setValue(QVariant::fromValue(d->m_functor));
-        d->notifyObservers(change);
-    }
+    d->update();
 }
 
 /*!
@@ -452,6 +440,13 @@ void QBuffer::setAccessType(QBuffer::AccessType access)
         d->m_access = access;
         Q_EMIT accessTypeChanged(access);
     }
+}
+
+/*! \internal */
+void QBuffer::sceneChangeEvent(const QSceneChangePtr &change)
+{
+    // TODO Unused remove in Qt6
+    Q_UNUSED(change)
 }
 
 bool QBuffer::isSyncData() const

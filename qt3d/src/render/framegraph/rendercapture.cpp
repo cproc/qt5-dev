@@ -37,6 +37,8 @@
 #include <Qt3DRender/private/qrendercapture_p.h>
 #include <Qt3DRender/private/rendercapture_p.h>
 #include <Qt3DCore/qpropertyupdatedchange.h>
+#include <Qt3DCore/private/qaspectmanager_p.h>
+#include <Qt3DCore/private/qaspectjobmanager_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -70,16 +72,23 @@ QRenderCaptureRequest RenderCapture::takeCaptureRequest()
     return m_requestedCaptures.takeFirst();
 }
 
-void RenderCapture::sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e)
+void RenderCapture::syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime)
 {
-    if (e->type() == Qt3DCore::PropertyUpdated) {
-        Qt3DCore::QPropertyUpdatedChangePtr propertyChange = qSharedPointerCast<Qt3DCore::QPropertyUpdatedChange>(e);
-        if (propertyChange->propertyName() == QByteArrayLiteral("renderCaptureRequest")) {
-            requestCapture(propertyChange->value().value<QRenderCaptureRequest>());
-            markDirty(AbstractRenderer::FrameGraphDirty);
-        }
+    const QRenderCapture *node = qobject_cast<const QRenderCapture *>(frontEnd);
+    if (!node)
+        return;
+
+    FrameGraphNode::syncFromFrontEnd(frontEnd, firstTime);
+
+    const QRenderCapturePrivate *d = static_cast<const QRenderCapturePrivate *>(QFrameGraphNodePrivate::get(node));
+    const auto newPendingsCaptures = std::move(d->m_pendingRequests);
+    if (newPendingsCaptures.size() > 0) {
+        m_requestedCaptures.append(newPendingsCaptures);
+        markDirty(AbstractRenderer::FrameGraphDirty);
     }
-    FrameGraphNode::sceneChangeEvent(e);
+
+    if (firstTime)
+        markDirty(AbstractRenderer::FrameGraphDirty);
 }
 
 // called by render thread
@@ -92,17 +101,26 @@ void RenderCapture::addRenderCapture(int captureId, const QImage &image)
     m_renderCaptureData.push_back(data);
 }
 
-// called by send render capture job thread
-void RenderCapture::sendRenderCaptures()
+// called to send render capture in main thread
+void RenderCapture::syncRenderCapturesToFrontend(Qt3DCore::QAspectManager *manager)
 {
-    QMutexLocker lock(&m_mutex);
+    auto *frontend = manager->lookupNode(peerId());
+    if (!frontend)
+        return;
+    QRenderCapturePrivate *dfrontend = static_cast<QRenderCapturePrivate *>(Qt3DCore::QNodePrivate::get(frontend));
 
+    QMutexLocker lock(&m_mutex);
     for (const RenderCaptureDataPtr &data : qAsConst(m_renderCaptureData)) {
-        auto e = Qt3DCore::QPropertyUpdatedChangePtr::create(peerId());
-        e->setDeliveryFlags(Qt3DCore::QSceneChange::DeliverToAll);
-        e->setPropertyName("renderCaptureData");
-        e->setValue(QVariant::fromValue(data));
-        notifyObservers(e);
+        QPointer<QRenderCaptureReply> reply = dfrontend->takeReply(data.data()->captureId);
+        // Note: QPointer has no operator bool, we must use isNull() to check it
+        if (!reply.isNull()) {
+            dfrontend->setImage(reply, data.data()->image);
+            emit reply->completed();
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_DEPRECATED
+            emit reply->completeChanged(true);
+QT_WARNING_POP
+        }
     }
     m_renderCaptureData.clear();
 }

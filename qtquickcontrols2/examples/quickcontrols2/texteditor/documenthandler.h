@@ -152,7 +152,7 @@ Q_SIGNALS:
     void textChanged();
     void fileUrlChanged();
 
-    void loaded(const QString &text);
+    void loaded(const QString &text, int format);
     void error(const QString &message);
 
     void modifiedChanged();
@@ -170,7 +170,6 @@ private:
     int m_selectionEnd;
 
     QFont m_font;
-    int m_fontSize;
     QUrl m_fileUrl;
 };
 

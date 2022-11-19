@@ -56,6 +56,7 @@
 #include <Qt3DRender/private/qrenderstatecreatedchange_p.h>
 #include <Qt3DCore/private/qresourcemanager_p.h>
 #include <Qt3DRender/private/statemask_p.h>
+#include <Qt3DRender/private/qt3drender_global_p.h>
 //#include <Qt3DRender/private/statevariant_p.h>
 #include <QList>
 #include <QVector3D>
@@ -73,14 +74,14 @@ class GraphicsContext;
 
 typedef quint64 StateMaskSet;
 
-class RenderStateImpl
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RenderStateImpl
 {
 public:
     virtual ~RenderStateImpl() {}
 
     virtual StateMask mask() const = 0;
     virtual bool equalTo(const RenderStateImpl &renderState) const = 0;
-    virtual void updateProperty(const char *name, const QVariant &value);
+    virtual void updateProperties(const QRenderState *);
 };
 
 template <class StateSetImpl, StateMask stateMask, typename ... T>

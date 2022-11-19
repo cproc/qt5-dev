@@ -74,7 +74,7 @@ namespace Render {
 
 class FrameGraphManager;
 
-class Q_AUTOTEST_EXPORT FrameGraphNode : public BackendNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT FrameGraphNode : public BackendNode
 {
 public:
     FrameGraphNode();
@@ -90,7 +90,7 @@ public:
         Viewport,
         ClearBuffers,
         SortMethod,
-        SubtreeSelector,
+        SubtreeEnabler,
         StateSet,
         NoDraw,
         FrustumCulling,
@@ -103,7 +103,9 @@ public:
         ProximityFilter,
         BlitFramebuffer,
         SetFence,
-        WaitFence
+        WaitFence,
+        NoPicking,
+        DebugOverlay,
     };
     FrameGraphNodeType nodeType() const { return m_nodeType; }
 
@@ -120,11 +122,10 @@ public:
 
     void cleanup();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
 protected:
     FrameGraphNode(FrameGraphNodeType nodeType, QBackendNode::Mode mode = QBackendNode::ReadOnly);
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) override;
 
 private:
     FrameGraphNodeType m_nodeType;
