@@ -21,10 +21,8 @@ struct ScopedPathUnlinkerTraits {
   static const FilePath* InvalidValue() { return nullptr; }
 
   static void Free(const FilePath* path) {
-#if 0
     if (unlink(path->value().c_str()))
       PLOG(WARNING) << "unlink";
-#endif
   }
 };
 
