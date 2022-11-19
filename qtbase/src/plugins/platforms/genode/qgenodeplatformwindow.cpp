@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2013-2019 Genode Labs GmbH
+ * Copyright (C) 2013-2022 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -92,7 +92,7 @@ void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &eve
 			QWindowSystemInterface::TouchPoint tp;
 
 			tp.id       = id.value;
-			tp.area     = QRectF(QPointF(0, 0), QSize(1, 1));
+			tp.area     = otp.area;
 			tp.state    = Qt::TouchPointReleased;
 			tp.pressure = 0;
 
@@ -468,6 +468,11 @@ void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 	_framebuffer_changed = true;
 	_geometry_changed = true;
 
+	if (_egl_surface != EGL_NO_SURFACE) {
+		eglDestroySurface(_egl_display, _egl_surface);
+		_egl_surface = EGL_NO_SURFACE;
+	}
+
 	emit framebuffer_changed();
 }
 
@@ -504,7 +509,8 @@ QString QGenodePlatformWindow::_sanitize_label(QString label)
 
 QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
                                              QGenodeSignalProxyThread &signal_proxy,
-                                             QWindow *window)
+                                             QWindow *window,
+                                             EGLDisplay egl_display)
 : QPlatformWindow(window),
   _env(env),
   _signal_proxy(signal_proxy),
@@ -519,6 +525,7 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
   _ev_buf(env.rm(), _input_session.dataspace()),
   _resize_handle(!window->flags().testFlag(Qt::Popup)),
   _decoration(!window->flags().testFlag(Qt::Popup)),
+  _egl_display(egl_display),
   _egl_surface(EGL_NO_SURFACE),
   _input_signal_handler(_env.ep(), *this,
                         &QGenodePlatformWindow::_handle_input),
@@ -916,14 +923,24 @@ void QGenodePlatformWindow::refresh(int x, int y, int w, int h)
 	_framebuffer_session.refresh(x, y, w, h);
 }
 
-EGLSurface QGenodePlatformWindow::egl_surface() const
+EGLSurface QGenodePlatformWindow::eglSurface(EGLConfig egl_config)
 {
-	return _egl_surface;
-}
+	if (_egl_surface == EGL_NO_SURFACE) {
 
-void QGenodePlatformWindow::egl_surface(EGLSurface egl_surface)
-{
-	_egl_surface = egl_surface;
+		Genode_egl_window egl_window = { geometry().width(),
+		                                 geometry().height(),
+		                                 framebuffer(),
+		                                 PIXMAP };
+
+		_egl_surface = eglCreatePixmapSurface(_egl_display,
+		                                      egl_config,
+		                                      &egl_window, 0);
+
+		if (_egl_surface == EGL_NO_SURFACE)
+			qFatal("eglCreatePixmapSurface() failed");
+	}
+
+	return _egl_surface;
 }
 
 Gui::Session_client &QGenodePlatformWindow::gui_session()

@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2013-2019 Genode Labs GmbH
+ * Copyright (C) 2013-2022 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -64,6 +64,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		QByteArray                  _title;
 		bool                        _resize_handle;
 		bool                        _decoration;
+		EGLDisplay                  _egl_display;
 		EGLSurface                  _egl_surface;
 
 		QPoint _local_position() const
@@ -121,7 +122,8 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 
 		QGenodePlatformWindow(Genode::Env &env,
 		                      QGenodeSignalProxyThread &signal_proxy,
-		                      QWindow *window);
+		                      QWindow *window,
+		                      EGLDisplay egl_display);
 
 		~QGenodePlatformWindow();
 
@@ -199,9 +201,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 
 		/* for QGenodeGLContext */
 
-		EGLSurface egl_surface() const;
-
-		void egl_surface(EGLSurface egl_surface);
+		EGLSurface eglSurface(EGLConfig egl_config);
 
 
 		/* for QGenodeViewWidget */

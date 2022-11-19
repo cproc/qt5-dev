@@ -215,13 +215,14 @@ void WebEngineContext::addProfileAdapter(ProfileAdapter *profileAdapter)
             }
         }
     }
-
+#if 0
     if (content::RenderProcessHost::run_renderer_in_process()){
         if (!m_profileAdapters.isEmpty())
             qFatal("Single mode supports only single profile.");
         // there is only one profle therefore make it 'default'
         m_defaultProfileAdapter.reset(profileAdapter);
     }
+#endif
     m_profileAdapters.append(profileAdapter);
 }
 
