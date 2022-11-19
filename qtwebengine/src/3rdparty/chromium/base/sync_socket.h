@@ -28,6 +28,15 @@
 #include "base/file_descriptor_posix.h"
 #endif
 
+#if defined(OS_GENODE)
+#define SYNC_SOCKET_GENODE_FD_MASK ((1 << 10) - 1)
+#define SYNC_SOCKET_GENODE_WRITE_FD_SHIFT  10
+#define SYNC_SOCKET_GENODE_CANCEL_FD_SHIFT 20
+#define SYNC_SOCKET_GENODE_READ_FD(handle)   ((handle                                      ) & SYNC_SOCKET_GENODE_FD_MASK)
+#define SYNC_SOCKET_GENODE_WRITE_FD(handle)  ((handle >> SYNC_SOCKET_GENODE_WRITE_FD_SHIFT ) & SYNC_SOCKET_GENODE_FD_MASK)
+#define SYNC_SOCKET_GENODE_CANCEL_FD(handle) ((handle >> SYNC_SOCKET_GENODE_CANCEL_FD_SHIFT) & SYNC_SOCKET_GENODE_FD_MASK)
+#endif
+
 namespace base {
 
 class BASE_EXPORT SyncSocket {
