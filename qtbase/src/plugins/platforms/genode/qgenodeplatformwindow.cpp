@@ -928,8 +928,10 @@ EGLSurface QGenodePlatformWindow::eglSurface(EGLConfig egl_config)
 {
 	if (_egl_surface == EGL_NO_SURFACE) {
 
-		Genode_egl_window egl_window = { geometry().width(),
-		                                 geometry().height(),
+		QRect geo = geometry();
+
+		Genode_egl_window egl_window = { geo.width(),
+		                                 geo.height(),
 		                                 framebuffer(),
 		                                 PIXMAP };
 

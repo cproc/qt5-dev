@@ -15,6 +15,8 @@
 #include <blit/blit.h>
 
 /* Qt includes */
+#include <QPainter>
+
 #include <private/qguiapplication_p.h>
 
 #include <qpa/qplatformscreen.h>
@@ -30,7 +32,7 @@ static const bool verbose = false;
 QT_BEGIN_NAMESPACE
 
 QGenodeWindowSurface::QGenodeWindowSurface(QWindow *window)
-    : QPlatformBackingStore(window), _backbuffer(0), _framebuffer_changed(true)
+    : QPlatformBackingStore(window), _framebuffer_changed(true)
 {
 	//qDebug() << "QGenodeWindowSurface::QGenodeWindowSurface:" << (long)this;
 
@@ -41,11 +43,6 @@ QGenodeWindowSurface::QGenodeWindowSurface(QWindow *window)
 	connect(_platform_window, SIGNAL(framebuffer_changed()), this, SLOT(framebuffer_changed()));
 }
 
-QGenodeWindowSurface::~QGenodeWindowSurface()
-{
-	free(_backbuffer);
-}
-
 QPaintDevice *QGenodeWindowSurface::paintDevice()
 {
 	if (verbose)
@@ -54,16 +51,14 @@ QPaintDevice *QGenodeWindowSurface::paintDevice()
 	if (_framebuffer_changed) {
 
 		_framebuffer_changed = false;
+
 		/*
 		 * It can happen that 'resize()' was not called yet, so the size needs
 		 * to be obtained from the window.
 		 */
 		QImage::Format format = QGuiApplication::primaryScreen()->handle()->format();
 		QRect geo = _platform_window->geometry();
-		unsigned int const bytes_per_pixel = QGuiApplication::primaryScreen()->depth() / 8;
-		free(_backbuffer);
-		_backbuffer = (unsigned char*)malloc(geo.width() * geo.height() * bytes_per_pixel);
-		_image = QImage(_backbuffer, geo.width(), geo.height(), geo.width() * bytes_per_pixel, format);
+		_image = QImage(geo.width(), geo.height(), format);
 
 		if (verbose)
 			qDebug() << "QGenodeWindowSurface::paintDevice(): w =" << geo.width() << ", h =" << geo.height();
@@ -77,10 +72,6 @@ QPaintDevice *QGenodeWindowSurface::paintDevice()
 
 void QGenodeWindowSurface::flush(QWindow *window, const QRegion &region, const QPoint &offset)
 {
-	Q_UNUSED(window);
-	Q_UNUSED(region);
-	Q_UNUSED(offset);
-
 	if (verbose)
 		qDebug() << "QGenodeWindowSurface::flush("
 		         << "window =" << window
@@ -88,7 +79,18 @@ void QGenodeWindowSurface::flush(QWindow *window, const QRegion &region, const Q
 		         << ", offset =" << offset
 		         << ")";
 
-	unsigned int const bytes_per_pixel = _image.depth() / 8;
+	if (offset != QPoint(0, 0)) {
+		Genode::warning("QGenodeWindowSurface::flush(): offset not handled");
+	}
+
+	QImage::Format format = QGuiApplication::primaryScreen()->handle()->format();
+	QRect geo = _platform_window->geometry();
+
+	QImage framebuffer_image(_platform_window->framebuffer(),
+	                         geo.width(), geo.height(),
+	                         format);
+
+	QPainter framebuffer_painter(&framebuffer_image);
 
 	for (QRect rect : region) {
 
@@ -99,18 +101,10 @@ void QGenodeWindowSurface::flush(QWindow *window, const QRegion &region, const Q
 
 		rect &= _image.rect();
 
-		unsigned int buffer_offset = ((rect.y() + offset.y()) * _image.bytesPerLine()) +
-		                             ((rect.x() + offset.x()) * bytes_per_pixel);
+		framebuffer_painter.drawImage(rect, _image, rect);
 
-		blit(_image.bits() + buffer_offset,
-		     _image.bytesPerLine(),
-		     _platform_window->framebuffer() + buffer_offset,
-		     _image.bytesPerLine(),
-		     rect.width() * bytes_per_pixel,
-		     rect.height());
-
-		_platform_window->refresh(rect.x() + offset.x(),
-		                          rect.y() + offset.y(),
+		_platform_window->refresh(rect.x(),
+		                          rect.y(),
 		                          rect.width(),
 		                          rect.height());
 	}

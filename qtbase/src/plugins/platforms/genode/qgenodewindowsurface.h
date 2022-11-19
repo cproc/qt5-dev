@@ -28,22 +28,19 @@ class QGenodeWindowSurface : public QObject, public QPlatformBackingStore
 	private:
 
 		QGenodePlatformWindow *_platform_window;
-		unsigned char         *_backbuffer;
 		QImage                 _image;
 		bool                   _framebuffer_changed;
 
 	public:
 
 		QGenodeWindowSurface(QWindow *window);
-		~QGenodeWindowSurface();
 
-		QPaintDevice *paintDevice();
-		void flush(QWindow *window, const QRegion &region, const QPoint &offset);
+		QPaintDevice *paintDevice() override;
+		void flush(QWindow *window, const QRegion &region, const QPoint &offset) override;
+		void resize(const QSize &size, const QRegion &staticContents) override;
 
 		/* needed for RasterGLSurface */
 		QImage toImage() const override;
-
-		void resize(const QSize &size, const QRegion &staticContents);
 
 	public slots:
 
