@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2013-2017 Genode Labs GmbH
+ * Copyright (C) 2013-2022 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -116,7 +116,12 @@ void QGenodeWindowSurface::flush(QWindow *window, const QRegion &region, const Q
 	}
 }
 
-void QGenodeWindowSurface::resize(const QSize &size, const QRegion &staticContents)
+QImage QGenodeWindowSurface::toImage() const
+{
+	return _image;
+}
+
+void QGenodeWindowSurface::resize(const QSize &size, const QRegion &)
 {
 	if (verbose)
 		qDebug() << "QGenodeWindowSurface::resize:" << this << size;

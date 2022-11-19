@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2013-2017 Genode Labs GmbH
+ * Copyright (C) 2013-2022 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -39,6 +39,10 @@ class QGenodeWindowSurface : public QObject, public QPlatformBackingStore
 
 		QPaintDevice *paintDevice();
 		void flush(QWindow *window, const QRegion &region, const QPoint &offset);
+
+		/* needed for RasterGLSurface */
+		QImage toImage() const override;
+
 		void resize(const QSize &size, const QRegion &staticContents);
 
 	public slots:
