@@ -23,8 +23,12 @@
 
 namespace base {
 
-#define READ_FD(handle) (handle >> 16)
-#define WRITE_FD(handle) (handle & ((1 << 16) - 1))
+#define FD_MASK ((1 << 10) - 1)
+#define WRITE_FD_SHIFT  10
+#define CANCEL_FD_SHIFT 20
+#define READ_FD(handle)   ((handle                   ) & FD_MASK)
+#define WRITE_FD(handle)  ((handle >> WRITE_FD_SHIFT ) & FD_MASK)
+#define CANCEL_FD(handle) ((handle >> CANCEL_FD_SHIFT) & FD_MASK)
 
 namespace {
 // To avoid users sending negative message lengths to Send/Receive
@@ -84,8 +88,8 @@ bool SyncSocket::CreatePair(SyncSocket* socket_a, SyncSocket* socket_b) {
   }
 
   // Copy the handles out for successful return.
-  socket_a->handle_ = (pipefds[0][0] << 16) | pipefds[1][1];
-  socket_b->handle_ = (pipefds[1][0] << 16) | pipefds[0][1];
+  socket_a->handle_ = (pipefds[1][1] << WRITE_FD_SHIFT) | pipefds[0][0];
+  socket_b->handle_ = (pipefds[0][1] << WRITE_FD_SHIFT) | pipefds[1][0];
 
   return true;
 }
@@ -178,17 +182,18 @@ size_t SyncSocket::ReceiveWithTimeout(void* buffer,
       fcntl(READ_FD(handle_), F_SETFL, flags | O_NONBLOCK);
     }
 
-    const size_t bytes_received =
-        Receive(static_cast<char*>(buffer) + bytes_read_total, bytes_to_read);
+    const ssize_t bytes_received =
+        read(READ_FD(handle_), static_cast<char*>(buffer) + bytes_read_total, bytes_to_read);
 
     if (flags != -1 && (flags & O_NONBLOCK) == 0) {
       // Restore the original flags.
       fcntl(READ_FD(handle_), F_SETFL, flags);
     }
 
-    bytes_read_total += bytes_received;
-    if (bytes_received != bytes_to_read)
+    if (bytes_received <= 0)
       return bytes_read_total;
+
+    bytes_read_total += bytes_received;
   }
 
   return bytes_read_total;
@@ -217,7 +222,28 @@ CancelableSyncSocket::CancelableSyncSocket(Handle handle)
 }
 
 bool CancelableSyncSocket::Shutdown() {
+
   DCHECK_NE(handle_, kInvalidHandle);
+
+  canceled_ = true;
+
+  /* unblock reader (if any) by writing into the write end of the pipe */
+
+  const int flags = fcntl(CANCEL_FD(handle_), F_GETFL);
+  if (flags != -1 && (flags & O_NONBLOCK) == 0) {
+    // Set the fd to non-blocking mode if its original mode
+    // is blocking.
+    fcntl(CANCEL_FD(handle_), F_SETFL, flags | O_NONBLOCK);
+  }
+
+  char buf = 0;
+  write(CANCEL_FD(handle_), &buf, sizeof(buf));
+
+  if (flags != -1 && (flags & O_NONBLOCK) == 0) {
+    // Restore the original flags.
+    fcntl(CANCEL_FD(handle_), F_SETFL, flags);
+  }
+
   return true;
 }
 
@@ -240,13 +266,118 @@ size_t CancelableSyncSocket::Send(const void* buffer, size_t length) {
     fcntl(WRITE_FD(handle_), F_SETFL, flags);
   }
 
+  if (canceled_)
+    return 0;
+
   return len;
+}
+
+size_t CancelableSyncSocket::Receive(void* buffer, size_t length) {
+
+  size_t total_read = 0;
+  while (total_read < length) {
+    ssize_t bytes_read =
+        HANDLE_EINTR(read(READ_FD(handle_), static_cast<char*>(buffer) + total_read, length - total_read));
+
+    if (canceled_)
+      return 0;
+
+    if (bytes_read <= 0)
+      break;
+
+    total_read += bytes_read;
+  }
+
+  if (total_read != length)
+    return 0;
+
+  return length;
+}
+
+size_t CancelableSyncSocket::ReceiveWithTimeout(void* buffer,
+                                                size_t length,
+                                                TimeDelta timeout) {
+  ScopedBlockingCall scoped_blocking_call(BlockingType::MAY_BLOCK);
+  DCHECK_GT(length, 0u);
+  DCHECK_LE(length, kMaxMessageLength);
+  DCHECK_NE(handle_, kInvalidHandle);
+
+  // Only timeouts greater than zero and less than one second are allowed.
+  DCHECK_GT(timeout.InMicroseconds(), 0);
+  DCHECK_LT(timeout.InMicroseconds(),
+            TimeDelta::FromSeconds(1).InMicroseconds());
+
+  // Track the start time so we can reduce the timeout as data is read.
+  TimeTicks start_time = TimeTicks::Now();
+  const TimeTicks finish_time = start_time + timeout;
+
+  struct pollfd pollfd;
+  pollfd.fd = READ_FD(handle_);
+  pollfd.events = POLLIN;
+  pollfd.revents = 0;
+
+  size_t bytes_read_total = 0;
+  while (bytes_read_total < length) {
+    const TimeDelta this_timeout = finish_time - TimeTicks::Now();
+    const int timeout_ms =
+        static_cast<int>(this_timeout.InMillisecondsRoundedUp());
+    if (timeout_ms <= 0)
+      break;
+    const int poll_result = poll(&pollfd, 1, timeout_ms);
+    // Handle EINTR manually since we need to update the timeout value.
+    if (poll_result == -1 && errno == EINTR)
+      continue;
+    // Return if other type of error or a timeout.
+    if (poll_result <= 0)
+      return bytes_read_total;
+
+    // poll() only tells us that data is ready for reading, not how much.  We
+    // must Peek() for the amount ready for reading to avoid blocking.
+    // At hang up (POLLHUP), the write end has been closed and there might still
+    // be data to be read.
+    // No special handling is needed for error (POLLERR); we can let any of the
+    // following operations fail and handle it there.
+    DCHECK(pollfd.revents & (POLLIN | POLLHUP | POLLERR)) << pollfd.revents;
+    const size_t bytes_to_read = length - bytes_read_total;
+
+    const int flags = fcntl(READ_FD(handle_), F_GETFL);
+    if (flags != -1 && (flags & O_NONBLOCK) == 0) {
+      // Set the socket to non-blocking mode for receiving if its original mode
+      // is blocking (since 'Peek()' is not supported).
+      fcntl(READ_FD(handle_), F_SETFL, flags | O_NONBLOCK);
+    }
+
+    const ssize_t bytes_received =
+        read(READ_FD(handle_), static_cast<char*>(buffer) + bytes_read_total, bytes_to_read);
+
+    if (flags != -1 && (flags & O_NONBLOCK) == 0) {
+      // Restore the original flags.
+      fcntl(READ_FD(handle_), F_SETFL, flags);
+    }
+
+    if (canceled_)
+      return 0;
+
+    if (bytes_received <= 0)
+      return bytes_read_total;
+
+    bytes_read_total += bytes_received;
+  }
+
+  return bytes_read_total;
 }
 
 // static
 bool CancelableSyncSocket::CreatePair(CancelableSyncSocket* socket_a,
                                       CancelableSyncSocket* socket_b) {
-  return SyncSocket::CreatePair(socket_a, socket_b);
+  bool result = SyncSocket::CreatePair(socket_a, socket_b);
+
+  if (result) {
+    socket_a->handle_ |= WRITE_FD(socket_b->handle_) << CANCEL_FD_SHIFT;
+    socket_b->handle_ |= WRITE_FD(socket_a->handle_) << CANCEL_FD_SHIFT;
+  }
+
+  return result;
 }
 
 }  // namespace base
