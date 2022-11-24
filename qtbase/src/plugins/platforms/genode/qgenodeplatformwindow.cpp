@@ -688,11 +688,12 @@ WId QGenodePlatformWindow::winId() const
 	return WId(this);
 }
 
-void QGenodePlatformWindow::setParent(const QPlatformWindow *window)
+void QGenodePlatformWindow::setParent(const QPlatformWindow *)
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setParent()";
-	QPlatformWindow::setParent(window);
+
+	/* don't call the base class function which only prints a warning */
 }
 
 void QGenodePlatformWindow::setWindowTitle(const QString &title)
@@ -735,14 +736,15 @@ void QGenodePlatformWindow::raise()
 	_gui_session.enqueue<Gui::Session::Command::To_front>(_view_handle);
 	_gui_session.execute();
 
-	QPlatformWindow::raise();
+	/* don't call the base class function which only prints a warning */
 }
 
 void QGenodePlatformWindow::lower()
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::lower()";
-	QPlatformWindow::lower();
+
+	/* don't call the base class function which only prints a warning */
 }
 
 bool QGenodePlatformWindow::isExposed() const
@@ -784,21 +786,24 @@ void QGenodePlatformWindow::propagateSizeHints()
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::propagateSizeHints()";
-	QPlatformWindow::propagateSizeHints();
+
+	/* don't call the base class function which only prints a warning */
 }
 
 void QGenodePlatformWindow::setOpacity(qreal level)
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setOpacity(" << level << ")";
-	QPlatformWindow::setOpacity(level);
+
+	/* don't call the base class function which only prints a warning */
 }
 
 void QGenodePlatformWindow::setMask(const QRegion &region)
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setMask(" << region << ")";
-	QPlatformWindow::setMask(region);
+
+	/* don't call the base class function which only prints a warning */
 }
 
 void QGenodePlatformWindow::requestActivateWindow()
@@ -822,18 +827,24 @@ qreal QGenodePlatformWindow::devicePixelRatio() const
 	return QPlatformWindow::devicePixelRatio();
 }
 
-bool QGenodePlatformWindow::setKeyboardGrabEnabled(bool grab)
+bool QGenodePlatformWindow::setKeyboardGrabEnabled(bool)
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setKeyboardGrabEnabled()";
-	return QPlatformWindow::setKeyboardGrabEnabled(grab);
+
+	/* don't call the base class function which only prints a warning */
+
+	return false;
 }
 
-bool QGenodePlatformWindow::setMouseGrabEnabled(bool grab)
+bool QGenodePlatformWindow::setMouseGrabEnabled(bool)
 {
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setMouseGrabEnabled()";
-	return QPlatformWindow::setMouseGrabEnabled(grab);
+
+	/* don't call the base class function which only prints a warning */
+
+	return false;
 }
 
 bool QGenodePlatformWindow::setWindowModified(bool modified)
