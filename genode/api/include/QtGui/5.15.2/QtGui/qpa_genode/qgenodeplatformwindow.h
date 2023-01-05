@@ -86,6 +86,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 
 		QHash<Input::Keycode, Qt::Key> _pressed;
 
+		Mapped_key _mapped_key_from_codepoint(Codepoint);
 		Mapped_key _map_key(Input::Keycode, Codepoint, Mapped_key::Event);
 		void _key_event(Input::Keycode, Codepoint, Mapped_key::Event);
 		void _mouse_button_event(Input::Keycode, bool press);

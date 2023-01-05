@@ -106,36 +106,37 @@ void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &eve
 }
 
 
-static Qt::Key key_from_unicode(unsigned unicode)
+QGenodePlatformWindow::Mapped_key
+QGenodePlatformWindow::_mapped_key_from_codepoint(Codepoint codepoint)
 {
 	/* special keys: function-key unicodes */
-	switch (unicode) {
-	case 0x0008: return Qt::Key_Backspace;
-	case 0x0009: return Qt::Key_Tab;
-	case 0x000a: return Qt::Key_Return;
-	case 0x001b: return Qt::Key_Escape;
-	case 0xf700: return Qt::Key_Up;
-	case 0xf701: return Qt::Key_Down;
-	case 0xf702: return Qt::Key_Left;
-	case 0xf703: return Qt::Key_Right;
-	case 0xf704: return Qt::Key_F1;
-	case 0xf705: return Qt::Key_F2;
-	case 0xf706: return Qt::Key_F3;
-	case 0xf707: return Qt::Key_F4;
-	case 0xf708: return Qt::Key_F5;
-	case 0xf709: return Qt::Key_F6;
-	case 0xf70a: return Qt::Key_F7;
-	case 0xf70b: return Qt::Key_F8;
-	case 0xf70c: return Qt::Key_F9;
-	case 0xf70d: return Qt::Key_F10;
-	case 0xf70e: return Qt::Key_F11;
-	case 0xf70f: return Qt::Key_F12;
-	case 0xf727: return Qt::Key_Insert;
-	case 0xf728: return Qt::Key_Delete;
-	case 0xf729: return Qt::Key_Home;
-	case 0xf72b: return Qt::Key_End;
-	case 0xf72c: return Qt::Key_PageUp;
-	case 0xf72d: return Qt::Key_PageDown;
+	switch (codepoint.value) {
+	case 0x0008: return Mapped_key { Qt::Key_Backspace };
+	case 0x0009: return Mapped_key { Qt::Key_Tab };
+	case 0x000a: return Mapped_key { Qt::Key_Return };
+	case 0x001b: return Mapped_key { Qt::Key_Escape };
+	case 0xf700: return Mapped_key { Qt::Key_Up };
+	case 0xf701: return Mapped_key { Qt::Key_Down };
+	case 0xf702: return Mapped_key { Qt::Key_Left };
+	case 0xf703: return Mapped_key { Qt::Key_Right };
+	case 0xf704: return Mapped_key { Qt::Key_F1 };
+	case 0xf705: return Mapped_key { Qt::Key_F2 };
+	case 0xf706: return Mapped_key { Qt::Key_F3 };
+	case 0xf707: return Mapped_key { Qt::Key_F4 };
+	case 0xf708: return Mapped_key { Qt::Key_F5 };
+	case 0xf709: return Mapped_key { Qt::Key_F6 };
+	case 0xf70a: return Mapped_key { Qt::Key_F7 };
+	case 0xf70b: return Mapped_key { Qt::Key_F8 };
+	case 0xf70c: return Mapped_key { Qt::Key_F9 };
+	case 0xf70d: return Mapped_key { Qt::Key_F10 };
+	case 0xf70e: return Mapped_key { Qt::Key_F11 };
+	case 0xf70f: return Mapped_key { Qt::Key_F12 };
+	case 0xf727: return Mapped_key { Qt::Key_Insert };
+	case 0xf728: return Mapped_key { Qt::Key_Delete };
+	case 0xf729: return Mapped_key { Qt::Key_Home };
+	case 0xf72b: return Mapped_key { Qt::Key_End };
+	case 0xf72c: return Mapped_key { Qt::Key_PageUp };
+	case 0xf72d: return Mapped_key { Qt::Key_PageDown };
 	default: break;
 	};
 
@@ -145,10 +146,11 @@ static Qt::Key key_from_unicode(unsigned unicode)
 	 */
 
 	/* printable keys */
-	if (unicode >= (unsigned)Qt::Key_Space && unicode <= (unsigned)Qt::Key_ydiaeresis)
-		return Qt::Key(QChar(unicode).toUpper().unicode());
+	if ((codepoint.value >= (unsigned)Qt::Key_Space) &&
+	    (codepoint.value <= (unsigned)Qt::Key_ydiaeresis))
+		return Mapped_key { Qt::Key(QChar(codepoint.value).toUpper().unicode()), codepoint };
 
-	return Qt::Key_unknown;
+	return Mapped_key { };
 }
 
 
@@ -233,13 +235,13 @@ QGenodePlatformWindow::Mapped_key QGenodePlatformWindow::_map_key(Input::Keycode
 	case Mapped_key::PRESSED:
 	case Mapped_key::REPEAT:
 		{
-			Qt::Key const qt_key = key_from_unicode(codepoint.value);
-			if (qt_key != Qt::Key_unknown) {
+			Mapped_key const mapped_key = _mapped_key_from_codepoint(codepoint);
+			if (mapped_key.key != Qt::Key_unknown) {
 				/* do not insert repeated codepoints */
 				if (e == Mapped_key::PRESSED)
-					_pressed.insert(key, qt_key);
+					_pressed.insert(key, mapped_key.key);
 
-				return Mapped_key { qt_key, codepoint };
+				return mapped_key;
 			}
 		} break;
 
