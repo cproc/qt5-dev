@@ -62,7 +62,7 @@ class Q_3DCORESHARED_EXPORT QBackendNodeMapper
 {
 public:
     virtual ~QBackendNodeMapper();
-    virtual QBackendNode *create(const QNodeCreatedChangeBasePtr &change) const = 0;
+    virtual QBackendNode *create(const QNodeCreatedChangeBasePtr &change) const = 0;        // TODO QT6 change to only take a NodeId
     virtual QBackendNode *get(QNodeId id) const = 0;
     virtual void destroy(QNodeId id) const = 0;
 };
@@ -90,18 +90,18 @@ public:
 protected:
     Q_DECLARE_PRIVATE(QBackendNode)
     explicit QBackendNode(QBackendNodePrivate &dd);
-    void notifyObservers(const QSceneChangePtr &e);
-    QNodeCommand::CommandId sendCommand(const QString &name, const QVariant &data,
-                                        QNodeCommand::CommandId replyTo = QNodeCommand::CommandId());
-    void sendReply(const QNodeCommandPtr &command);
-    virtual void sceneChangeEvent(const QSceneChangePtr &e);
+    Q3D_DECL_DEPRECATED void notifyObservers(const QSceneChangePtr &e);
+    Q3D_DECL_DEPRECATED QNodeCommand::CommandId sendCommand(const QString &name, const QVariant &data,
+                                                          QNodeCommand::CommandId replyTo = QNodeCommand::CommandId());
+    Q3D_DECL_DEPRECATED void sendReply(const QNodeCommandPtr &command);
+    Q3D_DECL_DEPRECATED virtual void sceneChangeEvent(const QSceneChangePtr &e);
 
     QBackendNodePrivate *d_ptr;
 
 private:
     Q_DISABLE_COPY(QBackendNode)
     void setPeerId(QNodeId id) Q_DECL_NOEXCEPT;
-    virtual void initializeFromPeer(const QNodeCreatedChangeBasePtr &change);
+    Q3D_DECL_DEPRECATED virtual void initializeFromPeer(const QNodeCreatedChangeBasePtr &change);
 
     friend class QBackendNodePropertyChange;
     friend class QAbstractAspectPrivate;

@@ -33,7 +33,6 @@
 #include <Qt3DInput/private/qmousedevice_p.h>
 #include <QObject>
 #include <QSignalSpy>
-#include <Qt3DCore/qpropertyupdatedchange.h>
 #include <Qt3DCore/private/qnodecreatedchangegenerator_p.h>
 #include <Qt3DCore/qnodecreatedchange.h>
 #include "testpostmanarbiter.h"
@@ -51,6 +50,7 @@ private Q_SLOTS:
 
         // THEN
         QCOMPARE(mouseDevice.sensitivity(), 0.1f);
+        QCOMPARE(mouseDevice.updateAxesContinuously(), false);
         QCOMPARE(mouseDevice.axisCount(), 4);
         QCOMPARE(mouseDevice.buttonCount(), 3);
         QCOMPARE(mouseDevice.axisNames(), QStringList()
@@ -95,6 +95,25 @@ private Q_SLOTS:
 
             // THEN
             QCOMPARE(mouseDevice.sensitivity(), newValue);
+            QCOMPARE(spy.count(), 0);
+        }
+        {
+            // WHEN
+            QSignalSpy spy(&mouseDevice, SIGNAL(updateAxesContinuouslyChanged(bool)));
+            const bool newValue = true;
+            mouseDevice.setUpdateAxesContinuously(newValue);
+
+            // THEN
+            QVERIFY(spy.isValid());
+            QCOMPARE(mouseDevice.updateAxesContinuously(), newValue);
+            QCOMPARE(spy.count(), 1);
+
+            // WHEN
+            spy.clear();
+            mouseDevice.setUpdateAxesContinuously(newValue);
+
+            // THEN
+            QCOMPARE(mouseDevice.updateAxesContinuously(), newValue);
             QCOMPARE(spy.count(), 0);
         }
     }
@@ -161,25 +180,42 @@ private Q_SLOTS:
         {
             // WHEN
             mouseDevice.setSensitivity(0.7f);
-            QCoreApplication::processEvents();
-
             // THEN
-            QCOMPARE(arbiter.events.size(), 1);
-            auto change = arbiter.events.first().staticCast<Qt3DCore::QPropertyUpdatedChange>();
-            QCOMPARE(change->propertyName(), "sensitivity");
-            QCOMPARE(change->value().value<float>(), mouseDevice.sensitivity());
-            QCOMPARE(change->type(), Qt3DCore::PropertyUpdated);
-
-            arbiter.events.clear();
+            QCOMPARE(arbiter.dirtyNodes.size(), 1);
+            QCOMPARE(arbiter.dirtyNodes.front(), &mouseDevice);
         }
 
         {
             // WHEN
             mouseDevice.setSensitivity(0.7f);
-            QCoreApplication::processEvents();
 
+            QCOMPARE(arbiter.dirtyNodes.size(), 1);
+            QCOMPARE(arbiter.dirtyNodes.front(), &mouseDevice);
+        }
+
+    }
+
+    void checkUpdateAxesContinuouslyUpdate()
+    {
+        // GIVEN
+        TestArbiter arbiter;
+        Qt3DInput::QMouseDevice mouseDevice;
+        arbiter.setArbiterOnNode(&mouseDevice);
+
+        {
+            // WHEN
+            mouseDevice.setUpdateAxesContinuously(true);
             // THEN
-            QCOMPARE(arbiter.events.size(), 0);
+            QCOMPARE(arbiter.dirtyNodes.size(), 1);
+            QCOMPARE(arbiter.dirtyNodes.front(), &mouseDevice);
+        }
+
+        {
+            // WHEN
+            mouseDevice.setSensitivity(true);
+
+            QCOMPARE(arbiter.dirtyNodes.size(), 1);
+            QCOMPARE(arbiter.dirtyNodes.front(), &mouseDevice);
         }
 
     }

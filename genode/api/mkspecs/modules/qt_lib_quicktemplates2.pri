@@ -1,11 +1,11 @@
-QT.quicktemplates2.VERSION = 5.13.2
+QT.quicktemplates2.VERSION = 5.15.2
 QT.quicktemplates2.name = QtQuickTemplates2
 QT.quicktemplates2.module = Qt5QuickTemplates2
 QT.quicktemplates2.libs = $$QT_MODULE_LIB_BASE
 QT.quicktemplates2.includes = $$QT_MODULE_INCLUDE_BASE $$QT_MODULE_INCLUDE_BASE/QtQuickTemplates2
 QT.quicktemplates2.frameworks =
 QT.quicktemplates2.bins = $$QT_MODULE_BIN_BASE
-QT.quicktemplates2.depends = core gui quick
+QT.quicktemplates2.depends = core gui quick qmlmodels
 QT.quicktemplates2.run_depends = core_private gui_private qml_private quick_private
 QT.quicktemplates2.uses =
 QT.quicktemplates2.module_config = v2

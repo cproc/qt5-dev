@@ -41,9 +41,9 @@
 #define ACCESSIBILITY_ACTIVATION_OBSERVER_H
 
 #include <QtGui/qtguiglobal.h>
-
-#ifndef QT_NO_ACCESSIBILITY
 #include <QtGui/qaccessible.h>
+
+#if QT_CONFIG(accessibility)
 
 namespace QtWebEngineCore {
 
@@ -60,6 +60,6 @@ public:
 
 } // namespace QtWebEngineCore
 
-#endif // QT_NO_ACCESSIBILITY
+#endif // QT_CONFIG(accessibility)
 
 #endif // ACCESSIBILITY_ACTIVATION_OBSERVER_H

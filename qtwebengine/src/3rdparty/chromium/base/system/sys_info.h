@@ -83,6 +83,11 @@ class BASE_EXPORT SysInfo {
     // Note: validate any new usage with the privacy team.
     // TODO(crbug.com/907518): Implement support on other platforms.
     std::string serial_number;
+
+    bool operator==(const HardwareInfo& rhs) const {
+      return manufacturer == rhs.manufacturer && model == rhs.model &&
+             serial_number == rhs.serial_number;
+    }
   };
   // Returns via |callback| a struct containing descriptive UTF-8 strings for
   // the current machine manufacturer and model, or empty strings if the
@@ -164,6 +169,9 @@ class BASE_EXPORT SysInfo {
   // Returns the Android build ID.
   static std::string GetAndroidBuildID();
 
+  // Returns the Android hardware EGL system property.
+  static std::string GetAndroidHardwareEGL();
+
   static int DalvikHeapSizeMB();
   static int DalvikHeapGrowthLimitMB();
 #endif  // defined(OS_ANDROID)
@@ -177,11 +185,19 @@ class BASE_EXPORT SysInfo {
   static std::string GetIOSBuildNumber();
 #endif  // defined(OS_IOS)
 
-  // Returns true if this is a low-end device.
-  // Low-end device refers to devices having a very low amount of total
-  // system memory, typically <= 1GB.
-  // See also SysUtils.java, method isLowEndDevice.
+  // Returns true for low-end devices that may require extreme tradeoffs,
+  // including user-visible changes, for acceptable performance.
+  // For general memory optimizations, consider |AmountOfPhysicalMemoryMB|.
+  //
+  // On Android this returns:
+  //   true when memory <= 1GB on Android O and later.
+  //   true when memory <= 512MB on Android N and earlier.
+  // This is not the same as "low-memory" and will be false on a large number of
+  // <=1GB pre-O Android devices. See: |detectLowEndDevice| in SysUtils.java.
+  // On Desktop this returns true when memory <= 512MB.
   static bool IsLowEndDevice();
+
+  static uint64_t MaxSharedMemorySize();
 
  private:
   FRIEND_TEST_ALL_PREFIXES(SysInfoTest, AmountOfAvailablePhysicalMemory);
@@ -192,7 +208,7 @@ class BASE_EXPORT SysInfo {
   static bool IsLowEndDeviceImpl();
   static HardwareInfo GetHardwareInfoSync();
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_AIX)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_AIX) || defined(OS_BSD)
   static int64_t AmountOfAvailablePhysicalMemory(
       const SystemMemoryInfoKB& meminfo);
 #endif

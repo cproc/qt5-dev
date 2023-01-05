@@ -237,11 +237,14 @@ QWaylandXdgSurfaceV6::~QWaylandXdgSurfaceV6()
     destroy();
 }
 
-void QWaylandXdgSurfaceV6::resize(QWaylandInputDevice *inputDevice, Qt::Edges edges)
+bool QWaylandXdgSurfaceV6::resize(QWaylandInputDevice *inputDevice, Qt::Edges edges)
 {
-    Q_ASSERT(m_toplevel && m_toplevel->isInitialized());
+    if (!m_toplevel || !m_toplevel->isInitialized())
+        return false;
+
     auto resizeEdges = Toplevel::convertToResizeEdges(edges);
     m_toplevel->resize(inputDevice->wl_seat(), inputDevice->serial(), resizeEdges);
+    return true;
 }
 
 bool QWaylandXdgSurfaceV6::move(QWaylandInputDevice *inputDevice)
@@ -425,7 +428,7 @@ QWaylandXdgShellV6::~QWaylandXdgShellV6()
 
 QWaylandXdgSurfaceV6 *QWaylandXdgShellV6::getXdgSurface(QWaylandWindow *window)
 {
-    return new QWaylandXdgSurfaceV6(this, get_xdg_surface(window->object()), window);
+    return new QWaylandXdgSurfaceV6(this, get_xdg_surface(window->wlSurface()), window);
 }
 
 void QWaylandXdgShellV6::zxdg_shell_v6_ping(uint32_t serial)

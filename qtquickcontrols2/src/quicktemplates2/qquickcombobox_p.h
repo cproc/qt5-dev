@@ -48,9 +48,12 @@
 // We mean it.
 //
 
+#include <QtCore/qloggingcategory.h>
 #include <QtQuickTemplates2/private/qquickcontrol_p.h>
 
 QT_BEGIN_NAMESPACE
+
+Q_DECLARE_LOGGING_CATEGORY(lcItemManagement)
 
 class QValidator;
 class QQuickPopup;
@@ -86,6 +89,11 @@ class Q_QUICKTEMPLATES2_PRIVATE_EXPORT QQuickComboBox : public QQuickControl
     Q_PROPERTY(qreal implicitIndicatorWidth READ implicitIndicatorWidth NOTIFY implicitIndicatorWidthChanged FINAL REVISION 5)
     Q_PROPERTY(qreal implicitIndicatorHeight READ implicitIndicatorHeight NOTIFY implicitIndicatorHeightChanged FINAL REVISION 5)
     Q_CLASSINFO("DeferredPropertyNames", "background,contentItem,indicator,popup")
+    // 2.14 (Qt 5.14)
+    Q_PROPERTY(QVariant currentValue READ currentValue NOTIFY currentValueChanged FINAL REVISION 14)
+    Q_PROPERTY(QString valueRole READ valueRole WRITE setValueRole NOTIFY valueRoleChanged FINAL REVISION 14)
+    // 2.15 (Qt 5.15)
+    Q_PROPERTY(bool selectTextByMouse READ selectTextByMouse WRITE setSelectTextByMouse NOTIFY selectTextByMouseChanged FINAL REVISION 15)
 
 public:
     explicit QQuickComboBox(QQuickItem *parent = nullptr);
@@ -113,6 +121,9 @@ public:
 
     QString textRole() const;
     void setTextRole(const QString &role);
+
+    QString valueRole() const;
+    void setValueRole(const QString &role);
 
     QQmlComponent *delegate() const;
     void setDelegate(QQmlComponent *delegate);
@@ -155,6 +166,15 @@ public:
     qreal implicitIndicatorWidth() const;
     qreal implicitIndicatorHeight() const;
 
+    // 2.14 (Qt 5.14)
+    QVariant currentValue() const;
+    Q_REVISION(14) Q_INVOKABLE QVariant valueAt(int index) const;
+    Q_REVISION(14) Q_INVOKABLE int indexOfValue(const QVariant &value) const;
+
+    // 2.15 (Qt 5.15)
+    bool selectTextByMouse() const;
+    void setSelectTextByMouse(bool canSelect);
+
 public Q_SLOTS:
     void incrementCurrentIndex();
     void decrementCurrentIndex();
@@ -189,6 +209,11 @@ Q_SIGNALS:
     // 2.5 (Qt 5.12)
     Q_REVISION(5) void implicitIndicatorWidthChanged();
     Q_REVISION(5) void implicitIndicatorHeightChanged();
+    // 2.14 (Qt 5.14)
+    Q_REVISION(14) void valueRoleChanged();
+    Q_REVISION(14) void currentValueChanged();
+    // 2.15 (Qt 5.15)
+    Q_REVISION(15) void selectTextByMouseChanged();
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
@@ -202,6 +227,7 @@ protected:
 #if QT_CONFIG(wheelevent)
     void wheelEvent(QWheelEvent *event) override;
 #endif
+    bool event(QEvent *e) override;
 
     void componentComplete() override;
     void itemChange(ItemChange change, const ItemChangeData &value) override;

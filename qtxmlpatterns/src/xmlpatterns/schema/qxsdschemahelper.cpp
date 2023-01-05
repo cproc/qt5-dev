@@ -388,7 +388,7 @@ XsdWildcard::Ptr XsdSchemaHelper::wildcardIntersection(const XsdWildcard::Ptr &w
 
 static SchemaType::DerivationConstraints convertBlockingConstraints(const NamedSchemaComponent::BlockingConstraints &constraints)
 {
-    SchemaType::DerivationConstraints result = 0;
+    SchemaType::DerivationConstraints result;
 
     if (constraints & NamedSchemaComponent::RestrictionConstraint)
         result |= SchemaType::RestrictionConstraint;
@@ -518,7 +518,7 @@ bool XsdSchemaHelper::constructAndCompare(const DerivedString<TypeString>::Ptr &
                                           const ReportContext::Ptr &context,
                                           const SourceLocationReflection *const sourceLocationReflection)
 {
-    Q_ASSERT_X(type->category() == SchemaType::SimpleTypeAtomic, Q_FUNC_INFO,
+    Q_ASSERT_X(type && type->category() == SchemaType::SimpleTypeAtomic, Q_FUNC_INFO,
                "We can only compare atomic values.");
 
     // we can not cast a xs:String to a xs:QName, so lets go the safe way

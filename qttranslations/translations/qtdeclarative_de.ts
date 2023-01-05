@@ -37,20 +37,6 @@
     </message>
 </context>
 <context>
-    <name>QInputMethod</name>
-    <message>
-        <source>InputMethod is an abstract class</source>
-        <translation>InputMethod ist eine abstrakte Klasse</translation>
-    </message>
-</context>
-<context>
-    <name>QQmlAbstractDelegateComponent</name>
-    <message>
-        <source>Cannot create instance of abstract class AbstractDelegateComponent.</source>
-        <translation>Es kann keine Instanz der abstrakten Klasse AbstractDelegateComponent erstellt werden.</translation>
-    </message>
-</context>
-<context>
     <name>QQmlAnonymousComponentResolver</name>
     <message>
         <source>Component objects cannot declare new functions.</source>
@@ -217,6 +203,14 @@
         <source>Connections: script expected</source>
         <translation>Verbindungen: Skript erwartet</translation>
     </message>
+    <message>
+        <source>Implicitly defined onFoo properties in Connections are deprecated. Use this syntax instead: function onFoo(&lt;arguments&gt;) { ... }</source>
+        <translation>Implizit definierte onFoo-Eigenschaften im Connections-Element sind deprecated. Verwenden Sie stattdessen die Syntax: function onFoo(&lt;arguments&gt;) { ... }</translation>
+    </message>
+    <message>
+        <source>Detected function &quot;%1&quot; in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.</source>
+        <translation>Im Connections-Element wurde die Funktion &quot;%1&quot; gefunden. Wahrscheinlich ist sie ein Signal-Handler, aber kein Signal des Ziels entspricht dem Namen.</translation>
+    </message>
 </context>
 <context>
     <name>QQmlDebugServerImpl</name>
@@ -283,6 +277,14 @@
 		  QML-Debug-Verbindung. Qt Creator benutzt dies,
 		  um Debug-Nachrichten in der Debugger-Konsole
 		  anzuzeigen.</translation>
+    </message>
+    <message>
+        <source>helps to see if a translated text
+		  will result in an elided text
+		  in QML elements.</source>
+        <translation>hilft festzustellen, ob ein übersetzter Text
+		  in QML-Elementen beschnitten
+		  wird.</translation>
     </message>
     <message>
         <source>Other services offered by qmltooling plugins that implement QQmlDebugServiceFactory and which can be found in the standard plugin paths will also be available and can be specified. If no &quot;services&quot; argument is given, all services found this way, including the default ones, are loaded.</source>
@@ -410,7 +412,7 @@
 <context>
     <name>QQmlEngine</name>
     <message>
-        <source>Locale cannot be instantiated.  Use Qt.locale()</source>
+        <source>Locale cannot be instantiated. Use Qt.locale()</source>
         <translation>Locale kann nicht instanziiert werden. Verwenden Sie Qt.locale()</translation>
     </message>
     <message>
@@ -468,8 +470,16 @@
         <translation>&quot;%1&quot; ist nicht eindeutig. Es kommt in %2 und %3 vor</translation>
     </message>
     <message>
+        <source>- %1 is neither a type nor a namespace</source>
+        <translation>- %1 ist weder ein Typ noch ein Namensraum</translation>
+    </message>
+    <message>
         <source>- %1 is not a namespace</source>
         <translation>- %1 ist kein gültiger Namensraum</translation>
+    </message>
+    <message>
+        <source>- %1 is not a type</source>
+        <translation>- %1 ist kein Typ</translation>
     </message>
     <message>
         <source>- nested namespaces not allowed</source>
@@ -540,24 +550,8 @@
         <translation>&quot;qmldir&quot; und Namensraum fehlen bei dem Import &quot;%1&quot;</translation>
     </message>
     <message>
-        <source>Module loaded for URI &apos;%1&apos; does not implement QQmlTypesExtensionInterface</source>
-        <translation>Das für den URI &apos;%1&apos; geladene Modul implementiert nicht QQmlTypesExtensionInterface</translation>
-    </message>
-    <message>
         <source>File name case mismatch for &quot;%1&quot;</source>
         <translation>Die Groß/Kleinschreibung des Dateinamens &quot;%1&quot; stimmt nicht überein</translation>
-    </message>
-    <message>
-        <source>Module namespace &apos;%1&apos; does not match import URI &apos;%2&apos;</source>
-        <translation>Der Modul-Namensraum &apos;%1&apos; entspricht nicht dem Import-URI &apos;%2&apos;</translation>
-    </message>
-    <message>
-        <source>Namespace &apos;%1&apos; has already been used for type registration</source>
-        <translation>Der Namensraum &apos;%1&apos; wurde bereits zur Typregistrierung verwendet</translation>
-    </message>
-    <message>
-        <source>Module &apos;%1&apos; does not contain a module identifier directive - it cannot be protected from external registrations.</source>
-        <translation>Der Modul &apos;%1&apos; enthält keine Modulbezeichner-Direktive - er kann nicht vor externen Registrierungen geschützt werden.</translation>
     </message>
 </context>
 <context>
@@ -808,6 +802,14 @@
         <translation>Eine importierte Datei muss ein Skript sein</translation>
     </message>
     <message>
+        <source>Module import requires a minor version (missing dot)</source>
+        <translation>Der Import eines Moduls erfordert die Angabe der Minor-Version (fehlender Punkt)</translation>
+    </message>
+    <message>
+        <source>Module import requires a minor version (missing number)</source>
+        <translation>Der Import eines Moduls erfordert die Angabe der Minor-Version (fehlende Zahl)</translation>
+    </message>
+    <message>
         <source>File import requires a qualifier</source>
         <translation>Dateiimport erfordert die Angabe eines Qualifizierers</translation>
     </message>
@@ -878,6 +880,10 @@
         <translation>Ungültiger Typ der Eigenschaft</translation>
     </message>
     <message>
+        <source>Cyclic alias</source>
+        <translation>Zyklischer Alias</translation>
+    </message>
+    <message>
         <source>Invalid alias target</source>
         <translation>Ungültiges Alias-Ziel</translation>
     </message>
@@ -931,6 +937,10 @@
     <message>
         <source>Invalid grouped property access</source>
         <translation>Falscher Zugriff auf gruppierte Eigenschaft</translation>
+    </message>
+    <message>
+        <source>Invalid grouped property access: Property &quot;%1&quot; with primitive type &quot;%2&quot;.</source>
+        <translation>Falscher Zugriff auf gruppierte Eigenschaft &quot;%1&quot; des primitiven Typs &quot;%2&quot;.</translation>
     </message>
     <message>
         <source>Invalid grouped property access: Property &quot;%1&quot; with type &quot;%2&quot;, which is not a value type</source>
@@ -1073,12 +1083,20 @@
         <translation>Der Listeneigenschaft &quot;%1&quot; kann kein Objekt zugewiesen werden</translation>
     </message>
     <message>
-        <source>Unexpected object assignment for property &quot;%1&quot;</source>
-        <translation>Ungültige Objektzuweisung für Eigenschaft &quot;%1&quot;</translation>
+        <source>Cannot assign value of type &quot;%1&quot; to property &quot;%2&quot;, expecting &quot;%3&quot;</source>
+        <translation>Der Eigenschaft &quot;%2&quot; kann kein Wert des Typs &quot;%1&quot; zugewiesen werden; es wird &quot;%3&quot; erwartet</translation>
+    </message>
+    <message>
+        <source>Cannot assign value of type &quot;%1&quot; to property &quot;%2&quot;, expecting an object</source>
+        <translation>Der Eigenschaft &quot;%2&quot; kann kein Wert des Typs &quot;%1&quot; zugewiesen werden; es wird ein Objekt erwartet</translation>
     </message>
     <message>
         <source>Cannot assign object of type &quot;%1&quot; to property of type &quot;%2&quot; as the former is neither the same as the latter nor a sub-class of it.</source>
         <translation>Das Objekt des Typs &quot;%1&quot; kann nicht einer Eigenschaft des Typs &quot;%2&quot; zugewiesen werden, da sein Typ weder dem Typ der Eigenschaft entspricht noch eine davon abgeleitete Klasse ist.</translation>
+    </message>
+    <message>
+        <source>Cannot assign to property of unknown type &quot;%1&quot;.</source>
+        <translation>Es kann keine Zuweisung an eine Eigenschaft des unbekannten Typs &quot;%1&quot; durchgeführt werden.</translation>
     </message>
     <message>
         <source>Invalid property assignment: script expected</source>
@@ -1142,6 +1160,10 @@
         <translation>Die Datei oder das Verzeichnis konnte nicht gefunden werden</translation>
     </message>
     <message>
+        <source>Type %1 has no inline component type called %2</source>
+        <translation>Der Typ %1 hat keinen eingebetteten Komponententyp des Namens %2</translation>
+    </message>
+    <message>
         <source>File is empty</source>
         <translation>Die Datei ist leer</translation>
     </message>
@@ -1171,21 +1193,6 @@
     <message>
         <source>Cannot animate read-only property &quot;%1&quot;</source>
         <translation>Die Eigenschaft &quot;%1&quot; ist schreibgeschützt und kann daher nicht animiert werden</translation>
-    </message>
-    <message>
-        <source>Animation is an abstract class</source>
-        <translation>Die Klasse Animation ist abstrakt</translation>
-    </message>
-    <message>
-        <source>Animator is an abstract class</source>
-        <translation>Die Klasse Animator ist abstrakt</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickAccessibleAttached</name>
-    <message>
-        <source>Accessible is only available via attached properties</source>
-        <translation>Auf Accessible kann nur mittels Eigenschaften des Typs&apos;attached&apos; zugegriffen werden</translation>
     </message>
 </context>
 <context>
@@ -1247,20 +1254,6 @@
     </message>
 </context>
 <context>
-    <name>QQuickAnimatedImage</name>
-    <message>
-        <source>Qt was built without support for QMovie</source>
-        <translation>Diese Version der Qt-Bibliothek wurde ohne Unterstützung für die Klasse QMovie erstellt</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickApplication</name>
-    <message>
-        <source>Application is an abstract class</source>
-        <translation>&apos;Application&apos; ist eine abstrakte Klasse</translation>
-    </message>
-</context>
-<context>
     <name>QQuickBehavior</name>
     <message>
         <source>Cannot change the animation assigned to a Behavior.</source>
@@ -1268,28 +1261,10 @@
     </message>
 </context>
 <context>
-    <name>QQuickDragAttached</name>
-    <message>
-        <source>Drag is only available via attached properties</source>
-        <translation>Auf Drag kann nur mittels Eigenschaften des Typs &apos;attached&apos; zugegriffen werden</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickDragHandler</name>
-    <message>
-        <source>DragAxis is only available as a grouped property of DragHandler</source>
-        <translation>DragAxis ist nur über gruppierte Eigenschaften von DragHandler verfügbar</translation>
-    </message>
-</context>
-<context>
     <name>QQuickEnterKeyAttached</name>
     <message>
         <source>EnterKey attached property only works with Items</source>
         <translation>Die EnterKey-Eigenschaft des Typs &apos;attached&apos; kann nur mit Elementen der Klasse Item verwendet werden</translation>
-    </message>
-    <message>
-        <source>EnterKey is only available via attached properties</source>
-        <translation>Auf EnterKey kann nur mittels Eigenschaften des Typs &apos;attached&apos; zugegriffen werden</translation>
     </message>
 </context>
 <context>
@@ -1304,43 +1279,14 @@
     </message>
 </context>
 <context>
-    <name>QQuickGraphicsInfo</name>
-    <message>
-        <source>GraphicsInfo is only available via attached properties</source>
-        <translation>Auf GraphicsInfo kann nur mittels Eigenschaften des Typs &apos;attached&apos; zugegriffen werden</translation>
-    </message>
-</context>
-<context>
     <name>QQuickItemView</name>
     <message>
         <source>Delegate must be of Item type</source>
         <translation>Delegate-Komponente muss vom Typ &apos;Item&apos; sein</translation>
     </message>
-    <message>
-        <source>ItemView is an abstract base class</source>
-        <translation>ItemView ist eine abstrakte Basisklasse</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickKeyNavigationAttached</name>
-    <message>
-        <source>KeyNavigation is only available via attached properties</source>
-        <translation>Tastennavigation ist nur über Eigenschaften des Typs &apos;attached&apos; verfügbar</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickKeysAttached</name>
-    <message>
-        <source>Keys is only available via attached properties</source>
-        <translation>Die Unterstützung für Tasten ist nur über Eigenschaften des Typs &apos;attached&apos; verfügbar</translation>
-    </message>
 </context>
 <context>
     <name>QQuickLayoutMirroringAttached</name>
-    <message>
-        <source>LayoutMirroring is only available via attached properties</source>
-        <translation>LayoutMirroring ist nur in Verbindung mit Eigenschaften des Typs &quot;attached&quot; möglich</translation>
-    </message>
     <message>
         <source>LayoutDirection attached property only works with Items and Windows</source>
         <translation>Die Eigenschaft LayoutDirection des Typs &apos;attached&apos; funktioniert nur mit Objekten des Typs Item oder Window</translation>
@@ -1351,31 +1297,6 @@
     <message>
         <source>setSource: value is not an object</source>
         <translation>setSource: Der Wert ist kein Objekt</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickMouseEvent</name>
-    <message>
-        <source>GestureEvent is only available in the context of handling the gestureStarted signal from MultiPointTouchArea</source>
-        <translation>GestureEvent ist nur im Kontext der Behandlung des gestureStarted-Signals von MultiPointTouchArea verfügbar</translation>
-    </message>
-    <message>
-        <source>MouseEvent is only available within handlers in MouseArea</source>
-        <translation>MouseEvent ist nur in Handler-Funktionen von MouseArea verfügbar</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickOpenGLInfo</name>
-    <message>
-        <source>OpenGLInfo is only available via attached properties</source>
-        <translation>Auf OpenGLInfo kann nur mittels Eigenschaften des Typs &apos;attached&apos; zugegriffen werden</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickPaintedItem</name>
-    <message>
-        <source>Cannot create instance of abstract class PaintedItem</source>
-        <translation>Es kann keine Instanz der abstrakten Klasse PaintedItem erstellt werden</translation>
     </message>
 </context>
 <context>
@@ -1457,37 +1378,6 @@
     </message>
 </context>
 <context>
-    <name>QQuickPointerHandler</name>
-    <message>
-        <source>PointerEvent is only available as a parameter of several signals in PointerHandler</source>
-        <translation>PointerEvent ist nur als Parameter einiger Signale von PointerHandler verfügbar</translation>
-    </message>
-    <message>
-        <source>PointerMouseEvent is only available as a parameter of several signals in PointerHandler</source>
-        <translation>PointerMouseEvent ist nur als Parameter einiger Signale in PointerHandler verfügbar</translation>
-    </message>
-    <message>
-        <source>PointerTouchEvent is only available as a parameter of several signals in PointerHandler</source>
-        <translation>PointerTouchEvent ist nur als Parameter einiger Signale in PointerHandler verfügbar</translation>
-    </message>
-    <message>
-        <source>EventPoint is only available as a member of PointerEvent</source>
-        <translation>EventPoint ist nur als Member von PointerEvent verfügbar</translation>
-    </message>
-    <message>
-        <source>EventTouchPoint is only available as a member of PointerEvent</source>
-        <translation>EventTouchPoint ist nur als Member von PointerEvent verfügbar</translation>
-    </message>
-    <message>
-        <source>PointerDevice is only available as a property of PointerEvent</source>
-        <translation>PointerDevice ist nur als Eigenschaft von PointerEvent verfügbar</translation>
-    </message>
-    <message>
-        <source>PointerHandler is an abstract base class</source>
-        <translation>PointerHandler ist eine abstrakte Basisklasse</translation>
-    </message>
-</context>
-<context>
     <name>QQuickPropertyAnimation</name>
     <message>
         <source>Cannot set a duration of &lt; 0</source>
@@ -1517,20 +1407,6 @@
     </message>
 </context>
 <context>
-    <name>QQuickShaderEffectMesh</name>
-    <message>
-        <source>Cannot create instance of abstract class ShaderEffectMesh.</source>
-        <translation>Es kann keine Instanz der abstrakten Klasse ShaderEffectMesh erstellt werden.</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickShapeGradient</name>
-    <message>
-        <source>ShapeGradient is an abstract base class</source>
-        <translation>ShapeGradient ist eine abstrakte Basisklasse</translation>
-    </message>
-</context>
-<context>
     <name>QQuickTextUtil</name>
     <message>
         <source>%1 does not support loading non-visual cursor delegates.</source>
@@ -1539,20 +1415,6 @@
     <message>
         <source>Could not load cursor delegate</source>
         <translation>Cursor-Delegate konnte nicht geladen werden</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickTouchPoint</name>
-    <message>
-        <source>PointingDeviceUniqueId is only available via read-only properties</source>
-        <translation>PointingDeviceUniqueId ist nur über schreibgeschützte Eigenschaften verfügbar</translation>
-    </message>
-</context>
-<context>
-    <name>QQuickViewTransitionAttached</name>
-    <message>
-        <source>ViewTransition is only available via attached properties</source>
-        <translation>ViewTransition ist nur über Eigenschaften des Typs &apos;attached&apos; verfügbar</translation>
     </message>
 </context>
 <context>
@@ -1572,6 +1434,10 @@ Installieren Sie einen Treiber, der OpenGL 2.0 oder neuer bereitstellt, oder ste
         <source>Failed to create %1 context for format %2</source>
         <extracomment>%1 Context type (Open GL, EGL), %2 format specification</extracomment>
         <translation>Es konnte kein %1-Kontext für das Format %2 erzeugt werden</translation>
+    </message>
+    <message>
+        <source>Failed to initialize graphics backend for %1.</source>
+        <translation>Das Graphics-Backend für %1 konnte nicht initialisiert werden.</translation>
     </message>
 </context>
 <context>
@@ -1640,10 +1506,6 @@ Installieren Sie einen Treiber, der OpenGL 2.0 oder neuer bereitstellt, oder ste
     <message>
         <source>Invalid QML %1 name &quot;%2&quot;; type names must begin with an uppercase letter</source>
         <translation>Ungültiger QML %1-Name &quot;%2&quot;; Typnamen müssen mit einem Großbuchstaben beginnen</translation>
-    </message>
-    <message>
-        <source>Cannot install %1 &apos;%2&apos; into protected namespace &apos;%3&apos;</source>
-        <translation>%1 &apos;%2&apos; kann nicht in einen geschützten Namensraum &apos;%3&apos; installiert werden</translation>
     </message>
     <message>
         <source>Cannot install %1 &apos;%2&apos; into protected module &apos;%3&apos; version &apos;%4&apos;</source>

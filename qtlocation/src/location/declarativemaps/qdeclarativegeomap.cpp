@@ -198,7 +198,7 @@ QDeclarativeGeoMap::QDeclarativeGeoMap(QQuickItem *parent)
     setAcceptHoverEvents(false);
     setAcceptedMouseButtons(Qt::LeftButton);
     setFlags(QQuickItem::ItemHasContents | QQuickItem::ItemClipsChildrenToShape);
-    setFiltersChildMouseEvents(true);
+    setFiltersChildMouseEvents(true); // needed for childMouseEventFilter to work.
 
     m_activeMapType = new QDeclarativeGeoMapType(QGeoMapType(QGeoMapType::NoMap,
                                                              tr("No Map"),
@@ -374,7 +374,10 @@ void QDeclarativeGeoMap::initialize()
 
     connect(m_map.data(), &QGeoMap::cameraDataChanged,
             this,  &QDeclarativeGeoMap::onCameraDataChanged);
-    m_map->setCameraData(cameraData);
+    m_map->setCameraData(cameraData); // This normally triggers property changed signals.
+                                      // BUT not in this case, since m_cameraData is already == cameraData.
+                                      // So, emit visibleRegionChanged() separately, as
+                                      // the effective visible region becomes available only now.
 
     for (auto obj : qAsConst(m_pendingMapObjects))
         obj->setMap(m_map);
@@ -386,6 +389,7 @@ void QDeclarativeGeoMap::initialize()
     connect(m_map.data(), &QGeoMap::visibleAreaChanged, this, &QDeclarativeGeoMap::visibleAreaChanged);
 
     emit mapReadyChanged(true);
+    emit visibleRegionChanged();
 
     if (m_copyrights) // To not update during initialize()
          update();
@@ -450,7 +454,7 @@ QQuickGeoMapGestureArea *QDeclarativeGeoMap::gesture()
 */
 void QDeclarativeGeoMap::populateMap()
 {
-    QSet<QObject *> kids = children().toSet();
+    QSet<QObject *> kids(children().cbegin(), children().cend());
     const QList<QQuickItem *> quickKids = childItems();
     for (QQuickItem *ite: quickKids)
         kids.insert(ite);
@@ -623,6 +627,15 @@ void QDeclarativeGeoMap::mappingManagerInitialized()
     if (!m_map)
         return;
 
+    // Any map items that were added before the plugin was ready
+    // need to have setMap called again
+    for (const QPointer<QDeclarativeGeoMapItemBase> &item : qAsConst(m_mapItems)) {
+        if (item) {
+            item->setMap(this, m_map);
+            m_map->addMapItem(item.data()); // m_map filters out what is not supported.
+        }
+    }
+
     /* COPY NOTICE SETUP */
     m_copyrights = new QDeclarativeGeoMapCopyrightNotice(this);
     m_copyrights->setCopyrightsZ(m_maxChildZ + 1);
@@ -694,7 +707,8 @@ void QDeclarativeGeoMap::mappingManagerInitialized()
         emit m_map->copyrightsChanged(copyrightImage);
 
 
-    connect(m_map.data(), &QGeoMap::sgNodeChanged, this, &QQuickItem::update);
+    connect(window(), &QQuickWindow::beforeSynchronizing, this, &QDeclarativeGeoMap::updateItemToWindowTransform, Qt::DirectConnection);
+    connect(m_map.data(), &QGeoMap::sgNodeChanged, this, &QDeclarativeGeoMap::onSGNodeChanged);
     connect(m_map.data(), &QGeoMap::cameraCapabilitiesChanged, this, &QDeclarativeGeoMap::onCameraCapabilitiesChanged);
 
     // This prefetches a buffer around the map
@@ -705,15 +719,6 @@ void QDeclarativeGeoMap::mappingManagerInitialized()
     emit maximumZoomLevelChanged();
     emit supportedMapTypesChanged();
     emit activeMapTypeChanged();
-
-    // Any map items that were added before the plugin was ready
-    // need to have setMap called again
-    for (const QPointer<QDeclarativeGeoMapItemBase> &item : qAsConst(m_mapItems)) {
-        if (item) {
-            item->setMap(this, m_map);
-            m_map->addMapItem(item.data()); // m_map filters out what is not supported.
-        }
-    }
 
     // Any map item groups that were added before the plugin was ready
     // DO NOT need to have setMap called again on their children map items
@@ -892,8 +897,11 @@ void QDeclarativeGeoMap::setZoomLevel(qreal zoomLevel, bool overzoom)
     } else {
         const bool zlHasChanged = zoomLevel != m_cameraData.zoomLevel();
         m_cameraData.setZoomLevel(zoomLevel);
-        if (zlHasChanged)
+        if (zlHasChanged) {
             emit zoomLevelChanged(zoomLevel);
+            // do not emit visibleRegionChanged() here, because, if the map isn't initialized,
+            // the getter won't return anything updated
+        }
     }
 }
 
@@ -976,8 +984,11 @@ void QDeclarativeGeoMap::setBearing(qreal bearing)
     } else {
         const bool bearingHasChanged = bearing != m_cameraData.bearing();
         m_cameraData.setBearing(bearing);
-        if (bearingHasChanged)
+        if (bearingHasChanged) {
             emit bearingChanged(bearing);
+            // do not emit visibleRegionChanged() here, because, if the map isn't initialized,
+            // the getter won't return anything updated
+        }
     }
 }
 
@@ -1041,8 +1052,11 @@ void QDeclarativeGeoMap::setTilt(qreal tilt)
     } else {
         const bool tiltHasChanged = tilt != m_cameraData.tilt();
         m_cameraData.setTilt(tilt);
-        if (tiltHasChanged)
+        if (tiltHasChanged) {
             emit tiltChanged(tilt);
+            // do not emit visibleRegionChanged() here, because, if the map isn't initialized,
+            // the getter won't return anything updated
+        }
     }
 }
 
@@ -1099,8 +1113,11 @@ void QDeclarativeGeoMap::setFieldOfView(qreal fieldOfView)
     } else {
         const bool fovChanged = fieldOfView != m_cameraData.fieldOfView();
         m_cameraData.setFieldOfView(fieldOfView);
-        if (fovChanged)
+        if (fovChanged) {
             emit fieldOfViewChanged(fieldOfView);
+            // do not emit visibleRegionChanged() here, because, if the map isn't initialized,
+            // the getter won't return anything updated
+        }
     }
 }
 
@@ -1266,8 +1283,11 @@ void QDeclarativeGeoMap::setCenter(const QGeoCoordinate &center)
     } else {
         const bool centerHasChanged = center != m_cameraData.center();
         m_cameraData.setCenter(center);
-        if (centerHasChanged)
+        if (centerHasChanged) {
             emit centerChanged(center);
+            // do not emit visibleRegionChanged() here, because, if the map isn't initialized,
+            // the getter won't return anything updated
+        }
     }
 }
 
@@ -1293,7 +1313,7 @@ QGeoCoordinate QDeclarativeGeoMap::center() const
     \l zoomLevel of the map. Any previously set value to those
     properties will be overridden.
 
-    This property does not provide any change notifications.
+    \note Since Qt 5.14 This property provides change notifications.
 
     \since 5.6
 */
@@ -1309,15 +1329,18 @@ void QDeclarativeGeoMap::setVisibleRegion(const QGeoShape &shape)
         // shape invalidated -> nothing to fit anymore
         m_visibleRegion = QGeoRectangle();
         m_pendingFitViewport = false;
+        emit visibleRegionChanged();
         return;
     }
 
     if (!m_map || !width() || !height()) {
         m_pendingFitViewport = true;
+        emit visibleRegionChanged();
         return;
     }
 
     fitViewportToGeoShape(m_visibleRegion);
+    emit visibleRegionChanged();
 }
 
 QGeoShape QDeclarativeGeoMap::visibleRegion() const
@@ -1423,6 +1446,14 @@ void QDeclarativeGeoMap::setVisibleArea(const QRectF &visibleArea)
 
     if (m_initialized) {
         m_map->setVisibleArea(visibleArea);
+        const QRectF newVisibleArea = QDeclarativeGeoMap::visibleArea();
+        if (newVisibleArea != oldVisibleArea) {
+            // polish map items
+            for (const QPointer<QDeclarativeGeoMapItemBase> &i: qAsConst(m_mapItems)) {
+                if (i)
+                    i->visibleAreaChanged();
+            }
+        }
     } else {
         m_visibleArea = visibleArea;
         const QRectF newVisibleArea = QDeclarativeGeoMap::visibleArea();
@@ -1466,7 +1497,7 @@ QMargins QDeclarativeGeoMap::mapMargins() const
 */
 QQmlListProperty<QDeclarativeGeoMapType> QDeclarativeGeoMap::supportedMapTypes()
 {
-    return QQmlListProperty<QDeclarativeGeoMapType>(this, m_supportedMapTypes);
+    return QQmlListProperty<QDeclarativeGeoMapType>(this, &m_supportedMapTypes);
 }
 
 /*!
@@ -1597,7 +1628,7 @@ void QDeclarativeGeoMap::clearData()
 void QDeclarativeGeoMap::fitViewportToGeoShape(const QGeoShape &shape, QVariant margins)
 {
     QMargins m(10, 10, 10, 10); // lets defaults to 10 if margins is invalid
-    switch (margins.type()) {
+    switch (static_cast<QMetaType::Type>(margins.type())) {
         case QMetaType::Int:
         case QMetaType::Double: {
             const int value = int(margins.toDouble());
@@ -1744,6 +1775,11 @@ void QDeclarativeGeoMap::onCameraDataChanged(const QGeoCameraData &cameraData)
     bool zoomHasChanged = cameraData.zoomLevel() != m_cameraData.zoomLevel();
 
     m_cameraData = cameraData;
+    // polish map items
+    for (const QPointer<QDeclarativeGeoMapItemBase> &i: qAsConst(m_mapItems)) {
+        if (i)
+            i->baseCameraDataChanged(m_cameraData); // Consider optimizing this further, removing the contained duplicate if conditions.
+    }
 
     if (centerHasChanged)
         emit centerChanged(m_cameraData.center());
@@ -1755,6 +1791,9 @@ void QDeclarativeGeoMap::onCameraDataChanged(const QGeoCameraData &cameraData)
         emit tiltChanged(m_cameraData.tilt());
     if (fovHasChanged)
         emit fieldOfViewChanged(m_cameraData.fieldOfView());
+    if (centerHasChanged || zoomHasChanged || bearingHasChanged
+            || tiltHasChanged || fovHasChanged)
+        emit visibleRegionChanged();
 }
 
 /*!
@@ -2137,6 +2176,38 @@ bool QDeclarativeGeoMap::removeMapItemView_real(QDeclarativeGeoMapItemView *item
     return removeMapItemGroup_real(itemView); // at this point, all delegate instances have been removed.
 }
 
+void QDeclarativeGeoMap::updateItemToWindowTransform()
+{
+    if (!m_initialized)
+        return;
+
+    // Update itemToWindowTransform into QGeoProjection
+    const QTransform item2WindowOld = m_map->geoProjection().itemToWindowTransform();
+    QTransform item2Window = QQuickItemPrivate::get(this)->itemToWindowTransform();
+    if (!property("layer").isNull() && property("layer").value<QObject *>()->property("enabled").toBool())
+        item2Window.reset(); // When layer is enabled, the item is rendered offscreen with no transformation, then the layer is applied
+
+    m_map->setItemToWindowTransform(item2Window);
+
+    // This method is called at every redraw, including those redraws not generated by
+    // sgNodeChanged.
+    // In these cases, *if* the item2windowTransform has changed (e.g., if transformation of
+    // the item or one of its ancestors changed), a forced update of the map items using accelerated
+    // GL implementation has to be performed in order to have them pulling the updated itemToWindowTransform.
+    if (!m_sgNodeHasChanged && item2WindowOld != item2Window) {
+        for (auto i: qAsConst(m_mapItems))
+            i->setMaterialDirty();
+    }
+
+    m_sgNodeHasChanged = false;
+}
+
+void QDeclarativeGeoMap::onSGNodeChanged()
+{
+    m_sgNodeHasChanged = true;
+    update();
+}
+
 /*!
     \qmlmethod void QtLocation::Map::addMapItemView(MapItemView itemView)
 
@@ -2225,7 +2296,13 @@ void QDeclarativeGeoMap::geometryChanged(const QRectF &newGeometry, const QRectF
             QGeoCoordinate coord = cameraData.center();
             coord.setLatitude(qBound(m_minimumViewportLatitude, coord.latitude(), m_maximumViewportLatitude));
             cameraData.setCenter(coord);
-            m_map->setCameraData(cameraData);
+            m_map->setCameraData(cameraData); // this polishes map items
+        } else if (oldGeometry.size() != newGeometry.size()) {
+            // polish map items
+            for (const QPointer<QDeclarativeGeoMapItemBase> &i: qAsConst(m_mapItems)) {
+                if (i)
+                    i->polishAndUpdate();
+            }
         }
     }
 
@@ -2245,17 +2322,31 @@ void QDeclarativeGeoMap::geometryChanged(const QRectF &newGeometry, const QRectF
 }
 
 /*!
-    \qmlmethod void QtLocation::Map::fitViewportToMapItems()
+    \qmlmethod void QtLocation::Map::fitViewportToMapItems(list<MapItems> items = {})
 
-    Fits the current viewport to the boundary of all map items. The camera is positioned
-    in the center of the map items, and at the largest integral zoom level possible which
-    allows all map items to be visible on screen.
+    If no argument is provided, fits the current viewport to the boundary of all map items.
+    The camera is positioned in the center of the map items, and at the largest integral zoom level
+    possible which allows all map items to be visible on screen.
+    If \a items is provided, fits the current viewport to the boundary of the specified map items only.
+
+    \note This method gained the optional \a items argument since Qt 5.15.
+    In previous releases, this method fitted the map to all map items.
 
     \sa fitViewportToVisibleMapItems
 */
-void QDeclarativeGeoMap::fitViewportToMapItems()
+void QDeclarativeGeoMap::fitViewportToMapItems(const QVariantList &items)
 {
-    fitViewportToMapItemsRefine(true, false);
+    if (items.size()) {
+        QList<QPointer<QDeclarativeGeoMapItemBase> > itms;
+        for (const QVariant &i: items) {
+            QDeclarativeGeoMapItemBase *itm = qobject_cast<QDeclarativeGeoMapItemBase *>(i.value<QObject *>());
+            if (itm)
+                itms.append(itm);
+        }
+        fitViewportToMapItemsRefine(itms, true, false);
+    } else {
+        fitViewportToMapItemsRefine(m_mapItems, true, false);
+    }
 }
 
 /*!
@@ -2269,18 +2360,20 @@ void QDeclarativeGeoMap::fitViewportToMapItems()
 */
 void QDeclarativeGeoMap::fitViewportToVisibleMapItems()
 {
-    fitViewportToMapItemsRefine(true, true);
+    fitViewportToMapItemsRefine(m_mapItems, true, true);
 }
 
 /*!
     \internal
 */
-void QDeclarativeGeoMap::fitViewportToMapItemsRefine(bool refine, bool onlyVisible)
+void QDeclarativeGeoMap::fitViewportToMapItemsRefine(const QList<QPointer<QDeclarativeGeoMapItemBase> > &mapItems,
+                                                     bool refine,
+                                                     bool onlyVisible)
 {
     if (!m_map)
         return;
 
-    if (m_mapItems.size() == 0)
+    if (mapItems.size() == 0)
         return;
 
     double minX = qInf();
@@ -2295,10 +2388,10 @@ void QDeclarativeGeoMap::fitViewportToMapItemsRefine(bool refine, bool onlyVisib
 
     // find bounds of all map items
     int itemCount = 0;
-    for (int i = 0; i < m_mapItems.count(); ++i) {
-        if (!m_mapItems.at(i))
+    for (int i = 0; i < mapItems.count(); ++i) {
+        if (!mapItems.at(i))
             continue;
-        QDeclarativeGeoMapItemBase *item = m_mapItems.at(i).data();
+        QDeclarativeGeoMapItemBase *item = mapItems.at(i).data();
         if (!item || (onlyVisible && (!item->isVisible() || item->mapItemOpacity() <= 0.0)))
             continue;
 
@@ -2349,7 +2442,7 @@ void QDeclarativeGeoMap::fitViewportToMapItemsRefine(bool refine, bool onlyVisib
 
     if (itemCount == 0) {
         if (haveQuickItem)
-            fitViewportToMapItemsRefine(false, onlyVisible);
+            fitViewportToMapItemsRefine(mapItems, false, onlyVisible);
         return;
     }
     double bboxWidth = maxX - minX;
@@ -2379,7 +2472,7 @@ void QDeclarativeGeoMap::fitViewportToMapItemsRefine(bool refine, bool onlyVisib
     // as map quick items retain the same screen size after the camera zooms in/out
     // we refine the viewport again to achieve better results
     if (refine)
-        fitViewportToMapItemsRefine(false, onlyVisible);
+        fitViewportToMapItemsRefine(mapItems, false, onlyVisible);
 }
 
 /*!

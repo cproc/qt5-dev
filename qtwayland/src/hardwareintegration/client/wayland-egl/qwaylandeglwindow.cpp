@@ -54,8 +54,8 @@ QT_BEGIN_NAMESPACE
 
 namespace QtWaylandClient {
 
-QWaylandEglWindow::QWaylandEglWindow(QWindow *window)
-    : QWaylandWindow(window)
+QWaylandEglWindow::QWaylandEglWindow(QWindow *window, QWaylandDisplay *display)
+    : QWaylandWindow(window, display)
     , m_clientBufferIntegration(static_cast<QWaylandEglClientBufferIntegration *>(mDisplay->clientBufferIntegration()))
 {
     QSurfaceFormat fmt = window->requestedFormat();
@@ -137,9 +137,8 @@ void QWaylandEglWindow::updateSurface(bool create)
 
                 m_resize = true;
             }
-        } else if (create && wl_surface::isInitialized()) {
-            ::wl_surface *wlSurface = wl_surface::object();
-            m_waylandEglWindow = wl_egl_window_create(wlSurface, sizeWithMargins.width(), sizeWithMargins.height());
+        } else if (create && wlSurface()) {
+            m_waylandEglWindow = wl_egl_window_create(wlSurface(), sizeWithMargins.width(), sizeWithMargins.height());
         }
 
         if (!m_eglSurface && m_waylandEglWindow && create) {
@@ -161,13 +160,6 @@ QRect QWaylandEglWindow::contentsRect() const
 QSurfaceFormat QWaylandEglWindow::format() const
 {
     return m_format;
-}
-
-void QWaylandEglWindow::setVisible(bool visible)
-{
-    QWaylandWindow::setVisible(visible);
-    if (!visible)
-        invalidateSurface();
 }
 
 void QWaylandEglWindow::invalidateSurface()

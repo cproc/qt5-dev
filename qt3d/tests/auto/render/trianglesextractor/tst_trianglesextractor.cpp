@@ -30,7 +30,6 @@
 #include <Qt3DRender/private/shader_p.h>
 #include <Qt3DRender/qshaderprogram.h>
 #include <Qt3DRender/private/nodemanagers_p.h>
-#include <Qt3DRender/private/renderer_p.h>
 #include <Qt3DRender/private/qrenderaspect_p.h>
 #include <Qt3DRender/qrenderaspect.h>
 #include <Qt3DRender/private/geometryrenderermanager_p.h>
@@ -46,7 +45,7 @@
 #include <Qt3DRender/qgeometry.h>
 #include <Qt3DRender/qgeometryrenderer.h>
 #include <Qt3DCore/private/qnodevisitor_p.h>
-#include <Qt3DCore/private/qnodecreatedchangegenerator_p.h>
+#include <Qt3DCore/private/qnode_p.h>
 
 Qt3DRender::QGeometryRenderer *customIndexedGeometryRenderer()
 {
@@ -95,7 +94,7 @@ Qt3DRender::QGeometryRenderer *customIndexedGeometryRenderer()
     QVector3D blue(0.0f, 0.0f, 1.0f);
     QVector3D white(1.0f, 1.0f, 1.0f);
 
-    QVector<QVector3D> vertices = QVector<QVector3D>()
+    const QVector<QVector3D> vertices = QVector<QVector3D>()
             << v0 << n0 << red
             << v1 << n1 << blue
             << v2 << n2 << green
@@ -104,7 +103,7 @@ Qt3DRender::QGeometryRenderer *customIndexedGeometryRenderer()
     float *rawVertexArray = reinterpret_cast<float *>(vertexBufferData.data());
     int idx = 0;
 
-    Q_FOREACH (const QVector3D &v, vertices) {
+    for (const QVector3D &v : vertices) {
         rawVertexArray[idx++] = v.x();
         rawVertexArray[idx++] = v.y();
         rawVertexArray[idx++] = v.z();
@@ -237,7 +236,7 @@ Qt3DRender::QGeometryRenderer *customNonIndexedGeometryRenderer()
     QVector3D blue(0.0f, 0.0f, 1.0f);
     QVector3D white(1.0f, 1.0f, 1.0f);
 
-    QVector<QVector3D> vertices = QVector<QVector3D>()
+    const QVector<QVector3D> vertices = QVector<QVector3D>()
             << v0 << n0 << red
             << v1 << n1 << blue
             << v2 << n2 << green
@@ -258,7 +257,7 @@ Qt3DRender::QGeometryRenderer *customNonIndexedGeometryRenderer()
     float *rawVertexArray = reinterpret_cast<float *>(vertexBufferData.data());
     int idx = 0;
 
-    Q_FOREACH (const QVector3D &v, vertices) {
+    for (const QVector3D &v : vertices) {
         rawVertexArray[idx++] = v.x();
         rawVertexArray[idx++] = v.y();
         rawVertexArray[idx++] = v.z();
@@ -320,18 +319,36 @@ public:
     TestAspect(Qt3DCore::QNode *root)
         : Qt3DRender::QRenderAspect()
     {
-        const Qt3DCore::QNodeCreatedChangeGenerator generator(root);
-        const QVector<Qt3DCore::QNodeCreatedChangeBasePtr> creationChanges = generator.creationChanges();
+        QVector<Qt3DCore::NodeTreeChange> nodes;
+        Qt3DCore::QNodeVisitor v;
+        v.traverse(root, [&nodes](Qt3DCore::QNode *node) {
+            Qt3DCore::QNodePrivate *d = Qt3DCore::QNodePrivate::get(node);
+            d->m_typeInfo = const_cast<QMetaObject*>(Qt3DCore::QNodePrivate::findStaticMetaObject(node->metaObject()));
+            d->m_hasBackendNode = true;
+            nodes.push_back({
+                node->id(),
+                Qt3DCore::QNodePrivate::get(node)->m_typeInfo,
+                Qt3DCore::NodeTreeChange::Added,
+                node
+            });
+        });
 
-        for (const Qt3DCore::QNodeCreatedChangeBasePtr change : creationChanges)
-            d_func()->createBackendNode(change);
+        for (const auto &node: nodes)
+            d_func()->createBackendNode(node);
     }
+
+    ~TestAspect();
 
     Qt3DRender::Render::NodeManagers *nodeManagers() const
     {
         return d_func()->m_renderer->nodeManagers();
     }
 };
+
+TestAspect::~TestAspect()
+{
+
+}
 
 QT_END_NAMESPACE
 

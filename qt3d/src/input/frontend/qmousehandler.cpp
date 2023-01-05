@@ -42,7 +42,6 @@
 
 #include <Qt3DInput/qmousedevice.h>
 #include <Qt3DInput/qmouseevent.h>
-#include <Qt3DCore/qpropertyupdatedchange.h>
 #include <QtCore/QTimer>
 
 QT_BEGIN_NAMESPACE
@@ -59,7 +58,7 @@ QMouseHandlerPrivate::QMouseHandlerPrivate()
 {
     m_shareable = false;
     m_pressAndHoldTimer->setSingleShot(true);
-    m_pressAndHoldTimer->setInterval(500);
+    m_pressAndHoldTimer->setInterval(800);
     QObject::connect(m_pressAndHoldTimer, &QTimer::timeout, [this] {
         emit q_func()->pressAndHold(m_lastPressedEvent.data());
     });
@@ -78,15 +77,15 @@ void QMouseHandlerPrivate::mouseEvent(const QMouseEventPtr &event)
 {
     Q_Q(QMouseHandler);
     switch (event->type()) {
-    case QEvent::MouseButtonPress: {
+    case QEvent::MouseButtonPress:
         m_lastPressedEvent = event;
         m_pressAndHoldTimer->start();
         emit q->pressed(event.data());
         break;
-    }
     case QEvent::MouseButtonRelease:
         m_pressAndHoldTimer->stop();
         emit q->released(event.data());
+        emit q->clicked(event.data());
         break;
 #if QT_CONFIG(gestures)
     case QEvent::Gesture:
@@ -97,6 +96,7 @@ void QMouseHandlerPrivate::mouseEvent(const QMouseEventPtr &event)
         emit q->doubleClicked(event.data());
         break;
     case QEvent::MouseMove:
+        m_pressAndHoldTimer->stop();
         emit q->positionChanged(event.data());
         break;
     default:
@@ -198,21 +198,21 @@ void QMouseHandlerPrivate::mouseEvent(const QMouseEventPtr &event)
     \qmlsignal Qt3D.Input::MouseHandler::wheel(MouseEvent mouse)
 
     This signal is emitted when the mouse wheel is used with the event details
-    being contained within \a wheel
+    being contained within \a mouse.
  */
 
 /*!
     \fn Qt3DInput::QMouseHandler::clicked(Qt3DInput::QMouseEvent *mouse)
 
     This signal is emitted when a mouse button is clicked with the event details
-    being contained within \a mouse
+    being contained within \a mouse.
  */
 
 /*!
     \fn Qt3DInput::QMouseHandler::doubleClicked(Qt3DInput::QMouseEvent *mouse)
 
     This signal is emitted when a mouse button is double clicked with the event
-    details being contained within \a mouse
+    details being contained within \a mouse.
  */
 
 /*!
@@ -299,6 +299,11 @@ void QMouseHandler::setSourceDevice(QMouseDevice *mouseDevice)
     }
 }
 
+// TODO Unused remove in Qt6
+void QMouseHandler::sceneChangeEvent(const QSceneChangePtr &)
+{
+}
+
 /*!
  * \property Qt3DInput::QMouseHandler::sourceDevice
  *
@@ -332,24 +337,6 @@ void QMouseHandler::setContainsMouse(bool contains)
     if (contains != d->m_containsMouse) {
         d->m_containsMouse = contains;
         emit containsMouseChanged(contains);
-    }
-}
-
-/*! \internal */
-void QMouseHandler::sceneChangeEvent(const Qt3DCore::QSceneChangePtr &change)
-{
-    Q_D(QMouseHandler);
-    QPropertyUpdatedChangePtr e = qSharedPointerCast<QPropertyUpdatedChange>(change);
-    if (e->type() == PropertyUpdated) {
-        if (e->propertyName() == QByteArrayLiteral("mouse")) {
-            QMouseEventPtr ev = e->value().value<QMouseEventPtr>();
-            d->mouseEvent(ev);
-#if QT_CONFIG(wheelevent)
-        } else if (e->propertyName() == QByteArrayLiteral("wheel")) {
-            QWheelEventPtr ev = e->value().value<QWheelEventPtr>();
-            emit wheel(ev.data());
-#endif
-        }
     }
 }
 

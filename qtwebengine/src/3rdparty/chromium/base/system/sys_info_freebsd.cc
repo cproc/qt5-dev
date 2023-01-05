@@ -9,6 +9,7 @@
 #include <sys/sysctl.h>
 
 #include "base/logging.h"
+#include "base/strings/string_util.h"
 
 namespace base {
 
@@ -60,15 +61,28 @@ std::string SysInfo::CPUModelName() {
   return std::string();
 }
 
-int SysInfo::NumberOfProcessors() {
-  int mib[] = { CTL_HW, HW_NCPU };
-  int ncpu;
-  size_t size = sizeof(ncpu);
-  if (sysctl(mib, base::size(mib), &ncpu, &size, NULL, 0) == -1) {
+// static
+uint64_t SysInfo::MaxSharedMemorySize() {
+  size_t limit;
+  size_t size = sizeof(limit);
+
+  if (sysctlbyname("kern.ipc.shmmax", &limit, &size, NULL, 0) < 0) {
     NOTREACHED();
-    return 1;
+    return 0;
   }
-  return ncpu;
+
+  return static_cast<uint64_t>(limit);
+}
+
+SysInfo::HardwareInfo SysInfo::GetHardwareInfoSync() {
+  HardwareInfo info;
+  // Set the manufacturer to "FreeBSD" and the model to
+  // an empty string.
+  info.manufacturer = "FreeBSD";
+  info.model = HardwareModelName();
+  DCHECK(IsStringUTF8(info.manufacturer));
+  DCHECK(IsStringUTF8(info.model));
+  return info;
 }
 
 }  // namespace base

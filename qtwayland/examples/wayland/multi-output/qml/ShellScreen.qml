@@ -50,7 +50,7 @@
 
 import QtQuick 2.0
 import QtQuick.Window 2.2
-import QtWayland.Compositor 1.0
+import QtWayland.Compositor 1.14
 
 WaylandOutput {
     id: output
@@ -66,7 +66,7 @@ WaylandOutput {
             id: mouseTracker
             anchors.fill: parent
 
-            windowSystemCursorEnabled: true
+            windowSystemCursorEnabled: !clientCursor.visible
             Image {
                 id: background
                 anchors.fill: parent
@@ -75,13 +75,20 @@ WaylandOutput {
                 smooth: true
             }
             WaylandCursorItem {
-                id: cursor
-                inputEventsEnabled: false
+                id: clientCursor
                 x: mouseTracker.mouseX
                 y: mouseTracker.mouseY
-
+                visible: surface !== null && mouseTracker.containsMouse
                 seat : output.compositor.defaultSeat
             }
         }
+    }
+
+    XdgOutputV1 {
+        name: "WL-1"
+        description: "Screen with window management"
+        logicalPosition: output.position
+        logicalSize: Qt.size(output.geometry.width / output.scaleFactor,
+                             output.geometry.height / output.scaleFactor)
     }
 }

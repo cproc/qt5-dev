@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Network module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5Network_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5Network_VERSION instead.
-set(Qt5Network_VERSION_STRING 5.13.2)
+set(Qt5Network_VERSION_STRING 5.15.2)
 
 set(Qt5Network_LIBRARIES Qt5::Network)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::Network)
 
     set(_Qt5Network_OWN_INCLUDE_DIRS "${_qt5Network_install_prefix}/include/" "${_qt5Network_install_prefix}/include/QtNetwork")
     set(Qt5Network_PRIVATE_INCLUDE_DIRS
-        "${_qt5Network_install_prefix}/include/QtNetwork/5.13.2"
-        "${_qt5Network_install_prefix}/include/QtNetwork/5.13.2/QtNetwork"
+        "${_qt5Network_install_prefix}/include/QtNetwork/5.15.2"
+        "${_qt5Network_install_prefix}/include/QtNetwork/5.15.2/QtNetwork"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::Network)
     foreach(_module_dep ${_Qt5Network_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5Network_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Network_FIND_VERSION_EXACT}
                 ${_Qt5Network_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Network_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -123,10 +122,27 @@ if (NOT TARGET Qt5::Network)
     list(REMOVE_DUPLICATES Qt5Network_COMPILE_DEFINITIONS)
     list(REMOVE_DUPLICATES Qt5Network_EXECUTABLE_COMPILE_FLAGS)
 
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::Network)
+        return()
+    endif()
+
     set(_Qt5Network_LIB_DEPENDENCIES "Qt5::Core")
 
 
     add_library(Qt5::Network SHARED IMPORTED)
+
 
     set_property(TARGET Qt5::Network PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Network_OWN_INCLUDE_DIRS})
@@ -134,7 +150,23 @@ if (NOT TARGET Qt5::Network)
       INTERFACE_COMPILE_DEFINITIONS QT_NETWORK_LIB)
 
     set_property(TARGET Qt5::Network PROPERTY INTERFACE_QT_ENABLED_FEATURES dnslookup;ftp;http;localserver;networkdiskcache;networkproxy;socks5;udpsocket)
-    set_property(TARGET Qt5::Network PROPERTY INTERFACE_QT_DISABLED_FEATURES networkinterface;bearermanagement;schannel;dtls;opensslv11;ocsp;sctp;ssl)
+    set_property(TARGET Qt5::Network PROPERTY INTERFACE_QT_DISABLED_FEATURES networkinterface;bearermanagement;securetransport;schannel;dtls;gssapi;opensslv11;ocsp;sctp;ssl;sspi)
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Network
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 dnslookup;ftp;http;localserver;networkdiskcache;networkproxy;socks5;udpsocket)
+    set_property(TARGET Qt5::Network
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 networkinterface;bearermanagement;securetransport;schannel;dtls;gssapi;opensslv11;ocsp;sctp;ssl;sspi)
+    set_property(TARGET Qt5::Network
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 system-proxies)
+    set_property(TARGET Qt5::Network
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 openssl-linked;openssl;libproxy;linux-netlink;netlistmgr)
+
+    set_property(TARGET Qt5::Network PROPERTY INTERFACE_QT_PLUGIN_TYPES "bearer")
 
     set(_Qt5Network_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5Network_PRIVATE_DIR ${Qt5Network_OWN_PRIVATE_INCLUDE_DIRS})
@@ -157,6 +189,14 @@ if (NOT TARGET Qt5::Network)
         set_property(TARGET Qt5::NetworkPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Network ${_Qt5Network_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::NetworkPrivate)
+            add_library(Qt::NetworkPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::NetworkPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::NetworkPrivate"
+            )
+        endif()
     endif()
 
     _populate_Network_target_properties(RELEASE "libQt5Network.lib.so" "" FALSE)
@@ -164,10 +204,16 @@ if (NOT TARGET Qt5::Network)
 
 
 
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5Network_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Network_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Network_*.cmake")
+    endif()
 
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5Network_*Plugin.cmake")
-
-    macro(_populate_Network_plugin_properties Plugin Configuration PLUGIN_LOCATION)
+    macro(_populate_Network_plugin_properties Plugin Configuration PLUGIN_LOCATION
+          IsDebugAndRelease)
         set_property(TARGET Qt5::${Plugin} APPEND PROPERTY IMPORTED_CONFIGURATIONS ${Configuration})
 
         set(imported_location "${_qt5Network_install_prefix}/plugins/${PLUGIN_LOCATION}")
@@ -175,6 +221,7 @@ if (NOT TARGET Qt5::Network)
         set_target_properties(Qt5::${Plugin} PROPERTIES
             "IMPORTED_LOCATION_${Configuration}" ${imported_location}
         )
+
     endmacro()
 
     if (pluginTargets)
@@ -185,8 +232,13 @@ if (NOT TARGET Qt5::Network)
 
 
 
+    _qt5_Network_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5NetworkConfigVersion.cmake")
+endif()
 
-
-_qt5_Network_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5NetworkConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Network AND NOT TARGET Qt::Network)
+    add_library(Qt::Network INTERFACE IMPORTED)
+    set_target_properties(Qt::Network PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Network"
+    )
 endif()

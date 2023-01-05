@@ -57,7 +57,7 @@ SystemMetrics SystemMetrics::Sample() {
   SystemMetrics system_metrics;
 
   system_metrics.committed_memory_ = GetSystemCommitCharge();
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_BSD)
   GetSystemMemoryInfo(&system_metrics.memory_info_);
   GetVmStatInfo(&system_metrics.vmstat_info_);
   GetSystemDiskInfo(&system_metrics.disk_info_);
@@ -74,8 +74,8 @@ SystemMetrics SystemMetrics::Sample() {
 std::unique_ptr<Value> SystemMetrics::ToValue() const {
   std::unique_ptr<DictionaryValue> res(new DictionaryValue());
 
-  res->SetInteger("committed_memory", static_cast<int>(committed_memory_));
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+  res->SetIntKey("committed_memory", static_cast<int>(committed_memory_));
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_BSD)
   std::unique_ptr<DictionaryValue> meminfo = memory_info_.ToValue();
   std::unique_ptr<DictionaryValue> vmstat = vmstat_info_.ToValue();
   meminfo->MergeDictionary(vmstat.get());

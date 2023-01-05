@@ -55,6 +55,7 @@
 #include "qquickjumplistitem_p.h"
 
 #include <QObject>
+#include <QVector>
 #include <QQmlListProperty>
 #include <QWinJumpListCategory>
 #include <QWinJumpListItem>
@@ -71,7 +72,7 @@ class QQuickJumpListCategory : public QObject
     Q_CLASSINFO("DefaultProperty", "data")
 
 public:
-    explicit QQuickJumpListCategory(QObject *parent = 0);
+    explicit QQuickJumpListCategory(QObject *parent = nullptr);
     ~QQuickJumpListCategory();
 
     QString title() const;
@@ -95,9 +96,9 @@ private:
     static int items_count(QQmlListProperty<QQuickJumpListItem> *property);
     static QQuickJumpListItem *items_at(QQmlListProperty<QQuickJumpListItem> *property, int index);
 
-    bool m_visible;
+    bool m_visible = true;
     QString m_title;
-    QList<QQuickJumpListItem *> m_items;
+    QVector<QQuickJumpListItem *> m_items;
 };
 
 QT_END_NAMESPACE

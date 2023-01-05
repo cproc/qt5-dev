@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 Zlib module requires at least CMake version 3.1.0")
 endif()
@@ -63,7 +62,7 @@ if (NOT TARGET Qt5::Zlib)
     foreach(_module_dep ${_Qt5Zlib_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5Zlib_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5Zlib_FIND_VERSION_EXACT}
                 ${_Qt5Zlib_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5Zlib_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -77,10 +76,27 @@ if (NOT TARGET Qt5::Zlib)
 
     endforeach()
 
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::Zlib)
+        return()
+    endif()
+
     set(_Qt5Zlib_LIB_DEPENDENCIES "")
 
 
     add_library(Qt5::Zlib INTERFACE IMPORTED)
+
 
     set_property(TARGET Qt5::Zlib PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5Zlib_OWN_INCLUDE_DIRS})
@@ -89,6 +105,22 @@ if (NOT TARGET Qt5::Zlib)
 
     set_property(TARGET Qt5::Zlib PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::Zlib PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::Zlib
+                 PROPERTY INTERFACE_QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::Zlib
+                 PROPERTY INTERFACE_QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::Zlib
+                 PROPERTY INTERFACE_QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::Zlib
+                 PROPERTY INTERFACE_QT_DISABLED_PRIVATE_FEATURES
+                 )
+
+    set_property(TARGET Qt5::Zlib PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
     set(_Qt5Zlib_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5Zlib_PRIVATE_DIR ${Qt5Zlib_OWN_PRIVATE_INCLUDE_DIRS})
@@ -111,6 +143,14 @@ if (NOT TARGET Qt5::Zlib)
         set_property(TARGET Qt5::ZlibPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::Zlib ${_Qt5Zlib_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::ZlibPrivate)
+            add_library(Qt::ZlibPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::ZlibPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::ZlibPrivate"
+            )
+        endif()
     endif()
 
     set_target_properties(Qt5::Zlib PROPERTIES
@@ -120,7 +160,13 @@ if (NOT TARGET Qt5::Zlib)
 
 
 
+    _qt5_Zlib_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5ZlibConfigVersion.cmake")
+endif()
 
-_qt5_Zlib_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5ZlibConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::Zlib AND NOT TARGET Qt::Zlib)
+    add_library(Qt::Zlib INTERFACE IMPORTED)
+    set_target_properties(Qt::Zlib PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::Zlib"
+    )
 endif()

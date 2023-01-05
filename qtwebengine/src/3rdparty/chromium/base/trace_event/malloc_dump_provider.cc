@@ -17,7 +17,7 @@
 
 #if defined(OS_MACOSX)
 #include <malloc/malloc.h>
-#elif defined(OS_FREEBSD)
+#elif defined(OS_BSD)
 #include <stdlib.h>
 #else
 #include <malloc.h>
@@ -89,7 +89,7 @@ bool MallocDumpProvider::OnMemoryDump(const MemoryDumpArgs& args,
   size_t resident_size = 0;
   size_t allocated_objects_size = 0;
   size_t allocated_objects_count = 0;
-#if defined(USE_TCMALLOC)
+#if BUILDFLAG(USE_TCMALLOC)
   bool res =
       allocator::GetNumericProperty("generic.heap_size", &total_virtual_size);
   DCHECK(res);
@@ -139,8 +139,6 @@ bool MallocDumpProvider::OnMemoryDump(const MemoryDumpArgs& args,
   allocated_objects_size = 0;
 #else
   struct mallinfo info = mallinfo();
-  DCHECK_GE(info.arena + info.hblkhd, info.uordblks);
-
   // In case of Android's jemalloc |arena| is 0 and the outer pages size is
   // reported by |hblkhd|. In case of dlmalloc the total is given by
   // |arena| + |hblkhd|. For more details see link: http://goo.gl/fMR8lF.

@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 QuickParticles module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5QuickParticles_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5QuickParticles_VERSION instead.
-set(Qt5QuickParticles_VERSION_STRING 5.13.2)
+set(Qt5QuickParticles_VERSION_STRING 5.15.2)
 
 set(Qt5QuickParticles_LIBRARIES Qt5::QuickParticles)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::QuickParticles)
 
     set(_Qt5QuickParticles_OWN_INCLUDE_DIRS "${_qt5QuickParticles_install_prefix}/include/" "${_qt5QuickParticles_install_prefix}/include/QtQuickParticles")
     set(Qt5QuickParticles_PRIVATE_INCLUDE_DIRS
-        "${_qt5QuickParticles_install_prefix}/include/QtQuickParticles/5.13.2"
-        "${_qt5QuickParticles_install_prefix}/include/QtQuickParticles/5.13.2/QtQuickParticles"
+        "${_qt5QuickParticles_install_prefix}/include/QtQuickParticles/5.15.2"
+        "${_qt5QuickParticles_install_prefix}/include/QtQuickParticles/5.15.2/QtQuickParticles"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -76,7 +75,7 @@ if (NOT TARGET Qt5::QuickParticles)
 
     set(Qt5QuickParticles_DEFINITIONS -DQT_QUICKPARTICLES_LIB)
     set(Qt5QuickParticles_COMPILE_DEFINITIONS QT_QUICKPARTICLES_LIB)
-    set(_Qt5QuickParticles_MODULE_DEPENDENCIES "Quick;Quick;Quick;Qml;Gui;Core")
+    set(_Qt5QuickParticles_MODULE_DEPENDENCIES "Quick;Qml;Gui;Core")
 
 
     set(Qt5QuickParticles_OWN_PRIVATE_INCLUDE_DIRS ${Qt5QuickParticles_PRIVATE_INCLUDE_DIRS})
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::QuickParticles)
     foreach(_module_dep ${_Qt5QuickParticles_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5QuickParticles_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5QuickParticles_FIND_VERSION_EXACT}
                 ${_Qt5QuickParticles_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5QuickParticles_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -123,10 +122,27 @@ if (NOT TARGET Qt5::QuickParticles)
     list(REMOVE_DUPLICATES Qt5QuickParticles_COMPILE_DEFINITIONS)
     list(REMOVE_DUPLICATES Qt5QuickParticles_EXECUTABLE_COMPILE_FLAGS)
 
-    set(_Qt5QuickParticles_LIB_DEPENDENCIES "Qt5::Quick;Qt5::Quick;Qt5::Quick;Qt5::Qml;Qt5::Gui;Qt5::Core")
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::QuickParticles)
+        return()
+    endif()
+
+    set(_Qt5QuickParticles_LIB_DEPENDENCIES "Qt5::Quick;Qt5::Qml;Qt5::Gui;Qt5::Core")
 
 
     add_library(Qt5::QuickParticles SHARED IMPORTED)
+
 
     set_property(TARGET Qt5::QuickParticles PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5QuickParticles_OWN_INCLUDE_DIRS})
@@ -135,6 +151,22 @@ if (NOT TARGET Qt5::QuickParticles)
 
     set_property(TARGET Qt5::QuickParticles PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::QuickParticles PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::QuickParticles
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickParticles
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickParticles
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::QuickParticles
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
+
+    set_property(TARGET Qt5::QuickParticles PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
     set(_Qt5QuickParticles_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5QuickParticles_PRIVATE_DIR ${Qt5QuickParticles_OWN_PRIVATE_INCLUDE_DIRS})
@@ -157,6 +189,14 @@ if (NOT TARGET Qt5::QuickParticles)
         set_property(TARGET Qt5::QuickParticlesPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::QuickParticles ${_Qt5QuickParticles_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::QuickParticlesPrivate)
+            add_library(Qt::QuickParticlesPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::QuickParticlesPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::QuickParticlesPrivate"
+            )
+        endif()
     endif()
 
     _populate_QuickParticles_target_properties(RELEASE "libQt5QuickParticles.lib.so" "" FALSE)
@@ -167,7 +207,13 @@ if (NOT TARGET Qt5::QuickParticles)
 
 
 
+    _qt5_QuickParticles_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QuickParticlesConfigVersion.cmake")
+endif()
 
-_qt5_QuickParticles_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5QuickParticlesConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::QuickParticles AND NOT TARGET Qt::QuickParticles)
+    add_library(Qt::QuickParticles INTERFACE IMPORTED)
+    set_target_properties(Qt::QuickParticles PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::QuickParticles"
+    )
 endif()

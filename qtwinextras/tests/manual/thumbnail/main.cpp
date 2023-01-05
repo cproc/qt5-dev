@@ -104,7 +104,7 @@ MainWindow::MainWindow()
 void MainWindow::initThumbnailToolBar()
 {
     m_thumbnailToolBar->setWindow(windowHandle());
-    QWinThumbnailToolButton *testButton = new QWinThumbnailToolButton(m_thumbnailToolBar);
+    auto *testButton = new QWinThumbnailToolButton(m_thumbnailToolBar);
     testButton->setToolTip("Test");
     testButton->setIcon(style()->standardIcon(QStyle::SP_ComputerIcon));
     connect(testButton, &QWinThumbnailToolButton::clicked, this, &MainWindow::testButtonClicked);
@@ -134,7 +134,7 @@ void MainWindow::updateIconicThumbnailPixmap()
     if (!m_enableIconicPixmapAction->isChecked())
         return;
     const QString number = QString::number(n++);
-    logText(QLatin1String(__FUNCTION__) + QLatin1Char(' ') + number);
+    logText(QLatin1String(__FUNCTION__) + u' ' + number);
     const QPixmap pixmap =
         drawColoredPixmap(QSize(200, 50), Qt::yellow, QStringLiteral("ITP ") + number);
     m_thumbnailToolBar->setIconicThumbnailPixmap(pixmap);
@@ -146,7 +146,7 @@ void MainWindow::updateIconicLivePreviewPixmap()
     if (!m_enableIconicLivePreviewAction->isChecked())
         return;
     const QString number = QString::number(n++);
-    logText(QLatin1String(__FUNCTION__) + QLatin1Char(' ') + number);
+    logText(QLatin1String(__FUNCTION__) + u' ' + number);
     const QPixmap pixmap =
         drawColoredPixmap(QSize(200, 50), Qt::red, QStringLiteral("ILP ") + number);
     m_thumbnailToolBar->setIconicLivePreviewPixmap(pixmap);

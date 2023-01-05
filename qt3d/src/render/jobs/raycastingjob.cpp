@@ -38,6 +38,7 @@
 ****************************************************************************/
 
 #include "raycastingjob_p.h"
+#include <Qt3DCore/private/qaspectmanager_p.h>
 #include <Qt3DRender/qgeometryrenderer.h>
 #include <Qt3DRender/private/entity_p.h>
 #include <Qt3DRender/private/geometryrenderer_p.h>
@@ -47,10 +48,10 @@
 #include <Qt3DRender/private/pickboundingvolumeutils_p.h>
 #include <Qt3DRender/private/qray3d_p.h>
 #include <Qt3DRender/private/sphere_p.h>
-#include <Qt3DRender/private/renderer_p.h>
 #include <Qt3DRender/private/rendersettings_p.h>
 #include <Qt3DRender/private/trianglesvisitor_p.h>
 #include <Qt3DRender/private/entityvisitor_p.h>
+#include <Qt3DRender/private/qabstractraycaster_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -82,11 +83,53 @@ public:
 } // anonymous
 
 
+class Qt3DRender::Render::RayCastingJobPrivate : public Qt3DCore::QAspectJobPrivate
+{
+public:
+    RayCastingJobPrivate(RayCastingJob *q) : q_ptr(q) { }
+    ~RayCastingJobPrivate() override { Q_ASSERT(dispatches.isEmpty()); }
+
+    bool isRequired() const override;
+    void postFrame(Qt3DCore::QAspectManager *manager) override;
+
+    QVector<QPair<RayCaster *, QAbstractRayCaster::Hits>> dispatches;
+
+    RayCastingJob *q_ptr;
+    Q_DECLARE_PUBLIC(RayCastingJob)
+};
+
+
+bool RayCastingJobPrivate::isRequired() const
+{
+    Q_Q(const RayCastingJob);
+    return q->m_castersDirty || q->m_oneEnabledAtLeast;
+}
+
+void RayCastingJobPrivate::postFrame(Qt3DCore::QAspectManager *manager)
+{
+    for (auto res: qAsConst(dispatches)) {
+        QAbstractRayCaster *node = qobject_cast<QAbstractRayCaster *>(manager->lookupNode(res.first->peerId()));
+        if (!node)
+            continue;
+
+        QAbstractRayCasterPrivate *d = QAbstractRayCasterPrivate::get(node);
+        d->dispatchHits(res.second);
+
+        if (node->runMode() == QAbstractRayCaster::SingleShot) {
+            node->setEnabled(false);
+            res.first->setEnabled(false);
+        }
+    }
+
+    dispatches.clear();
+}
+
+
 RayCastingJob::RayCastingJob()
-    : AbstractPickingJob()
+    : AbstractPickingJob(*new RayCastingJobPrivate(this))
     , m_castersDirty(true)
 {
-    SET_JOB_RUN_STAT_TYPE(this, JobTypes::RayCasting, 0);
+    SET_JOB_RUN_STAT_TYPE(this, JobTypes::RayCasting, 0)
 }
 
 void RayCastingJob::markCastersDirty()
@@ -239,7 +282,8 @@ void RayCastingJob::dispatchHits(RayCaster *rayCaster, const PickingUtils::HitLi
         };
     }
 
-    rayCaster->dispatchHits(hits);
+    Q_D(RayCastingJob);
+    d->dispatches.push_back({rayCaster, hits});
 }
 
 QT_END_NAMESPACE

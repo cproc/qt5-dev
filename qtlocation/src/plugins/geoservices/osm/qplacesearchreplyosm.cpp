@@ -64,7 +64,8 @@ QPlaceSearchReplyOsm::QPlaceSearchReplyOsm(const QPlaceSearchRequest &request,
     setRequest(request);
 
     connect(reply, SIGNAL(finished()), this, SLOT(replyFinished()));
-    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkError(QNetworkReply::NetworkError)));
+    connect(reply, SIGNAL(errorOccurred(QNetworkReply::NetworkError)),
+            this, SLOT(networkError(QNetworkReply::NetworkError)));
     connect(this, &QPlaceReply::aborted, reply, &QNetworkReply::abort);
     connect(this, &QObject::destroyed, reply, &QObject::deleteLater);
 }
@@ -184,7 +185,7 @@ QPlaceResult QPlaceSearchReplyOsm::parsePlaceResult(const QJsonObject &item) con
     //double importance = item.value(QStringLiteral("importance")).toDouble();
 
     place.setAttribution(item.value(QStringLiteral("licence")).toString());
-    place.setPlaceId(item.value(QStringLiteral("place_id")).toString());
+    place.setPlaceId(QString::number(item.value(QStringLiteral("place_id")).toInt()));
 
     QVariantMap iconParameters;
     iconParameters.insert(QPlaceIcon::SingleUrl,

@@ -54,7 +54,7 @@ namespace QtWaylandClient {
 
 QWaylandXdgSurfaceV5::QWaylandXdgSurfaceV5(QWaylandXdgShellV5 *shell, QWaylandWindow *window)
     : QWaylandShellSurface(window)
-    , QtWayland::xdg_surface_v5(shell->get_xdg_surface(window->object()))
+    , QtWayland::xdg_surface_v5(shell->get_xdg_surface(window->wlSurface()))
     , m_window(window)
     , m_shell(shell)
 {
@@ -82,10 +82,11 @@ QtWayland::xdg_surface_v5::resize_edge QWaylandXdgSurfaceV5::convertToResizeEdge
                 | ((edges & Qt::RightEdge) ? resize_edge_right : 0));
 }
 
-void QWaylandXdgSurfaceV5::resize(QWaylandInputDevice *inputDevice, Qt::Edges edges)
+bool QWaylandXdgSurfaceV5::resize(QWaylandInputDevice *inputDevice, Qt::Edges edges)
 {
     resize_edge resizeEdges = convertToResizeEdges(edges);
     resize(inputDevice->wl_seat(), inputDevice->serial(), resizeEdges);
+    return true;
 }
 
 bool QWaylandXdgSurfaceV5::move(QWaylandInputDevice *inputDevice)

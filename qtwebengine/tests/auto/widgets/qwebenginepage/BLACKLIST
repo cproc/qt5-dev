@@ -3,9 +3,10 @@ osx
 
 [mouseMovementProperties]
 windows
+macos # Can't move cursor (QTBUG-76312)
 
-[getUserMediaRequestDesktopVideoManyPages]
-windows
+[devTools]
+msvc-2019
 
-[getUserMediaRequestDesktopVideoManyRequests]
-windows
+[setLifecycleStateWithDevTools]
+msvc-2019

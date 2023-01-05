@@ -1,8 +1,8 @@
-QT.packetprotocol_private.VERSION = 5.13.2
+QT.packetprotocol_private.VERSION = 5.15.2
 QT.packetprotocol_private.name = QtPacketProtocol
 QT.packetprotocol_private.module = Qt5PacketProtocol
 QT.packetprotocol_private.libs = $$QT_MODULE_LIB_BASE
-QT.packetprotocol_private.includes = $$QT_MODULE_INCLUDE_BASE $$QT_MODULE_INCLUDE_BASE/QtPacketProtocol $$QT_MODULE_INCLUDE_BASE/QtPacketProtocol/5.13.2 $$QT_MODULE_INCLUDE_BASE/QtPacketProtocol/5.13.2/QtPacketProtocol
+QT.packetprotocol_private.includes = $$QT_MODULE_INCLUDE_BASE $$QT_MODULE_INCLUDE_BASE/QtPacketProtocol $$QT_MODULE_INCLUDE_BASE/QtPacketProtocol/5.15.2 $$QT_MODULE_INCLUDE_BASE/QtPacketProtocol/5.15.2/QtPacketProtocol
 QT.packetprotocol_private.frameworks =
 QT.packetprotocol_private.bins = $$QT_MODULE_BIN_BASE
 QT.packetprotocol_private.depends = core_private

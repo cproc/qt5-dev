@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \qmltype TextArea
     \inherits TextEdit
-    \instantiates QQuickTextArea
+//!     \instantiates QQuickTextArea
     \inqmlmodule QtQuick.Controls
     \since 5.7
     \ingroup qtquickcontrols2-input
@@ -121,8 +121,8 @@ QT_BEGIN_NAMESPACE
     \qmlsignal QtQuick.Controls::TextArea::pressAndHold(MouseEvent event)
 
     This signal is emitted when there is a long press (the delay depends on the platform plugin).
-    The \l {MouseEvent}{event} parameter provides information about the press, including the x and y
-    position of the press, and which button is pressed.
+    The \a event parameter provides information about the press, including the x and y
+    coordinates of the press, and which button is pressed.
 
     \sa pressed, released
 */
@@ -132,8 +132,8 @@ QT_BEGIN_NAMESPACE
     \since QtQuick.Controls 2.1 (Qt 5.8)
 
     This signal is emitted when the text area is pressed by the user.
-    The \l {MouseEvent}{event} parameter provides information about the press,
-    including the x and y position of the press, and which button is pressed.
+    The \a event parameter provides information about the press,
+    including the x and y coordinates of the press, and which button is pressed.
 
     \sa released, pressAndHold
 */
@@ -143,8 +143,9 @@ QT_BEGIN_NAMESPACE
     \since QtQuick.Controls 2.1 (Qt 5.8)
 
     This signal is emitted when the text area is released by the user.
-    The \l {MouseEvent}{event} parameter provides information about the release,
-    including the x and y position of the press, and which button is pressed.
+    The \a event parameter provides information about the release,
+    including the x and y coordinates of the press, and which button
+    is pressed.
 
     \sa pressed, pressAndHold
 */
@@ -218,16 +219,25 @@ void QQuickTextAreaPrivate::resizeBackground()
 
     resizingBackground = true;
 
+    // When using the attached property TextArea.flickable, we reparent the background out
+    // of TextArea and into the Flickable since we don't want the background to move while
+    // flicking. This means that the size of the background should also follow the size of
+    // the Flickable rather than the size of the TextArea.
+    const auto flickable = qobject_cast<QQuickFlickable *>(background->parentItem());
+
     QQuickItemPrivate *p = QQuickItemPrivate::get(background);
     if (((!p->widthValid || !extra.isAllocated() || !extra->hasBackgroundWidth) && qFuzzyIsNull(background->x()))
             || (extra.isAllocated() && (extra->hasLeftInset || extra->hasRightInset))) {
+        const qreal bgWidth = flickable ? flickable->width() : width;
         background->setX(getLeftInset());
-        background->setWidth(width - getLeftInset() - getRightInset());
+        background->setWidth(bgWidth - getLeftInset() - getRightInset());
     }
+
     if (((!p->heightValid || !extra.isAllocated() || !extra->hasBackgroundHeight) && qFuzzyIsNull(background->y()))
             || (extra.isAllocated() && (extra->hasTopInset || extra->hasBottomInset))) {
+        const qreal bgHeight = flickable ? flickable->height() : height;
         background->setY(getTopInset());
-        background->setHeight(height - getTopInset() - getBottomInset());
+        background->setHeight(bgHeight - getTopInset() - getBottomInset());
     }
 
     resizingBackground = false;
@@ -253,7 +263,10 @@ void QQuickTextAreaPrivate::inheritFont(const QFont &font)
     parentFont.resolve(extra.isAllocated() ? extra->requestedFont.resolve() | font.resolve() : font.resolve());
 
     const QFont defaultFont = QQuickTheme::font(QQuickTheme::TextArea);
-    const QFont resolvedFont = parentFont.resolve(defaultFont);
+    QFont resolvedFont = parentFont.resolve(defaultFont);
+    // See comment in QQuickControlPrivate::inheritFont
+    if (defaultFont.families().isEmpty())
+        resolvedFont.setFamilies(QStringList());
 
     setFont_helper(resolvedFont);
 }
@@ -630,7 +643,7 @@ void QQuickTextArea::setBackground(QQuickItem *background)
     }
 
     QQuickControlPrivate::removeImplicitSizeListener(d->background, d, QQuickControlPrivate::ImplicitSizeChanges | QQuickItemPrivate::Geometry);
-    delete d->background;
+    QQuickControlPrivate::hideOldItem(d->background);
     d->background = background;
 
     if (background) {

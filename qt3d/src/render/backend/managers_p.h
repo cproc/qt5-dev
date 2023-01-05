@@ -71,21 +71,19 @@
 #include <Qt3DRender/private/parameter_p.h>
 #include <Qt3DRender/private/shaderdata_p.h>
 #include <Qt3DRender/private/handle_types_p.h>
-#include <Qt3DRender/private/glbuffer_p.h>
-#include <Qt3DRender/private/glfence_p.h>
 #include <Qt3DRender/private/textureimage_p.h>
 #include <Qt3DRender/private/attribute_p.h>
 #include <Qt3DRender/private/geometry_p.h>
 #include <Qt3DRender/private/objectpicker_p.h>
 #include <Qt3DRender/private/raycaster_p.h>
 #include <Qt3DRender/private/boundingvolumedebug_p.h>
-#include <Qt3DRender/private/openglvertexarrayobject_p.h>
 #include <Qt3DRender/private/light_p.h>
 #include <Qt3DRender/private/environmentlight_p.h>
 #include <Qt3DRender/private/computecommand_p.h>
 #include <Qt3DRender/private/armature_p.h>
 #include <Qt3DRender/private/skeleton_p.h>
 #include <Qt3DRender/private/joint_p.h>
+#include <Qt3DRender/private/shaderimage_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -93,7 +91,7 @@ namespace Qt3DRender {
 
 namespace Render {
 
-class AttachmentManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT AttachmentManager : public Qt3DCore::QResourceManager<
         RenderTargetOutput,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -102,7 +100,7 @@ public:
     AttachmentManager() {}
 };
 
-class CameraManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT CameraManager : public Qt3DCore::QResourceManager<
         CameraLens,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -111,7 +109,7 @@ public:
     CameraManager() {}
 };
 
-class FilterKeyManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT FilterKeyManager : public Qt3DCore::QResourceManager<
         FilterKey,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -121,7 +119,7 @@ public:
     FilterKeyManager() {}
 };
 
-class EffectManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT EffectManager : public Qt3DCore::QResourceManager<
         Effect,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -130,7 +128,7 @@ public:
     EffectManager() {}
 };
 
-class Q_AUTOTEST_EXPORT EntityManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT EntityManager : public Qt3DCore::QResourceManager<
         Entity,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -148,7 +146,7 @@ public:
 
 class FrameGraphNode;
 
-class Q_AUTOTEST_EXPORT FrameGraphManager
+class Q_3DRENDERSHARED_PRIVATE_EXPORT FrameGraphManager
 {
 public:
     FrameGraphManager() {}
@@ -163,7 +161,7 @@ private:
     QHash<Qt3DCore::QNodeId, FrameGraphNode*> m_nodes;
 };
 
-class LayerManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT LayerManager : public Qt3DCore::QResourceManager<
         Layer,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -172,7 +170,7 @@ public:
     LayerManager() {}
 };
 
-class LevelOfDetailManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT LevelOfDetailManager : public Qt3DCore::QResourceManager<
         LevelOfDetail,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -181,7 +179,7 @@ public:
     LevelOfDetailManager() {}
 };
 
-class MaterialManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT MaterialManager : public Qt3DCore::QResourceManager<
         Material,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -190,7 +188,7 @@ public:
     MaterialManager() {}
 };
 
-class MatrixManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT MatrixManager : public Qt3DCore::QResourceManager<
         Matrix4x4,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -199,16 +197,46 @@ public:
     MatrixManager() {}
 };
 
-class ShaderManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ShaderManager : public Qt3DCore::QResourceManager<
         Shader,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
 {
 public:
     ShaderManager() {}
+
+    // Called in AspectThread by Shader node functor destroy
+    void addShaderIdToCleanup(Qt3DCore::QNodeId id)
+    {
+        m_shaderIdsToCleanup.push_back(id);
+    }
+
+    void removeShaderIdFromIdsToCleanup(Qt3DCore::QNodeId id)
+    {
+        m_shaderIdsToCleanup.removeAll(id);
+    }
+
+    bool hasShaderIdToCleanup(Qt3DCore::QNodeId id) const
+    {
+        return m_shaderIdsToCleanup.contains(id);
+    }
+
+    QVector<Qt3DCore::QNodeId> shaderIdsToCleanup() const
+    {
+        return m_shaderIdsToCleanup;
+    }
+
+    // Called by RenderThread in updateGLResources (locked)
+    QVector<Qt3DCore::QNodeId> takeShaderIdsToCleanup()
+    {
+        return std::move(m_shaderIdsToCleanup);
+    }
+
+private:
+    QVector<Qt3DCore::QNodeId> m_shaderIdsToCleanup;
 };
 
-class ShaderBuilderManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ShaderBuilderManager : public Qt3DCore::QResourceManager<
         ShaderBuilder,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -217,7 +245,7 @@ public:
     ShaderBuilderManager() {}
 };
 
-class TextureManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT TextureManager : public Qt3DCore::QResourceManager<
         Texture,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -256,7 +284,7 @@ private:
     QVector<Qt3DCore::QNodeId> m_textureIdsToCleanup;
 };
 
-class TransformManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT TransformManager : public Qt3DCore::QResourceManager<
         Transform,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -265,25 +293,45 @@ public:
     TransformManager() {}
 };
 
-class VAOManager : public Qt3DCore::QResourceManager<
-        OpenGLVertexArrayObject,
-        VAOIdentifier,
-        Qt3DCore::NonLockingPolicy>
-{
-public:
-    VAOManager() {}
-};
-
-class RenderTargetManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RenderTargetManager : public Qt3DCore::QResourceManager<
         RenderTarget,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
 {
 public:
     RenderTargetManager() {}
+
+    // Called in AspectThread by RenderTarget node functor destroy
+    void addRenderTargetIdToCleanup(Qt3DCore::QNodeId id)
+    {
+        m_renderTargetIdsToCleanup.push_back(id);
+    }
+
+    // Called in AspectThread by RenderTarget node functor create
+    void removeRenderTargetToCleanup(Qt3DCore::QNodeId id)
+    {
+        m_renderTargetIdsToCleanup.removeAll(id);
+    }
+
+    // Called by RenderThread in updateGLResources (locked)
+    QVector<Qt3DCore::QNodeId> takeRenderTargetIdsToCleanup()
+    {
+        return std::move(m_renderTargetIdsToCleanup);
+    }
+
+#ifdef QT_BUILD_INTERNAL
+    // For unit testing purposes only
+    QVector<Qt3DCore::QNodeId> renderTargetIdsToCleanup() const
+    {
+        return m_renderTargetIdsToCleanup;
+    }
+#endif
+
+private:
+    QVector<Qt3DCore::QNodeId> m_renderTargetIdsToCleanup;
 };
 
-class RenderPassManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RenderPassManager : public Qt3DCore::QResourceManager<
         RenderPass,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -293,7 +341,7 @@ public:
 };
 
 
-class ParameterManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ParameterManager : public Qt3DCore::QResourceManager<
         Parameter,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -302,7 +350,16 @@ public:
     ParameterManager() {}
 };
 
-class ShaderDataManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ShaderImageManager : public Qt3DCore::QResourceManager<
+        ShaderImage,
+        Qt3DCore::QNodeId,
+        Qt3DCore::NonLockingPolicy>
+{
+public:
+    ShaderImageManager() {}
+};
+
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ShaderDataManager : public Qt3DCore::QResourceManager<
         ShaderData,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -311,46 +368,35 @@ public:
     ShaderDataManager() {}
 };
 
-class GLBufferManager : public Qt3DCore::QResourceManager<
-        GLBuffer,
-        Qt3DCore::QNodeId,
-        Qt3DCore::NonLockingPolicy>
-{
-};
-
-class GLFenceManager : public QHash<Qt3DCore::QNodeId, GLFence>
-{
-};
-
-class TextureImageManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT TextureImageManager : public Qt3DCore::QResourceManager<
         TextureImage,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
 {
 };
 
-class AttributeManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT AttributeManager : public Qt3DCore::QResourceManager<
         Attribute,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
 {
 };
 
-class GeometryManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT GeometryManager : public Qt3DCore::QResourceManager<
         Geometry,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
 {
 };
 
-class ObjectPickerManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ObjectPickerManager : public Qt3DCore::QResourceManager<
         ObjectPicker,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
 {
 };
 
-class RayCasterManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RayCasterManager : public Qt3DCore::QResourceManager<
         RayCaster,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -366,7 +412,7 @@ class BoundingVolumeDebugManager : public Qt3DCore::QResourceManager<
 };
 #endif
 
-class LightManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT LightManager : public Qt3DCore::QResourceManager<
         Light,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -375,7 +421,7 @@ public:
     LightManager() {}
 };
 
-class EnvironmentLightManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT EnvironmentLightManager : public Qt3DCore::QResourceManager<
         EnvironmentLight,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -384,7 +430,7 @@ public:
     EnvironmentLightManager() {}
 };
 
-class ComputeCommandManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ComputeCommandManager : public Qt3DCore::QResourceManager<
         ComputeCommand,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -393,21 +439,21 @@ public:
     ComputeCommandManager() {}
 };
 
-class RenderStateManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RenderStateManager : public Qt3DCore::QResourceManager<
         RenderStateNode,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
 {
 };
 
-class ArmatureManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT ArmatureManager : public Qt3DCore::QResourceManager<
         Armature,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
 {
 };
 
-class SkeletonManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT SkeletonManager : public Qt3DCore::QResourceManager<
         Skeleton,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -426,7 +472,7 @@ private:
     QVector<HSkeleton> m_dirtyTransformSkeletons;
 };
 
-class JointManager : public Qt3DCore::QResourceManager<
+class Q_3DRENDERSHARED_PRIVATE_EXPORT JointManager : public Qt3DCore::QResourceManager<
         Joint,
         Qt3DCore::QNodeId,
         Qt3DCore::NonLockingPolicy>
@@ -461,11 +507,11 @@ Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::BoundingVolumeDebug, Q_REQUIRES_CLEA
 Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::ComputeCommand, Q_REQUIRES_CLEANUP)
 Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::Parameter, Q_REQUIRES_CLEANUP)
 Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::Transform, Q_REQUIRES_CLEANUP)
-Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::OpenGLVertexArrayObject, Q_REQUIRES_CLEANUP)
 Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::Armature, Q_REQUIRES_CLEANUP)
 Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::Skeleton, Q_REQUIRES_CLEANUP)
 Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::Joint, Q_REQUIRES_CLEANUP)
 Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::ShaderBuilder, Q_REQUIRES_CLEANUP)
+Q_DECLARE_RESOURCE_INFO(Qt3DRender::Render::ShaderImage, Q_REQUIRES_CLEANUP)
 
 QT_END_NAMESPACE
 

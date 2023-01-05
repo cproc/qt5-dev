@@ -259,16 +259,14 @@ bool VideoCaptureDeviceFactoryLinux::HasUsableFormats(int fd,
   if (!(capabilities & V4L2_CAP_VIDEO_CAPTURE))
     return false;
 
-#if !defined(OS_FREEBSD)
   const std::vector<uint32_t>& usable_fourccs =
       VideoCaptureDeviceLinux::GetListOfUsableFourCCs(false);
   v4l2_fmtdesc fmtdesc = {};
   fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   for (; DoIoctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0; ++fmtdesc.index) {
-    if (base::ContainsValue(usable_fourccs, fmtdesc.pixelformat))
+    if (base::Contains(usable_fourccs, fmtdesc.pixelformat))
       return true;
   }
-#endif
 
   DVLOG(1) << "No usable formats found";
   return false;
@@ -314,13 +312,10 @@ void VideoCaptureDeviceFactoryLinux::GetSupportedFormatsForV4L2BufferType(
   v4l2_format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   for (; DoIoctl(fd, VIDIOC_ENUM_FMT, &v4l2_format) == 0; ++v4l2_format.index) {
     VideoCaptureFormat supported_format;
-#if !defined(OS_FREEBSD)
     supported_format.pixel_format =
         VideoCaptureDeviceLinux::V4l2FourCcToChromiumPixelFormat(
             v4l2_format.pixelformat);
-#else
     supported_format.pixel_format = PIXEL_FORMAT_UNKNOWN;
-#endif
 
     if (supported_format.pixel_format == PIXEL_FORMAT_UNKNOWN)
       continue;

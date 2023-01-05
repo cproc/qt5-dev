@@ -98,37 +98,6 @@ class BASE_EXPORT ProcessMetrics {
   BASE_EXPORT size_t GetResidentSetSize() const;
 #endif
 
-#if defined(OS_CHROMEOS)
-  // /proc/<pid>/totmaps is a syscall that returns memory summary statistics for
-  // the process.
-  // totmaps is a Linux specific concept, currently only being used on ChromeOS.
-  // Do not attempt to extend this to other platforms.
-  //
-  struct TotalsSummary {
-    size_t private_clean_kb;
-    size_t private_dirty_kb;
-    size_t swap_kb;
-  };
-  BASE_EXPORT TotalsSummary GetTotalsSummary() const;
-#endif
-
-#if defined(OS_MACOSX)
-  struct TaskVMInfo {
-    // Only available on macOS 10.12+.
-    // Anonymous, non-discardable memory, including non-volatile IOKit.
-    // Measured in bytes.
-    uint64_t phys_footprint = 0;
-
-    // Anonymous, non-discardable, non-compressed memory, excluding IOKit.
-    // Measured in bytes.
-    uint64_t internal = 0;
-
-    // Compressed memory measured in bytes.
-    uint64_t compressed = 0;
-  };
-  TaskVMInfo GetTaskVMInfo() const;
-#endif
-
   // Returns the percentage of time spent executing, across all threads of the
   // process, in the interval since the last time the method was called. Since
   // this considers the total execution time across all threads in a process,
@@ -168,6 +137,10 @@ class BASE_EXPORT ProcessMetrics {
   // measures such as placing DRAM in to self-refresh (also referred to as
   // auto-refresh), place interconnects into lower-power states etc"
   int GetPackageIdleWakeupsPerSecond();
+
+  // Returns "Energy Impact", a synthetic power estimation metric displayed by
+  // macOS in Activity Monitor and the battery menu.
+  int GetEnergyImpact();
 #endif
 
   // Retrieves accounting information for all I/O operations performed by the
@@ -257,6 +230,9 @@ class BASE_EXPORT ProcessMetrics {
   // And same thing for package idle exit wakeups.
   TimeTicks last_package_idle_wakeups_time_;
   uint64_t last_absolute_package_idle_wakeups_;
+  double last_energy_impact_;
+  // In mach_absolute_time units.
+  uint64_t last_energy_impact_time_;
 #endif
 
 #if !defined(OS_IOS)
@@ -285,6 +261,9 @@ BASE_EXPORT size_t GetPageSize();
 // at once. If the number is unavailable, a conservative best guess is returned.
 BASE_EXPORT size_t GetMaxFds();
 
+// Returns the maximum number of handles that can be open at once per process.
+BASE_EXPORT size_t GetHandleLimit();
+
 #if defined(OS_POSIX)
 // Increases the file descriptor soft limit to |max_descriptors| or the OS hard
 // limit, whichever is lower. If the limit is already higher than
@@ -292,8 +271,8 @@ BASE_EXPORT size_t GetMaxFds();
 BASE_EXPORT void IncreaseFdLimitTo(unsigned int max_descriptors);
 #endif  // defined(OS_POSIX)
 
-#if defined(OS_WIN) || defined(OS_MACOSX) || defined(OS_LINUX) || \
-    defined(OS_ANDROID) || defined(OS_AIX) || defined(OS_FUCHSIA) || defined(OS_BSD)
+#if defined(OS_WIN) || defined(OS_MACOSX) || defined(OS_LINUX) || defined(OS_BSD) || \
+    defined(OS_ANDROID) || defined(OS_AIX) || defined(OS_FUCHSIA)
 // Data about system-wide memory consumption. Values are in KB. Available on
 // Windows, Mac, Linux, Android and Chrome OS.
 //
@@ -340,8 +319,8 @@ struct BASE_EXPORT SystemMemoryInfoKB {
   int swap_free = 0;
 #endif
 
-#if defined(OS_ANDROID) || defined(OS_LINUX) || defined(OS_AIX) || \
-    defined(OS_FUCHSIA) || defined(OS_BSD)
+#if defined(OS_ANDROID) || defined(OS_LINUX) || defined(OS_AIX) || defined(OS_BSD) || \
+    defined(OS_FUCHSIA)
   int buffers = 0;
   int cached = 0;
   int active_anon = 0;
@@ -350,8 +329,8 @@ struct BASE_EXPORT SystemMemoryInfoKB {
   int inactive_file = 0;
   int dirty = 0;
   int reclaimable = 0;
-#endif  // defined(OS_ANDROID) || defined(OS_LINUX) || defined(OS_AIX) ||
-        // defined(OS_FUCHSIA) || defined(OS_BSD)
+#endif  // defined(OS_ANDROID) || defined(OS_LINUX) || defined(OS_AIX) || defined(OS_BSD) ||
+        // defined(OS_FUCHSIA)
 
 #if defined(OS_CHROMEOS)
   int shmem = 0;
@@ -376,8 +355,8 @@ struct BASE_EXPORT SystemMemoryInfoKB {
 // Exposed for memory debugging widget.
 BASE_EXPORT bool GetSystemMemoryInfo(SystemMemoryInfoKB* meminfo);
 
-#endif  // defined(OS_WIN) || defined(OS_MACOSX) || defined(OS_LINUX) ||
-        // defined(OS_ANDROID) || defined(OS_AIX) || defined(OS_FUCHSIA) || defined(OS_BSD)
+#endif  // defined(OS_WIN) || defined(OS_MACOSX) || defined(OS_LINUX) || defined(OS_BSD)
+        // defined(OS_ANDROID) || defined(OS_AIX) || defined(OS_FUCHSIA)
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_AIX) || defined(OS_BSD)
 // Parse the data found in /proc/<pid>/stat and return the sum of the
@@ -452,7 +431,7 @@ BASE_EXPORT bool GetSystemDiskInfo(SystemDiskInfo* diskinfo);
 // Returns the amount of time spent in user space since boot across all CPUs.
 BASE_EXPORT TimeDelta GetUserCpuTimeSinceBoot();
 
-#endif  // defined(OS_LINUX) || defined(OS_ANDROID)
+#endif  // defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_BSD)
 
 #if defined(OS_CHROMEOS)
 // Data from files in directory /sys/block/zram0 about ZRAM usage.
@@ -534,7 +513,7 @@ BASE_EXPORT bool GetSystemPerformanceInfo(SystemPerformanceInfo* info);
 // Collects and holds performance metrics for system memory and disk.
 // Provides functionality to retrieve the data on various platforms and
 // to serialize the stored data.
-class SystemMetrics {
+class BASE_EXPORT SystemMetrics {
  public:
   SystemMetrics();
 
@@ -547,7 +526,7 @@ class SystemMetrics {
   FRIEND_TEST_ALL_PREFIXES(SystemMetricsTest, SystemMetrics);
 
   size_t committed_memory_;
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_BSD)
   SystemMemoryInfoKB memory_info_;
   VmStatInfo vmstat_info_;
   SystemDiskInfo disk_info_;

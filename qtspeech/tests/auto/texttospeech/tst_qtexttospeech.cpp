@@ -38,19 +38,23 @@
 #include <QTest>
 #include <QTextToSpeech>
 #include <QSignalSpy>
+#include <qttexttospeech-config.h>
 
-#if defined(HAVE_SPEECHD)
+#if QT_CONFIG(speechd)
     #include <libspeechd.h>
     #if LIBSPEECHD_MAJOR_VERSION == 0 && LIBSPEECHD_MINOR_VERSION < 9
         #define HAVE_SPEECHD_BEFORE_090
     #endif
 #endif
 
+enum : int { SpeechDuration = 20000 };
+
 class tst_QTextToSpeech : public QObject
 {
     Q_OBJECT
 
 private slots:
+    void initTestCase();
     void say_hello();
     void speech_rate();
     void pitch();
@@ -58,6 +62,12 @@ private slots:
     void volume();
 };
 
+void tst_QTextToSpeech::initTestCase()
+{
+#if QT_CONFIG(speechd) && defined(LIBSPEECHD_MAJOR_VERSION) && defined(LIBSPEECHD_MINOR_VERSION)
+    qInfo("Using libspeechd v%d.%d", LIBSPEECHD_MAJOR_VERSION, LIBSPEECHD_MINOR_VERSION);
+#endif
+}
 
 void tst_QTextToSpeech::say_hello()
 {
@@ -69,9 +79,9 @@ void tst_QTextToSpeech::say_hello()
     timer.start();
     tts.say(text);
     QTRY_COMPARE(tts.state(), QTextToSpeech::Speaking);
-    QSignalSpy spy(&tts, SIGNAL(stateChanged(QTextToSpeech::State)));
-    spy.wait(10000);
-    QCOMPARE(tts.state(), QTextToSpeech::Ready);
+    QSignalSpy spy(&tts, &QTextToSpeech::stateChanged);
+    QVERIFY(spy.wait(SpeechDuration));
+    QCOMPARE(int(tts.state()), int(QTextToSpeech::Ready));
     QVERIFY(timer.elapsed() > 100);
 }
 
@@ -93,9 +103,9 @@ void tst_QTextToSpeech::speech_rate()
         timer.start();
         tts.say(text);
         QTRY_COMPARE(tts.state(), QTextToSpeech::Speaking);
-        QSignalSpy spy(&tts, SIGNAL(stateChanged(QTextToSpeech::State)));
-        spy.wait(10000);
-        QCOMPARE(tts.state(), QTextToSpeech::Ready);
+        QSignalSpy spy(&tts, &QTextToSpeech::stateChanged);
+        QVERIFY(spy.wait(SpeechDuration));
+        QCOMPARE(int(tts.state()), int(QTextToSpeech::Ready));
         qint64 time = timer.elapsed();
         QVERIFY(time > lastTime);
         lastTime = time;
@@ -133,9 +143,9 @@ void tst_QTextToSpeech::set_voice()
     timer.start();
     tts.say(text);
     QTRY_COMPARE(tts.state(), QTextToSpeech::Speaking);
-    QSignalSpy spy(&tts, SIGNAL(stateChanged(QTextToSpeech::State)));
-    spy.wait(10000);
-    QCOMPARE(tts.state(), QTextToSpeech::Ready);
+    QSignalSpy spy(&tts, &QTextToSpeech::stateChanged);
+    QVERIFY(spy.wait(SpeechDuration));
+    QCOMPARE(int(tts.state()), int(QTextToSpeech::Ready));
     QVERIFY(timer.elapsed() > 100);
 }
 

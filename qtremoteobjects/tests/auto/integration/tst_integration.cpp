@@ -1062,6 +1062,32 @@ private slots:
         QCOMPARE(engine_r2->rpm(), e.rpm());
     }
 
+    // verify that our second replica emits "Changed" signals when initialized
+    void doubleReplicaTest2()
+    {
+        setupHost();
+        Engine e;
+        host->enableRemoting(&e);
+        e.setRpm(3412);
+
+        setupClient();
+
+        const QScopedPointer<EngineReplica> engine_r1(client->acquire< EngineReplica >());
+        QSignalSpy spy_r1(engine_r1.data(), SIGNAL(rpmChanged(int)));
+        engine_r1->waitForSource();
+        QCOMPARE(engine_r1->rpm(), e.rpm());
+        QCOMPARE(spy_r1.count(), 1);
+
+        // NOTE: A second replica will have initialized and notify signals emitted as part of acquire,
+        // which leads to different semantics for first and second replicas. Specifically, there is no
+        // way to hook in to initialized and the initial notify signals. We should consider changing this.
+        const QScopedPointer<EngineReplica> engine_r2(client->acquire< EngineReplica >());
+//        QSignalSpy spy_r2(engine_r2.data(), SIGNAL(rpmChanged(int)));
+//        engine_r2->waitForSource();
+        QCOMPARE(engine_r2->rpm(), e.rpm());
+//        QCOMPARE(spy_r2.count(), 1);
+    }
+
     void twoReplicaTest() {
         setupHost();
         Engine e;
@@ -1323,7 +1349,7 @@ private slots:
         replica.reset(localSocketTestClient.acquireDynamic(objectname));
 
         QProcess testServer;
-        testServer.start(progName);
+        testServer.start(progName, QStringList());
         QVERIFY(testServer.waitForStarted());
         QVERIFY(localSocketTestClient.lastError() == QRemoteObjectNode::NoError);
         replica->waitForSource(1000);
@@ -1342,7 +1368,7 @@ private slots:
         });
 
         QProcess testServer;
-        testServer.start(progName);
+        testServer.start(progName, QStringList());
         QVERIFY(testServer.waitForStarted());
         QFileInfo info(QDir::temp().absoluteFilePath(QStringLiteral("crashMe")));
         QVERIFY(info.exists());
@@ -1358,7 +1384,7 @@ private slots:
         QScopedPointer<QRemoteObjectDynamicReplica> replica;
         replica.reset(localSocketTestClient.acquireDynamic(objectname));
 
-        testServer.start(progName);
+        testServer.start(progName, QStringList());
         QVERIFY(testServer.waitForStarted());
         QVERIFY(localSocketTestClient.lastError() == QRemoteObjectNode::NoError);
         replica->waitForSource(1000);

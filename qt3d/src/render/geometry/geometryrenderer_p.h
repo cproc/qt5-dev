@@ -54,6 +54,7 @@
 #include <Qt3DRender/private/backendnode_p.h>
 #include <Qt3DRender/qgeometryrenderer.h>
 #include <Qt3DRender/qgeometryfactory.h>
+#include <Qt3DRender/qmesh.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -66,7 +67,13 @@ namespace Render {
 
 class GeometryRendererManager;
 
-class Q_AUTOTEST_EXPORT GeometryRenderer : public BackendNode
+struct GeometryFunctorResult
+{
+    QGeometry *geometry;
+    QMesh::Status status;
+};
+
+class Q_3DRENDERSHARED_PRIVATE_EXPORT GeometryRenderer : public BackendNode
 {
 public:
     GeometryRenderer();
@@ -74,8 +81,8 @@ public:
 
     void cleanup();
     void setManager(GeometryRendererManager *manager);
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
-    void executeFunctor();
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
+    GeometryFunctorResult executeFunctor();
 
     inline Qt3DCore::QNodeId geometryId() const { return m_geometryId; }
     inline int instanceCount() const { return m_instanceCount; }
@@ -98,8 +105,6 @@ public:
     QVector<RayCasting::QBoundingVolume *> triangleData() const;
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     Qt3DCore::QNodeId m_geometryId;
     int m_instanceCount;
     int m_vertexCount;

@@ -58,10 +58,6 @@ QAbstractRayCasterPrivate::QAbstractRayCasterPrivate()
     m_shareable = false;
 }
 
-/*!
-    \property Qt3DRender::QAbstractRayCaster::Hits
-*/
-
 QAbstractRayCasterPrivate *QAbstractRayCasterPrivate::get(QAbstractRayCaster *obj)
 {
     return obj->d_func();
@@ -117,7 +113,8 @@ void QAbstractRayCasterPrivate::dispatchHits(const QAbstractRayCaster::Hits &hit
 
     \note Components derived from QAbstractRayCaster should not be shared amount multiple entities.
 
-    \sa Qt3DRender::QRayCaster, Qt3DRender::QScreenRayCaster, Qt3DRender::QObjectPicker, Qt3DRender::QPickingSettings
+    \sa Qt3DRender::QRayCaster, Qt3DRender::QScreenRayCaster, Qt3DRender::QObjectPicker,
+    Qt3DRender::QPickingSettings, Qt3DRender::QNoPicking
 */
 /*!
     \qmltype AbstractRayCaster
@@ -148,7 +145,8 @@ void QAbstractRayCasterPrivate::dispatchHits(const QAbstractRayCaster::Hits &hit
 
     Note: components derived from AbstractRayCaster should not be shared amount multiple entities.
 
-    \sa Qt3D.Render::RayCaster, Qt3D.Render::ScreenRayCaster, Qt3D.Render::ObjectPicker, Qt3D.Render::PickingSettings
+    \sa Qt3D.Render::RayCaster, Qt3D.Render::ScreenRayCaster, Qt3D.Render::ObjectPicker,
+    Qt3D.Render::PickingSettings, Qt3D.Render::NoPicking
 */
 
 /*!
@@ -339,11 +337,7 @@ void QAbstractRayCaster::addLayer(QLayer *layer)
         if (!layer->parent())
             layer->setParent(this);
 
-        if (d->m_changeArbiter != nullptr) {
-            const auto change = Qt3DCore::QPropertyNodeAddedChangePtr::create(id(), layer);
-            change->setPropertyName("layer");
-            d->notifyObservers(change);
-        }
+        d->updateNode(layer, "layer", Qt3DCore::PropertyValueAdded);
     }
 }
 
@@ -354,12 +348,9 @@ void QAbstractRayCaster::removeLayer(QLayer *layer)
 {
     Q_ASSERT(layer);
     Q_D(QAbstractRayCaster);
-    if (d->m_changeArbiter != nullptr) {
-        const auto change = Qt3DCore::QPropertyNodeRemovedChangePtr::create(id(), layer);
-        change->setPropertyName("layer");
-        d->notifyObservers(change);
-    }
-    d->m_layers.removeOne(layer);
+    if (!d->m_layers.removeOne(layer))
+        return;
+    d->updateNode(layer, "layer", Qt3DCore::PropertyValueRemoved);
     // Remove bookkeeping connection
     d->unregisterDestructionHelper(layer);
 }

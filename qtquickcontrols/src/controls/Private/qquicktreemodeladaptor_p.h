@@ -84,10 +84,10 @@ public:
         ModelIndexRole
     };
 
-    QHash<int, QByteArray> roleNames() const;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    QVariant data(const QModelIndex &, int role) const;
-    bool setData(const QModelIndex &index, const QVariant &value, int role);
+    QHash<int, QByteArray> roleNames() const override;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &, int role) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
     void clearModelData();
 
@@ -95,7 +95,7 @@ public:
     bool childrenVisible(const QModelIndex &index);
 
     const QModelIndex &mapToModel(const QModelIndex &index) const;
-    Q_INVOKABLE QModelIndex mapRowToModelIndex(int row) const;
+    Q_INVOKABLE QPersistentModelIndex mapRowToModelIndex(int row) const;
 
     Q_INVOKABLE QItemSelection selectionForRowRange(const QModelIndex &fromIndex, const QModelIndex &toIndex) const;
 
@@ -157,12 +157,39 @@ private:
         }
     };
 
+    struct DataChangedParams {
+        QModelIndex topLeft;
+        QModelIndex bottomRight;
+        QVector<int> roles;
+    };
+
+    struct SignalFreezer {
+        SignalFreezer(QQuickTreeModelAdaptor1 *parent) : m_parent(parent) {
+            m_parent->enableSignalAggregation();
+        }
+        ~SignalFreezer() { m_parent->disableSignalAggregation(); }
+
+    private:
+        QQuickTreeModelAdaptor1 *m_parent;
+    };
+
+    void enableSignalAggregation();
+    void disableSignalAggregation();
+    bool isAggregatingSignals() const { return m_signalAggregatorStack > 0; }
+    void queueDataChanged(const QModelIndex &topLeft,
+                          const QModelIndex &bottomRight,
+                          const QVector<int> &roles);
+    void emitQueuedSignals();
+
     QPointer<QAbstractItemModel> m_model;
     QPersistentModelIndex m_rootIndex;
     QList<TreeItem> m_items;
     QSet<QPersistentModelIndex> m_expandedItems;
     QList<TreeItem *> m_itemsToExpand;
     mutable int m_lastItemIndex;
+    bool m_visibleRowsMoved;
+    int m_signalAggregatorStack;
+    QVector<DataChangedParams> m_queuedDataChanged;
 };
 
 QT_END_NAMESPACE

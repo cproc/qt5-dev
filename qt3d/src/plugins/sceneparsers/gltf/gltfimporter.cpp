@@ -64,6 +64,7 @@
 #include <Qt3DRender/qmultisampleantialiasing.h>
 #include <Qt3DRender/qpointsize.h>
 #include <Qt3DRender/qnodepthmask.h>
+#include <Qt3DRender/qdepthrange.h>
 #include <Qt3DRender/qdepthtest.h>
 #include <Qt3DRender/qseamlesscubemap.h>
 #include <Qt3DRender/qstencilmask.h>
@@ -107,6 +108,7 @@
 #include <Qt3DExtras/qtorusmesh.h>
 
 #include <private/qurlhelper_p.h>
+#include <private/qloadgltf_p.h>
 
 /**
   * glTF 2.0 conformance report
@@ -409,12 +411,7 @@ void GLTFImporter::setSource(const QUrl &source)
     QFile f(path);
     f.open(QIODevice::ReadOnly);
 
-    QByteArray jsonData = f.readAll();
-    QJsonDocument sceneDocument = QJsonDocument::fromBinaryData(jsonData);
-    if (sceneDocument.isNull())
-        sceneDocument = QJsonDocument::fromJson(jsonData);
-
-    if (Q_UNLIKELY(!setJSON(sceneDocument))) {
+    if (Q_UNLIKELY(!setJSON(qLoadGLTF(f.readAll())))) {
         qCWarning(GLTFImporterLog, "not a JSON document");
         return;
     }
@@ -429,11 +426,7 @@ void GLTFImporter::setSource(const QUrl &source)
  */
 void GLTFImporter::setData(const QByteArray& data, const QString &basePath)
 {
-    QJsonDocument sceneDocument = QJsonDocument::fromBinaryData(data);
-    if (sceneDocument.isNull())
-        sceneDocument = QJsonDocument::fromJson(data);
-
-    if (Q_UNLIKELY(!setJSON(sceneDocument))) {
+    if (Q_UNLIKELY(!setJSON(qLoadGLTF(data)))) {
         qCWarning(GLTFImporterLog, "not a JSON document");
         return;
     }
@@ -1513,16 +1506,6 @@ void GLTFImporter::processJSONBufferView(const QString &id, const QJsonObject& j
     } else {
         target = targetValue.toInt();
     }
-    Qt3DRender::QBuffer::BufferType ty(Qt3DRender::QBuffer::VertexBuffer);
-
-    switch (target) {
-    case GL_ARRAY_BUFFER:           ty = Qt3DRender::QBuffer::VertexBuffer; break;
-    case GL_ELEMENT_ARRAY_BUFFER:   ty = Qt3DRender::QBuffer::IndexBuffer; break;
-    default:
-        qCWarning(GLTFImporterLog, "buffer %ls unsupported target: %d",
-                  qUtf16PrintableImpl(id), target);
-        return;
-    }
 
     quint64 offset = 0;
     const auto byteOffset = json.value(KEY_BYTE_OFFSET);
@@ -1540,7 +1523,6 @@ void GLTFImporter::processJSONBufferView(const QString &id, const QJsonObject& j
     }
 
     Qt3DRender::QBuffer *b = new Qt3DRender::QBuffer();
-    b->setType(ty);
     b->setData(bytes);
     m_buffers[id] = b;
 }
@@ -2403,9 +2385,11 @@ QRenderState* GLTFImporter::buildState(const QString& functionName, const QJsonV
     }
 
     if (functionName == QLatin1String("depthRange")) {
-        //TODO: support render state depthRange
-        qCWarning(GLTFImporterLog, "unsupported render state: %ls", qUtf16PrintableImpl(functionName));
-        return nullptr;
+        type = GL_DEPTH_RANGE;
+        QDepthRange *depthRange = new QDepthRange;
+        depthRange->setNearValue(values.at(0).toDouble(0.0));
+        depthRange->setFarValue(values.at(1).toDouble(1.0));
+        return depthRange;
     }
 
     if (functionName == QLatin1String("frontFace")) {

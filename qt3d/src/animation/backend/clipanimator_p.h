@@ -77,10 +77,10 @@ public:
     bool isRunning() const { return m_running; }
     void setLoops(int loops) { m_loops = loops; }
     int loops() const { return m_loops; }
-    void setNormalizedLocalTime(float normalizedLocalTime);
+    void setNormalizedLocalTime(float normalizedLocalTime, bool allowMarkDirty = true);
     float normalizedLocalTime() const { return m_normalizedLocalTime; }
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
     void setHandler(Handler *handler) { m_handler = handler; }
 
     // Called by jobs
@@ -92,9 +92,6 @@ public:
 
     int currentLoop() const { return m_currentLoop; }
     void setCurrentLoop(int currentLoop) { m_currentLoop = currentLoop; }
-
-    void sendPropertyChanges(const QVector<Qt3DCore::QSceneChangePtr> &changes);
-    void sendCallbacks(const QVector<AnimationCallbackAndValue> &callbacks);
 
     void animationClipMarkedDirty() { setDirty(Handler::ClipAnimatorDirty); }
 
@@ -116,8 +113,6 @@ public:
     }
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     Qt3DCore::QNodeId m_clipId;
     Qt3DCore::QNodeId m_mapperId;
     Qt3DCore::QNodeId m_clockId;

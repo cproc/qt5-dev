@@ -55,7 +55,7 @@ AbstractBarChartItem::AbstractBarChartItem(QAbstractBarSeries *series, QGraphics
     m_orientation(Qt::Horizontal),
     m_resetAnimation(true)
 {
-    setAcceptedMouseButtons(0);
+    setAcceptedMouseButtons({});
     setFlag(ItemClipsChildrenToShape);
     setFlag(QGraphicsItem::ItemIsSelectable);
     connect(series->d_func(), SIGNAL(updatedLayout()), this, SLOT(handleLayoutChanged()));
@@ -207,12 +207,9 @@ void AbstractBarChartItem::handleLayoutChanged()
 void AbstractBarChartItem::handleLabelsVisibleChanged(bool visible)
 {
     bool newVisible = visible && m_series->isVisible();
-    QMapIterator<QBarSet *, QList<Bar *> > i(m_barMap);
-    while (i.hasNext()) {
-        i.next();
-        const QList<Bar *> &bars = i.value();
-        for (int j = 0; j < bars.size(); j++) {
-            QGraphicsTextItem *label = bars.at(j)->labelItem();
+    for (const QList<Bar *> &bars : qAsConst(m_barMap)) {
+        for (Bar *bar :  bars) {
+            QGraphicsTextItem *label = bar->labelItem();
             if (label)
                 label->setVisible(newVisible);
         }
@@ -235,9 +232,7 @@ void AbstractBarChartItem::handleVisibleChanged()
     bool visible = m_series->isVisible();
     handleLabelsVisibleChanged(m_series->isLabelsVisible());
 
-    QMapIterator<QBarSet *, QList<Bar *> > i(m_barMap);
-    while (i.hasNext()) {
-        i.next();
+    for (auto i = m_barMap.cbegin(), end = m_barMap.cend(); i != end; ++i) {
         const QList<Bar *> &bars = i.value();
         for (int j = 0; j < bars.size(); j++) {
             Bar *bar = bars.at(j);
@@ -357,14 +352,16 @@ void AbstractBarChartItem::positionLabels()
             case QAbstractBarSeries::LabelsCenter:
                 xPos = m_layout.at(bar->layoutIndex()).center().x() - center.x();
                 break;
+            case QAbstractBarSeries::LabelsOutsideEnd:
+                xPos = m_layout.at(bar->layoutIndex()).right() + offset + xDiff;
+                if (xPos + labelRect.width() - offset <= m_rect.right())
+                    break;
+                Q_FALLTHROUGH();
             case QAbstractBarSeries::LabelsInsideEnd:
                 xPos = m_layout.at(bar->layoutIndex()).right() - labelRect.width() - offset + xDiff;
                 break;
             case QAbstractBarSeries::LabelsInsideBase:
                 xPos = m_layout.at(bar->layoutIndex()).left() + offset + xDiff;
-                break;
-            case QAbstractBarSeries::LabelsOutsideEnd:
-                xPos = m_layout.at(bar->layoutIndex()).right() + offset + xDiff;
                 break;
             default:
                 // Invalid position, never comes here
@@ -478,14 +475,16 @@ void AbstractBarChartItem::positionLabelsVertical()
             case QAbstractBarSeries::LabelsCenter:
                 yPos = m_layout.at(bar->layoutIndex()).center().y() - center.y();
                 break;
+            case QAbstractBarSeries::LabelsOutsideEnd:
+                yPos = m_layout.at(bar->layoutIndex()).top() - labelRect.height() - offset + yDiff;
+                if (yPos + offset >= m_rect.y())
+                    break;
+                Q_FALLTHROUGH();
             case QAbstractBarSeries::LabelsInsideEnd:
                 yPos = m_layout.at(bar->layoutIndex()).top() + offset + yDiff;
                 break;
             case QAbstractBarSeries::LabelsInsideBase:
                 yPos = m_layout.at(bar->layoutIndex()).bottom() - labelRect.height() - offset + yDiff;
-                break;
-            case QAbstractBarSeries::LabelsOutsideEnd:
-                yPos = m_layout.at(bar->layoutIndex()).top() - labelRect.height() - offset + yDiff;
                 break;
             default:
                 // Invalid position, never comes here
@@ -505,17 +504,14 @@ void AbstractBarChartItem::createLabelItems()
 
     m_labelItemsMissing = false;
 
-    QMapIterator<QBarSet *, QList<Bar *> > i(m_barMap);
-    while (i.hasNext()) {
-        i.next();
-        const QList<Bar *> &bars = i.value();
-        for (int j = 0; j < bars.size(); j++) {
-            QGraphicsTextItem *label = bars.at(j)->labelItem();
+    for (const QList<Bar *> &bars : qAsConst(m_barMap)) {
+        for (Bar *bar :  bars) {
+            QGraphicsTextItem *label = bar->labelItem();
             if (!label) {
                 QGraphicsTextItem *newLabel = new QGraphicsTextItem(this);
                 newLabel->setAcceptHoverEvents(false);
                 newLabel->document()->setDocumentMargin(ChartPresenter::textMargin());
-                bars.at(j)->setLabelItem(newLabel);
+                bar->setLabelItem(newLabel);
             }
         }
     }

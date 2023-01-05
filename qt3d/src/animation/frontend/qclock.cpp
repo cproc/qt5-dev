@@ -36,7 +36,6 @@
 
 #include "qclock.h"
 #include "qclock_p.h"
-#include <Qt3DCore/qpropertyupdatedchange.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -64,7 +63,10 @@ QClock::~QClock()
 /*!
     \property Qt3DAnimation::QClock::playbackRate
 
-    The playback speed of the animation.
+    The playback speed of the animation. The playback speed can be negative.
+    When that is the case the animation will be played back from the current
+    normalized time value back to 0 and for the number of loops it had been
+    played for with a positive playback rate.
 */
 
 double QClock::playbackRate() const

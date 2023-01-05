@@ -60,12 +60,12 @@ namespace Qt3DRender {
 
 namespace Render {
 
-class Q_AUTOTEST_EXPORT BlitFramebuffer : public FrameGraphNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT BlitFramebuffer : public FrameGraphNode
 {
 public:
     BlitFramebuffer();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
     Qt3DCore::QNodeId sourceRenderTargetId() const;
 
@@ -82,8 +82,6 @@ public:
     QBlitFramebuffer::InterpolationMethod interpolationMethod() const;
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     Qt3DCore::QNodeId m_sourceRenderTargetId;
     Qt3DCore::QNodeId m_destinationRenderTargetId;
     QRect m_sourceRect;

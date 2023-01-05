@@ -121,7 +121,7 @@ void QScriptDebuggerCodeFinderWidgetPrivate::_q_previous()
 
 QScriptDebuggerCodeFinderWidget::QScriptDebuggerCodeFinderWidget(QWidget *parent)
     : QScriptDebuggerCodeFinderWidgetInterface(
-        *new QScriptDebuggerCodeFinderWidgetPrivate, parent, 0)
+        *new QScriptDebuggerCodeFinderWidgetPrivate, parent, {})
 {
     Q_D(QScriptDebuggerCodeFinderWidget);
     QString system = QLatin1String("win");
@@ -130,7 +130,7 @@ QScriptDebuggerCodeFinderWidget::QScriptDebuggerCodeFinderWidget(QWidget *parent
     system = QLatin1String("mac");
 #else
     hboxLayout->setSpacing(6);
-    hboxLayout->setMargin(0);
+    hboxLayout->setContentsMargins(0, 0, 0, 0);
 #endif
 
     d->toolClose = new QToolButton(this);

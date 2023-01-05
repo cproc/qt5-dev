@@ -54,6 +54,7 @@
 #include <QtQuick/private/qquickitemchangelistener_p.h>
 #include <QtQml/private/qv4value_p.h>
 #include <QtCore/qset.h>
+#include <QtCore/qstack.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -72,6 +73,7 @@ public:
     }
 
     void warn(const QString &error);
+    void warnOfInterruption(const QString &attemptedOperation);
 
     void setCurrentItem(QQuickStackElement *element);
 
@@ -93,6 +95,7 @@ public:
     void depthChange(int newDepth, int oldDepth);
 
     bool busy = false;
+    bool modifyingElements = false;
     QString operation;
     QJSValue initialItem;
     QQuickItem *currentItem = nullptr;
@@ -112,7 +115,7 @@ public:
         return attached->d_func();
     }
 
-    void itemParentChanged(QQuickItem *item, QQuickItem *parent);
+    void itemParentChanged(QQuickItem *item, QQuickItem *parent) override;
 
     bool explicitVisible = false;
     QQuickStackElement *element = nullptr;

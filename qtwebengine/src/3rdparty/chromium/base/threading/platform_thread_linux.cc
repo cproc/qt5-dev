@@ -51,7 +51,7 @@ FilePath ThreadPriorityToCgroupDirectory(const FilePath& cgroup_filepath,
 void SetThreadCgroup(PlatformThreadId thread_id,
                      const FilePath& cgroup_directory) {
   FilePath tasks_filepath = cgroup_directory.Append(FILE_PATH_LITERAL("tasks"));
-  std::string tid = IntToString(thread_id);
+  std::string tid = NumberToString(thread_id);
   int bytes_written = WriteFile(tasks_filepath, tid.c_str(), tid.size());
   if (bytes_written != static_cast<int>(tid.size())) {
     DVLOG(1) << "Failed to add " << tid << " to " << tasks_filepath.value();
@@ -124,7 +124,7 @@ bool SetCurrentThreadPriorityForPlatform(ThreadPriority priority) {
 }
 
 Optional<ThreadPriority> GetCurrentThreadPriorityForPlatform() {
-#if !defined(OS_NACL)
+#if !defined(OS_NACL) && !defined(OS_GENODE)
   int maybe_sched_rr = 0;
   struct sched_param maybe_realtime_prio = {0};
   if (pthread_getschedparam(pthread_self(), &maybe_sched_rr,

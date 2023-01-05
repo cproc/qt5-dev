@@ -47,6 +47,8 @@
 #include <private/qquickwindow_p.h>
 #include <private/qquickprofiler_p.h>
 
+#include <qtquick_tracepoints_p.h>
+
 #include "qopenvgcontext_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -96,7 +98,7 @@ void QSGOpenVGRenderLoop::windowDestroyed(QQuickWindow *window)
         vg->doneCurrent();
     }
 
-    delete d->animationController;
+    d->animationController.reset();
 }
 
 void QSGOpenVGRenderLoop::exposureChanged(QQuickWindow *window)
@@ -171,12 +173,16 @@ void QSGOpenVGRenderLoop::renderWindow(QQuickWindow *window)
     if (!cd->isRenderable() || !m_windows.contains(window))
         return;
 
+    Q_TRACE_SCOPE(QSG_renderWindow);
+
     WindowData &data = const_cast<WindowData &>(m_windows[window]);
 
     if (vg == nullptr) {
         vg = new QOpenVGContext(window);
         vg->makeCurrent();
-        cd->context->initialize(vg);
+        QSGOpenVGRenderContext::InitParams params;
+        params.context = vg;
+        cd->context->initialize(&params);
     } else {
         vg->makeCurrent();
     }
@@ -196,14 +202,17 @@ void QSGOpenVGRenderLoop::renderWindow(QQuickWindow *window)
     if (profileFrames)
         renderTimer.start();
     Q_QUICK_SG_PROFILE_START(QQuickProfiler::SceneGraphPolishFrame);
+    Q_TRACE(QSG_polishItems_entry);
 
     cd->polishItems();
 
     if (profileFrames)
         polishTime = renderTimer.nsecsElapsed();
+    Q_TRACE(QSG_polishItems_exit);
     Q_QUICK_SG_PROFILE_SWITCH(QQuickProfiler::SceneGraphPolishFrame,
                               QQuickProfiler::SceneGraphRenderLoopFrame,
                               QQuickProfiler::SceneGraphPolishPolish);
+    Q_TRACE(QSG_sync_entry);
 
     emit window->afterAnimating();
 
@@ -212,8 +221,10 @@ void QSGOpenVGRenderLoop::renderWindow(QQuickWindow *window)
 
     if (profileFrames)
         syncTime = renderTimer.nsecsElapsed();
+    Q_TRACE(QSG_sync_exit);
     Q_QUICK_SG_PROFILE_RECORD(QQuickProfiler::SceneGraphRenderLoopFrame,
                               QQuickProfiler::SceneGraphRenderLoopSync);
+    Q_TRACE(QSG_render_entry);
 
     // setup coordinate system for window
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
@@ -225,8 +236,10 @@ void QSGOpenVGRenderLoop::renderWindow(QQuickWindow *window)
 
     if (profileFrames)
         renderTime = renderTimer.nsecsElapsed();
+    Q_TRACE(QSG_render_exit);
     Q_QUICK_SG_PROFILE_RECORD(QQuickProfiler::SceneGraphRenderLoopFrame,
                               QQuickProfiler::SceneGraphRenderLoopRender);
+    Q_TRACE(QSG_swap_entry);
 
     if (data.grabOnly) {
         grabContent = vg->readFramebuffer(window->size() * window->effectiveDevicePixelRatio());
@@ -241,6 +254,7 @@ void QSGOpenVGRenderLoop::renderWindow(QQuickWindow *window)
     qint64 swapTime = 0;
     if (profileFrames)
         swapTime = renderTimer.nsecsElapsed();
+    Q_TRACE(QSG_swap_exit);
     Q_QUICK_SG_PROFILE_END(QQuickProfiler::SceneGraphRenderLoopFrame,
                            QQuickProfiler::SceneGraphRenderLoopSwap);
 

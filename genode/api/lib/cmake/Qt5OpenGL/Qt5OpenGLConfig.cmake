@@ -1,4 +1,3 @@
-
 if (CMAKE_VERSION VERSION_LESS 3.1.0)
     message(FATAL_ERROR "Qt 5 OpenGL module requires at least CMake version 3.1.0")
 endif()
@@ -6,7 +5,7 @@ endif()
 get_filename_component(_qt5OpenGL_install_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
 # For backwards compatibility only. Use Qt5OpenGL_VERSION instead.
-set(Qt5OpenGL_VERSION_STRING 5.13.2)
+set(Qt5OpenGL_VERSION_STRING 5.15.2)
 
 set(Qt5OpenGL_LIBRARIES Qt5::OpenGL)
 
@@ -54,8 +53,8 @@ if (NOT TARGET Qt5::OpenGL)
 
     set(_Qt5OpenGL_OWN_INCLUDE_DIRS "${_qt5OpenGL_install_prefix}/include/" "${_qt5OpenGL_install_prefix}/include/QtOpenGL")
     set(Qt5OpenGL_PRIVATE_INCLUDE_DIRS
-        "${_qt5OpenGL_install_prefix}/include/QtOpenGL/5.13.2"
-        "${_qt5OpenGL_install_prefix}/include/QtOpenGL/5.13.2/QtOpenGL"
+        "${_qt5OpenGL_install_prefix}/include/QtOpenGL/5.15.2"
+        "${_qt5OpenGL_install_prefix}/include/QtOpenGL/5.15.2/QtOpenGL"
     )
     include("${CMAKE_CURRENT_LIST_DIR}/ExtraSourceIncludes.cmake" OPTIONAL)
 
@@ -99,7 +98,7 @@ if (NOT TARGET Qt5::OpenGL)
     foreach(_module_dep ${_Qt5OpenGL_MODULE_DEPENDENCIES})
         if (NOT Qt5${_module_dep}_FOUND)
             find_package(Qt5${_module_dep}
-                5.13.2 ${_Qt5OpenGL_FIND_VERSION_EXACT}
+                5.15.2 ${_Qt5OpenGL_FIND_VERSION_EXACT}
                 ${_Qt5OpenGL_DEPENDENCIES_FIND_QUIET}
                 ${_Qt5OpenGL_FIND_DEPENDENCIES_REQUIRED}
                 PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
@@ -123,10 +122,27 @@ if (NOT TARGET Qt5::OpenGL)
     list(REMOVE_DUPLICATES Qt5OpenGL_COMPILE_DEFINITIONS)
     list(REMOVE_DUPLICATES Qt5OpenGL_EXECUTABLE_COMPILE_FLAGS)
 
+    # It can happen that the same FooConfig.cmake file is included when calling find_package()
+    # on some Qt component. An example of that is when using a Qt static build with auto inclusion
+    # of plugins:
+    #
+    # Qt5WidgetsConfig.cmake -> Qt5GuiConfig.cmake -> Qt5Gui_QSvgIconPlugin.cmake ->
+    # Qt5SvgConfig.cmake -> Qt5WidgetsConfig.cmake ->
+    # finish processing of second Qt5WidgetsConfig.cmake ->
+    # return to first Qt5WidgetsConfig.cmake ->
+    # add_library cannot create imported target Qt5::Widgets.
+    #
+    # Make sure to return early in the original Config inclusion, because the target has already
+    # been defined as part of the second inclusion.
+    if(TARGET Qt5::OpenGL)
+        return()
+    endif()
+
     set(_Qt5OpenGL_LIB_DEPENDENCIES "Qt5::Widgets;Qt5::Gui;Qt5::Core")
 
 
     add_library(Qt5::OpenGL SHARED IMPORTED)
+
 
     set_property(TARGET Qt5::OpenGL PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${_Qt5OpenGL_OWN_INCLUDE_DIRS})
@@ -135,6 +151,22 @@ if (NOT TARGET Qt5::OpenGL)
 
     set_property(TARGET Qt5::OpenGL PROPERTY INTERFACE_QT_ENABLED_FEATURES )
     set_property(TARGET Qt5::OpenGL PROPERTY INTERFACE_QT_DISABLED_FEATURES )
+
+    # Qt 6 forward compatible properties.
+    set_property(TARGET Qt5::OpenGL
+                 PROPERTY QT_ENABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::OpenGL
+                 PROPERTY QT_DISABLED_PUBLIC_FEATURES
+                 )
+    set_property(TARGET Qt5::OpenGL
+                 PROPERTY QT_ENABLED_PRIVATE_FEATURES
+                 )
+    set_property(TARGET Qt5::OpenGL
+                 PROPERTY QT_DISABLED_PRIVATE_FEATURES
+                 )
+
+    set_property(TARGET Qt5::OpenGL PROPERTY INTERFACE_QT_PLUGIN_TYPES "")
 
     set(_Qt5OpenGL_PRIVATE_DIRS_EXIST TRUE)
     foreach (_Qt5OpenGL_PRIVATE_DIR ${Qt5OpenGL_OWN_PRIVATE_INCLUDE_DIRS})
@@ -157,6 +189,14 @@ if (NOT TARGET Qt5::OpenGL)
         set_property(TARGET Qt5::OpenGLPrivate PROPERTY
             INTERFACE_LINK_LIBRARIES Qt5::OpenGL ${_Qt5OpenGL_PRIVATEDEPS}
         )
+
+        # Add a versionless target, for compatibility with Qt6.
+        if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND NOT TARGET Qt::OpenGLPrivate)
+            add_library(Qt::OpenGLPrivate INTERFACE IMPORTED)
+            set_target_properties(Qt::OpenGLPrivate PROPERTIES
+                INTERFACE_LINK_LIBRARIES "Qt5::OpenGLPrivate"
+            )
+        endif()
     endif()
 
     _populate_OpenGL_target_properties(RELEASE "libQt5OpenGL.lib.so" "" FALSE)
@@ -164,10 +204,16 @@ if (NOT TARGET Qt5::OpenGL)
 
 
 
+    # In Qt 5.15 the glob pattern was relaxed to also catch plugins not literally named Plugin.
+    # Define QT5_STRICT_PLUGIN_GLOB or ModuleName_STRICT_PLUGIN_GLOB to revert to old behavior.
+    if (QT5_STRICT_PLUGIN_GLOB OR Qt5OpenGL_STRICT_PLUGIN_GLOB)
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGL_*Plugin.cmake")
+    else()
+        file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGL_*.cmake")
+    endif()
 
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGL_*Plugin.cmake")
-
-    macro(_populate_OpenGL_plugin_properties Plugin Configuration PLUGIN_LOCATION)
+    macro(_populate_OpenGL_plugin_properties Plugin Configuration PLUGIN_LOCATION
+          IsDebugAndRelease)
         set_property(TARGET Qt5::${Plugin} APPEND PROPERTY IMPORTED_CONFIGURATIONS ${Configuration})
 
         set(imported_location "${_qt5OpenGL_install_prefix}/plugins/${PLUGIN_LOCATION}")
@@ -175,6 +221,7 @@ if (NOT TARGET Qt5::OpenGL)
         set_target_properties(Qt5::${Plugin} PROPERTIES
             "IMPORTED_LOCATION_${Configuration}" ${imported_location}
         )
+
     endmacro()
 
     if (pluginTargets)
@@ -185,8 +232,13 @@ if (NOT TARGET Qt5::OpenGL)
 
 
 
+    _qt5_OpenGL_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGLConfigVersion.cmake")
+endif()
 
-
-_qt5_OpenGL_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5OpenGLConfigVersion.cmake")
-
+# Add a versionless target, for compatibility with Qt6.
+if(NOT "${QT_NO_CREATE_VERSIONLESS_TARGETS}" AND TARGET Qt5::OpenGL AND NOT TARGET Qt::OpenGL)
+    add_library(Qt::OpenGL INTERFACE IMPORTED)
+    set_target_properties(Qt::OpenGL PROPERTIES
+        INTERFACE_LINK_LIBRARIES "Qt5::OpenGL"
+    )
 endif()

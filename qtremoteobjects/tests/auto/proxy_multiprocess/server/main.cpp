@@ -52,11 +52,11 @@ private Q_SLOTS:
         subclass.setI(initialI);
         QStringListModel model;
         model.setStringList(QStringList() << "Track1" << "Track2" << "Track3");
-        if (objectMode == QLatin1Literal("ObjectPointer")) {
+        if (objectMode == QLatin1String("ObjectPointer")) {
             parent.setSubClass(&subclass);
             parent.setTracks(&model);
             parent.setMyEnum(ParentClassSource::bar);
-            parent.setDate(Qt::SystemLocaleShortDate);
+            parent.setDate(Qt::RFC2822Date);
             parent.setNsEnum(NS::Bravo);
             parent.setNs2Enum(NS2::NamespaceEnum::Bravo);
             parent.setVariant(QVariant::fromValue(42.0f));
@@ -82,10 +82,10 @@ private Q_SLOTS:
         updatedSubclass.setMyPOD(updatedValue);
         updatedSubclass.setI(updatedI);
         parent.setSubClass(&updatedSubclass);
-        if (objectMode == QLatin1Literal("NullPointer"))
+        if (objectMode == QLatin1String("NullPointer"))
             parent.setTracks(&model);
         parent.setMyEnum(ParentClassSource::foobar);
-        parent.setDate(Qt::SystemLocaleLongDate);
+        parent.setDate(Qt::ISODateWithMs);
         parent.setNsEnum(NS::Charlie);
         parent.setNs2Enum(NS2::NamespaceEnum::Charlie);
         parent.setVariant(QVariant::fromValue(podValue));

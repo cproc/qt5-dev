@@ -5,7 +5,7 @@
 **
 ** This file is part of the QtWaylandCompositor module of the Qt Toolkit.
 **
-** $QT_BEGIN_LICENSE:LGPL$
+** $QT_BEGIN_LICENSE:GPL$
 ** Commercial License Usage
 ** Licensees holding valid commercial Qt licenses may use this file in
 ** accordance with the commercial license agreement provided with the
@@ -14,32 +14,18 @@
 ** and conditions see https://www.qt.io/terms-conditions. For further
 ** information use the contact form at https://www.qt.io/contact-us.
 **
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 3 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL3 included in the
-** packaging of this file. Please review the following information to
-** ensure the GNU Lesser General Public License version 3 requirements
-** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
-**
 ** GNU General Public License Usage
 ** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 2.0 or (at your option) the GNU General
-** Public license version 3 or any later version approved by the KDE Free
-** Qt Foundation. The licenses are as published by the Free Software
-** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
+** General Public License version 3 or (at your option) any later version
+** approved by the KDE Free Qt Foundation. The licenses are as published by
+** the Free Software Foundation and appearing in the file LICENSE.GPL3
 ** included in the packaging of this file. Please review the following
 ** information to ensure the GNU General Public License requirements will
-** be met: https://www.gnu.org/licenses/gpl-2.0.html and
-** https://www.gnu.org/licenses/gpl-3.0.html.
+** be met: https://www.gnu.org/licenses/gpl-3.0.html.
 **
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-
-#define  GL_GLEXT_PROTOTYPES
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 
 #include "vulkanserverbufferintegration.h"
 
@@ -48,6 +34,7 @@
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLTexture>
 #include <QtGui/QOffscreenSurface>
+#include <QtGui/qopengl.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -218,7 +205,7 @@ QOpenGLTexture *VulkanServerBuffer::toOpenGlTexture()
         return nullptr;
 
     funcs->glCreateMemoryObjectsEXT(1, &m_memoryObject);
-    if (extraDebug) qDebug() << "glCreateMemoryObjectsEXT" << hex << glGetError();
+    if (extraDebug) qDebug() << "glCreateMemoryObjectsEXT" << Qt::hex << glGetError();
 
 
     int dupfd = fcntl(m_fd, F_DUPFD_CLOEXEC, 0);
@@ -228,7 +215,7 @@ QOpenGLTexture *VulkanServerBuffer::toOpenGlTexture()
     }
 
     funcs->glImportMemoryFdEXT(m_memoryObject, m_memorySize, GL_HANDLE_TYPE_OPAQUE_FD_EXT, dupfd);
-    if (extraDebug) qDebug() << "glImportMemoryFdEXT" << hex << glGetError();
+    if (extraDebug) qDebug() << "glImportMemoryFdEXT" << Qt::hex << glGetError();
 
 
     if (!m_texture)
@@ -236,13 +223,13 @@ QOpenGLTexture *VulkanServerBuffer::toOpenGlTexture()
     m_texture->create();
 
     GLuint texId = m_texture->textureId();
-    if (extraDebug) qDebug() << "created texture" << texId << hex << glGetError();
+    if (extraDebug) qDebug() << "created texture" << texId << Qt::hex << glGetError();
 
     m_texture->bind();
-    if (extraDebug) qDebug() << "bound texture" << texId << hex << glGetError();
+    if (extraDebug) qDebug() << "bound texture" << texId << Qt::hex << glGetError();
     funcs->glTexStorageMem2DEXT(GL_TEXTURE_2D, 1, m_glInternalFormat, m_size.width(), m_size.height(), m_memoryObject, 0 );
-    if (extraDebug) qDebug() << "glTexStorageMem2DEXT" << hex << glGetError();
-    if (extraDebug) qDebug() << "format" << hex  << m_glInternalFormat << GL_RGBA8;
+    if (extraDebug) qDebug() << "glTexStorageMem2DEXT" << Qt::hex << glGetError();
+    if (extraDebug) qDebug() << "format" << Qt::hex  << m_glInternalFormat << GL_RGBA8;
 
 
     return m_texture;
@@ -278,11 +265,12 @@ VulkanServerBufferIntegration::~VulkanServerBufferIntegration()
 {
 }
 
-void VulkanServerBufferIntegration::initializeHardware(QWaylandCompositor *compositor)
+bool VulkanServerBufferIntegration::initializeHardware(QWaylandCompositor *compositor)
 {
     Q_ASSERT(QGuiApplication::platformNativeInterface());
 
     QtWaylandServer::zqt_vulkan_server_buffer_v1::init(compositor->display(), 1);
+    return true;
 }
 
 bool VulkanServerBufferIntegration::supportsFormat(QtWayland::ServerBuffer::Format format) const

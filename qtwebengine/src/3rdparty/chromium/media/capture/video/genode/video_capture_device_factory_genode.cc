@@ -18,7 +18,8 @@ const char kVideoCaptureDeviceGenodeName[] = "/dev/capture";
 std::unique_ptr<VideoCaptureDevice> VideoCaptureDeviceFactoryGenode::CreateDevice(
     const VideoCaptureDeviceDescriptor& device_descriptor) {
   DCHECK(thread_checker_.CalledOnValidThread());
-  base::ScopedBlockingCall scoped_blocking_call(base::BlockingType::MAY_BLOCK);
+  base::ScopedBlockingCall scoped_blocking_call(FROM_HERE,
+                                                base::BlockingType::MAY_BLOCK);
   return std::unique_ptr<VideoCaptureDevice>(new VideoCaptureDeviceGenode());
 }
 
@@ -38,8 +39,8 @@ void VideoCaptureDeviceFactoryGenode::GetSupportedFormats(
     const VideoCaptureDeviceDescriptor& device_descriptor,
     VideoCaptureFormats* supported_formats) {
   DCHECK(thread_checker_.CalledOnValidThread());
-  base::ScopedBlockingCall scoped_blocking_call(base::BlockingType::MAY_BLOCK);
-
+  base::ScopedBlockingCall scoped_blocking_call(FROM_HERE,
+                                                base::BlockingType::MAY_BLOCK);
   VideoCaptureFormat capture_format;
   if (!VideoCaptureDeviceGenode::GetVideoCaptureFormat(&capture_format)) {
     return;

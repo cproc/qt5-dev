@@ -58,7 +58,7 @@ QT_BEGIN_NAMESPACE
 namespace Qt3DRender {
 namespace Render {
 
-struct Q_AUTOTEST_EXPORT StateVariant
+struct Q_3DRENDERSHARED_PRIVATE_EXPORT StateVariant
 {
     StateMask type;
 
@@ -67,6 +67,7 @@ struct Q_AUTOTEST_EXPORT StateVariant
         BlendEquation blendEquation;
         AlphaFunc alphaFunc;
         MSAAEnabled msaaEnabled;
+        DepthRange depthRange;
         DepthTest depthTest;
         NoDepthMask noDepthMask;
         CullFace cullFace;

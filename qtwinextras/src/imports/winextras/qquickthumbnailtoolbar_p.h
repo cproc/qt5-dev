@@ -55,6 +55,7 @@
 #include <QQuickItem>
 #include <QWinThumbnailToolBar>
 #include <QUrl>
+#include <QVector>
 
 QT_BEGIN_NAMESPACE
 
@@ -74,7 +75,7 @@ class QQuickThumbnailToolBar : public QQuickItem
     Q_CLASSINFO("DefaultProperty", "data")
 
 public:
-    explicit QQuickThumbnailToolBar(QQuickItem *parent = 0);
+    explicit QQuickThumbnailToolBar(QQuickItem *parent = nullptr);
     ~QQuickThumbnailToolBar();
 
     int count() const;
@@ -109,7 +110,7 @@ private Q_SLOTS:
     void iconicLivePreviewLoaded(const QVariant &);
 
 protected:
-    void itemChange(QQuickItem::ItemChange change, const QQuickItem::ItemChangeData &data);
+    void itemChange(QQuickItem::ItemChange change, const QQuickItem::ItemChangeData &data) override;
 
 private:
     static void addData(QQmlListProperty<QObject> *property, QObject *button);
@@ -117,7 +118,7 @@ private:
     static QQuickThumbnailToolButton *buttonAt(QQmlListProperty<QQuickThumbnailToolButton> *property, int index);
 
     QWinThumbnailToolBar m_toolbar;
-    QList<QQuickThumbnailToolButton *> m_buttons;
+    QVector<QQuickThumbnailToolButton *> m_buttons;
     QUrl m_iconicThumbnailSource;
     QUrl m_iconicLivePreviewSource;
 };

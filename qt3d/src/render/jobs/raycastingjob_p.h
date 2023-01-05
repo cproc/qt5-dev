@@ -55,6 +55,7 @@
 #include <Qt3DRender/qpickevent.h>
 #include <Qt3DRender/private/handle_types_p.h>
 #include <Qt3DRender/private/qcollisionqueryresult_p.h>
+#include <Qt3DRender/private/qt3drender_global_p.h>
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QSharedPointer>
@@ -68,7 +69,9 @@ namespace PickingUtils {
 typedef QVector<RayCasting::QCollisionQueryResult::Hit> HitList;
 }
 
-class Q_AUTOTEST_EXPORT RayCastingJob : public AbstractPickingJob
+class RayCastingJobPrivate;
+
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RayCastingJob : public AbstractPickingJob
 {
 public:
     RayCastingJob();
@@ -80,6 +83,8 @@ protected:
     void dispatchHits(RayCaster *rayCaster, const PickingUtils::HitList &sphereHits);
 
 private:
+    Q_DECLARE_PRIVATE(RayCastingJob)
+
     bool m_castersDirty;
     bool m_oneEnabledAtLeast;
 };

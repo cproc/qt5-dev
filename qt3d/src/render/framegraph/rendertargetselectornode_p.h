@@ -61,19 +61,17 @@ class QRenderTargetSelector;
 
 namespace Render {
 
-class RenderTargetSelector : public FrameGraphNode
+class Q_3DRENDERSHARED_PRIVATE_EXPORT RenderTargetSelector : public FrameGraphNode
 {
 public:
     RenderTargetSelector();
 
-    void sceneChangeEvent(const Qt3DCore::QSceneChangePtr &e) override;
+    void syncFromFrontEnd(const Qt3DCore::QNode *frontEnd, bool firstTime) override;
 
     Qt3DCore::QNodeId renderTargetUuid() const { return m_renderTargetUuid; }
     QVector<QRenderTargetOutput::AttachmentPoint> outputs() const { return m_outputs; }
 
 private:
-    void initializeFromPeer(const Qt3DCore::QNodeCreatedChangeBasePtr &change) final;
-
     Qt3DCore::QNodeId m_renderTargetUuid;
     QVector<QRenderTargetOutput::AttachmentPoint> m_outputs;
 };

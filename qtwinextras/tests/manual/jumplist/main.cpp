@@ -44,15 +44,17 @@ static bool associateFileType()
 {
     const QString applicationBinary = QCoreApplication::applicationFilePath();
     QString exeFileName = applicationBinary;
-    const int lastSlashPos = exeFileName.lastIndexOf(QLatin1Char('/'));
+    const int lastSlashPos = exeFileName.lastIndexOf(u'/');
     exeFileName.remove(0, lastSlashPos + 1);
     QSettings regApplications("HKEY_CURRENT_USER\\Software\\Classes\\Applications\\" + exeFileName, QSettings::NativeFormat);
     regApplications.setValue("FriendlyAppName", QGuiApplication::applicationDisplayName());
 
     regApplications.beginGroup("SupportedTypes");
     QMimeDatabase mimeDatabase;
-    foreach (const QString &t, TestWidget::supportedMimeTypes()) {
-        foreach (const QString &s, mimeDatabase.mimeTypeForName(t).suffixes())
+    const auto types = TestWidget::supportedMimeTypes();
+    for (const QString &t : types) {
+        const auto suffixes = mimeDatabase.mimeTypeForName(t).suffixes();
+        for (const QString &s : suffixes)
             regApplications.setValue('.' + s, QString());
     }
     regApplications.endGroup();
