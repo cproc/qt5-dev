@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2013-2017 Genode Labs GmbH
+ * Copyright (C) 2013-2023 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -46,12 +46,19 @@ class QGenodeScreen : public QPlatformScreen
 			                        scr_mode.area.h());
 		}
 
-		QRect geometry() const { return _geometry; }
-		int depth() const { return 32; }
-		QImage::Format format() const { return QImage::Format_RGB32; }
-		QDpi logicalDpi() const { return QDpi(80, 80); };
+		QRect geometry() const override { return _geometry; }
+		int depth() const override { return 32; }
+		QImage::Format format() const override{ return QImage::Format_RGB32; }
+		QDpi logicalDpi() const override { return QDpi(80, 80); };
 
-		QPlatformCursor *cursor() const
+		QSizeF physicalSize() const override
+		{
+			/* 'overrideDpi()' takes 'QT_FONT_DPI' into account */
+			static const int dpi = overrideDpi(logicalDpi()).first;
+			return QSizeF(geometry().size()) / dpi * qreal(25.4);
+		}
+
+		QPlatformCursor *cursor() const override
 		{
 			static QGenodeCursor instance(_env);
 			return &instance;
