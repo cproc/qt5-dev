@@ -60,6 +60,8 @@ class OssAudioOutputStream : public AudioOutputStream {
   // Handle of the OSS audio device
   int write_fd;
 
+  bool up_mixing;
+
   // Handle of the audio device
   struct sio_hdl* hdl;
   // Current state of the stream

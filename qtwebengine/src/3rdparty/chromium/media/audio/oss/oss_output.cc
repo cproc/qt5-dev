@@ -28,6 +28,7 @@ OssAudioOutputStream::OssAudioOutputStream(const AudioParameters& params,
     : manager(manager),
       params(params),
       audio_bus(AudioBus::Create(params)),
+      up_mixing(false),
       state(kClosed),
       mutex(PTHREAD_MUTEX_INITIALIZER) {
 }
@@ -44,6 +45,9 @@ bool OssAudioOutputStream::Open() {
     LOG(WARNING) << "Unsupported audio format.";
     return false;
   }
+
+  if (params.channels() < 2)
+    up_mixing = true;
 
   write_fd = open("/dev/dsp", O_WRONLY);
   if (write_fd == -1) {
@@ -107,6 +111,8 @@ void OssAudioOutputStream::Flush() {}
 void OssAudioOutputStream::ThreadLoop(void) {
   int avail, count, result;
 
+  static short up_mixing_buffer[16u << 10];
+
   while (state == kRunning) {
     // Update volume if needed
     pthread_mutex_lock(&mutex);
@@ -128,8 +134,18 @@ void OssAudioOutputStream::ThreadLoop(void) {
     }
 
     // Submit data to the device
-    avail = count * params.GetBytesPerFrame(kSampleFormat);
-    result = write(write_fd, buffer, avail);
+    if (up_mixing) {
+      short *p = (short*)buffer;
+      int const avail = count * params.GetBytesPerFrame(kSampleFormat);
+      for (int j = 0, i = 0; i < avail / 2; i++) {
+        up_mixing_buffer[j++] = p[i];
+        up_mixing_buffer[j++] = p[i];
+      }
+      result = write(write_fd, up_mixing_buffer, avail * 2);
+    } else {
+      avail = count * params.GetBytesPerFrame(kSampleFormat);
+      result = write(write_fd, buffer, avail);
+    }
     if (result == 0) {
       LOG(WARNING) << "Audio device disconnected.";
       break;
