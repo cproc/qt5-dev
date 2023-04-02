@@ -54,7 +54,7 @@ constexpr char kNumTasksBeforeDetachHistogramPrefix[] =
 constexpr char kNumWorkersHistogramPrefix[] = "ThreadPool.NumWorkers.";
 constexpr char kNumActiveWorkersHistogramPrefix[] =
     "ThreadPool.NumActiveWorkers.";
-constexpr size_t kMaxNumberOfWorkers = 256;
+constexpr size_t kMaxNumberOfWorkers = /*256*/3;
 
 // In a background thread group:
 // - Blocking calls take more time than in a foreground thread group.
