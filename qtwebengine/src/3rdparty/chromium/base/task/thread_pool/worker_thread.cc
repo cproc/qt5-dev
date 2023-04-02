@@ -24,6 +24,7 @@
 
 #if defined(OS_GENODE)
 #include <trace/probe.h>
+#include <pthread_np.h>
 #endif
 
 namespace base {
@@ -72,8 +73,22 @@ bool WorkerThread::Start(WorkerThreadObserver* worker_thread_observer) {
   self_ = this;
 
   constexpr size_t kDefaultStackSize = 0;
+
+#if defined(OS_GENODE)
+  char buf[32];
+  pthread_get_name_np(pthread_self(), buf, sizeof(buf));
+  fprintf(stderr, "[%s] WorkerThread::Start()\n", buf);
+  if (strstr(buf, "Chrome_InProcRendererThread")) {
+    PlatformThread::CreateWithPriority(kDefaultStackSize, this, &thread_handle_,
+                                       current_thread_priority_, "RendererWorkerThread");
+  } else {
+    PlatformThread::CreateWithPriority(kDefaultStackSize, this, &thread_handle_,
+                                       current_thread_priority_, "WorkerThread");
+  }
+#else
   PlatformThread::CreateWithPriority(kDefaultStackSize, this, &thread_handle_,
                                      current_thread_priority_, "WorkerThread");
+#endif
 
   if (thread_handle_.is_null()) {
     self_ = nullptr;
