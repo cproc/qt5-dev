@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include <fcntl.h>
+#include <pthread_np.h>
 #include <sys/soundcard.h>
 
 #include "base/bind.h"
@@ -68,7 +69,10 @@ void OssAudioInputStream::Start(AudioInputCallback* cb) {
   state = kRunning;
   hw_delay = 0;
   callback = cb;
-  if (pthread_create(&thread, NULL, &ThreadEntry, this) != 0) {
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_attr_setname_np(&attr, "OssAudioInput");
+  if (pthread_create(&thread, &attr, &ThreadEntry, this) != 0) {
     LOG(ERROR) << "Failed to create real-time thread for recording.";
     state = kStopped;
   }

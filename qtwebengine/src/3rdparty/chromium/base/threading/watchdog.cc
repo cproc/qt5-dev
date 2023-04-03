@@ -53,7 +53,8 @@ Watchdog::Watchdog(const TimeDelta& duration,
     return;  // Don't start thread, or doing anything really.
   enabled_ = PlatformThread::Create(0,  // Default stack size.
                                     &delegate_,
-                                    &handle_);
+                                    &handle_,
+                                    thread_watched_name_);
   DCHECK(enabled_);
 }
 

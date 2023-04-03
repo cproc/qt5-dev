@@ -102,6 +102,10 @@
 #include <sys/neutrino.h>
 #endif
 
+#if defined(Q_OS_GENODE)
+#include <pthread_np.h>
+#endif
+
 QT_BEGIN_NAMESPACE
 
 #if QT_CONFIG(thread)
@@ -701,6 +705,14 @@ void QThread::start(Priority priority)
     else
         pthread_attr_setthreadname(&attr, objectName().toLocal8Bit());
 #endif
+
+#ifdef Q_OS_GENODE
+    if (Q_LIKELY(objectName().isEmpty()))
+        pthread_attr_setname_np(&attr, metaObject()->className());
+    else
+        pthread_attr_setname_np(&attr, objectName().toLocal8Bit());
+#endif
+
     pthread_t threadId;
     int code = pthread_create(&threadId, &attr, QThreadPrivate::start, this);
     if (code == EPERM) {

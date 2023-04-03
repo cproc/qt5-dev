@@ -325,7 +325,7 @@ InotifyReader::InotifyReader()
 bool InotifyReader::StartThread() {
   // This object is LazyInstance::Leaky, so thread_delegate_ will outlive the
   // thread.
-  return PlatformThread::CreateNonJoinable(0, &thread_delegate_);
+  return PlatformThread::CreateNonJoinable(0, &thread_delegate_, "inotify_reader");
 }
 
 InotifyReader::Watch InotifyReader::AddWatch(
