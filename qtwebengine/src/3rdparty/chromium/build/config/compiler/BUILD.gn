@@ -1828,8 +1828,8 @@ config("no_exceptions") {
       defines = [ "_HAS_EXCEPTIONS=0" ]
     }
   } else {
-    cflags_cc = [ "-fno-exceptions" ]
-    cflags_objcc = cflags_cc
+    #cflags_cc = [ "-fno-exceptions" ]
+    #cflags_objcc = cflags_cc
   }
 }
 
