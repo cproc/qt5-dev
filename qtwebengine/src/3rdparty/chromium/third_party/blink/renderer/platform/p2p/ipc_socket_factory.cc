@@ -361,6 +361,10 @@ int IpcPacketSocket::SendTo(const void* data,
                             const rtc::PacketOptions& options) {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
 
+//int dummy;
+//fprintf(stderr, "%p: IpcPacketSocket::SendTo(): 0x%x, 0x%x\n",
+//        &dummy, ((unsigned char*)data)[0], ((unsigned char*)data)[1]);
+
   switch (state_) {
     case IS_UNINITIALIZED:
       NOTREACHED();
@@ -419,6 +423,9 @@ int IpcPacketSocket::SendTo(const void* data,
       return -1;
     }
   }
+
+//fprintf(stderr, "%p: IpcPacketSocket::SendTo() 2: 0x%x, 0x%x\n",
+//        &dummy, ((unsigned char*)data)[0], ((unsigned char*)data)[1]);
 
   send_bytes_available_ -= data_size;
 

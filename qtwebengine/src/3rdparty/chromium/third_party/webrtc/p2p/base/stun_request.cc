@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "p2p/base/stun_request.h"
 
 #include <algorithm>
@@ -243,6 +245,7 @@ void StunRequest::set_manager(StunRequestManager* manager) {
 }
 
 void StunRequest::OnMessage(rtc::Message* pmsg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "StunRequest::OnMessage()");
   RTC_DCHECK(manager_ != NULL);
   RTC_DCHECK(pmsg->message_id == MSG_STUN_SEND);
 

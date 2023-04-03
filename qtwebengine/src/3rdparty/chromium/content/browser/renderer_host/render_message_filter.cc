@@ -121,16 +121,19 @@ void RenderMessageFilter::GenerateRoutingID(
 void RenderMessageFilter::SetThreadPriorityOnFileThread(
     base::PlatformThreadId ns_tid,
     base::ThreadPriority priority) {
+fprintf(stderr, "RenderMessageFilter::SetThreadPriorityOnFileThread(): %d\n", priority);
   bool ns_pid_supported = false;
   pid_t peer_tid = base::FindThreadID(peer_pid(), ns_tid, &ns_pid_supported);
   if (peer_tid == -1) {
     if (ns_pid_supported)
       DLOG(WARNING) << "Could not find tid";
+fprintf(stderr, "RenderMessageFilter::SetThreadPriorityOnFileThread(): error 1\n");
     return;
   }
 
   if (peer_tid == peer_pid()) {
     DLOG(WARNING) << "Changing priority of main thread is not allowed";
+fprintf(stderr, "RenderMessageFilter::SetThreadPriorityOnFileThread(): error 2\n");
     return;
   }
 
@@ -141,6 +144,7 @@ void RenderMessageFilter::SetThreadPriorityOnFileThread(
 #if defined(OS_LINUX) || defined(OS_BSD)
 void RenderMessageFilter::SetThreadPriority(int32_t ns_tid,
                                             base::ThreadPriority priority) {
+fprintf(stderr, "RenderMessageFilter::SetThreadPriority(): %d\n", priority);
   constexpr base::TaskTraits kTraits = {
       base::MayBlock(), base::TaskPriority::USER_BLOCKING,
       base::TaskShutdownBehavior::CONTINUE_ON_SHUTDOWN};

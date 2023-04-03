@@ -64,6 +64,8 @@
  *
  */
 
+#include <trace/probe.h>
+
 #include "p2p/base/tcp_port.h"
 
 #include <errno.h>
@@ -512,6 +514,8 @@ void TCPConnection::OnClose(rtc::AsyncPacketSocket* socket, int error) {
 }
 
 void TCPConnection::OnMessage(rtc::Message* pmsg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "TCPConnection::OnMessage()");
+
   switch (pmsg->message_id) {
     case MSG_TCPCONNECTION_DELAYED_ONCLOSE:
       // If this connection can't become connected and writable again in 5

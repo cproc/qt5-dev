@@ -40,8 +40,8 @@ rtc_library("rtc_event_log_factory") {
     "../task_queue",
   ]
 
-  if (rtc_enable_protobuf) {
-    defines = [ "WEBRTC_ENABLE_RTC_EVENT_LOG" ]
-    deps += [ "../../logging:rtc_event_log_impl" ]
-  }
+#  if (rtc_enable_protobuf) {
+#    defines = [ "WEBRTC_ENABLE_RTC_EVENT_LOG" ]
+#    deps += [ "../../logging:rtc_event_log_impl" ]
+#  }
 }

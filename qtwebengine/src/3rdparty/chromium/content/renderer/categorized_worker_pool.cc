@@ -17,6 +17,8 @@
 #include "cc/base/math_util.h"
 #include "cc/raster/task_category.h"
 
+#include <trace/probe.h>
+
 namespace content {
 namespace {
 
@@ -188,6 +190,7 @@ void CategorizedWorkerPool::Start(int num_threads) {
   // Use background priority for background thread.
   base::SimpleThread::Options thread_options;
 #if !defined(OS_MACOSX)
+fprintf(stderr, "CategorizedWorkerPool::Start(): BACKGROUND\n");
   thread_options.priority = base::ThreadPriority::BACKGROUND;
 #endif
 
@@ -264,6 +267,7 @@ void CategorizedWorkerPool::Run(
   base::AutoLock lock(lock_);
 
   while (true) {
+GENODE_TRACE_DURATION_NAMED(0, "CategorizedWorkerPool::Run()");
     if (!RunTaskWithLockAcquired(categories)) {
       // We are no longer running tasks, which may allow another category to
       // start running. Signal other worker threads.

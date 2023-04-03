@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <trace/probe.h>
+
 #include "media/audio/simple_sources.h"
 
 #include <stddef.h>
@@ -263,6 +265,23 @@ int BeepingSource::OnMoreData(base::TimeDelta /* delay */,
                               base::TimeTicks /* delay_timestamp */,
                               int /* prior_frames_skipped */,
                               AudioBus* dest) {
+
+#if 0
+{
+::uint64_t now_ms = Genode::Trace::timestamp_ms();
+static ::uint64_t last_ms = now_ms;
+::uint64_t diff_ms = now_ms - last_ms;
+last_ms = now_ms;
+static ::uint64_t total_diff_ms = 0;
+total_diff_ms += diff_ms;
+static int count = 0;
+::uint64_t avg_diff_ms = (count > 0) ? total_diff_ms / count : 0;
+GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "BeepingSource::OnMoreData()");
+GENODE_TRACE_CHECKPOINT_NAMED(avg_diff_ms, "BeepingSource::OnMoreData(): avg");
+count++;
+}
+#endif
+
   // Accumulate the time from the last beep.
   interval_from_last_beep_ += base::TimeTicks::Now() - last_callback_time_;
 
@@ -272,9 +291,10 @@ int BeepingSource::OnMoreData(base::TimeDelta /* delay */,
   if (beep_context->automatic_beep()) {
     base::TimeDelta delta = interval_from_last_beep_ -
         base::TimeDelta::FromMilliseconds(kAutomaticBeepIntervalInMs);
-    if (delta > base::TimeDelta()) {
+    if (delta >= base::TimeDelta()) {
       should_beep = true;
       interval_from_last_beep_ = delta;
+GENODE_TRACE_CHECKPOINT_NAMED(delta.InMilliseconds(), "beep");
     }
   } else {
     should_beep = beep_context->beep_once();

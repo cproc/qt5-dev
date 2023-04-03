@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/network_monitor.h"
 
 #include <stdint.h>
@@ -39,6 +41,8 @@ void NetworkMonitorBase::OnNetworksChanged() {
 }
 
 void NetworkMonitorBase::OnMessage(Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "NetworkMonitorBase::OnMessage()");
+
   RTC_DCHECK(msg->message_id == UPDATE_NETWORKS_MESSAGE);
   SignalNetworksChanged();
 }

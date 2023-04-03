@@ -52,6 +52,8 @@
 #include <emscripten.h>
 #endif
 
+#include <trace/probe.h>
+
 QT_BEGIN_NAMESPACE
 
 /*!
@@ -228,8 +230,10 @@ int QEventLoop::exec(ProcessEventsFlags flags)
         emscripten_sleep(1);
 #endif
 
-    while (!d->exit.loadAcquire())
+    while (!d->exit.loadAcquire()) {
+GENODE_TRACE_DURATION_NAMED(0, "QEventLoop::exec()");
         processEvents(flags | WaitForMoreEvents | EventLoopExec);
+    }
 
     ref.exceptionCaught = false;
     return d->returnCode.loadRelaxed();

@@ -756,6 +756,7 @@ void RenderThreadImpl::Init() {
              base::PlatformThreadId thread_id) {
             if (!render_thread)
               return;
+fprintf(stderr, "RenderThreadImpl::Init(): BACKGROUND\n");
             render_thread->render_message_filter()->SetThreadPriority(
                 thread_id, base::ThreadPriority::BACKGROUND);
           },

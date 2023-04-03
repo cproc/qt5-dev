@@ -9,6 +9,8 @@
 #include "base/logging.h"
 #include "base/system/sys_info.h"
 
+#include <trace/probe.h>
+
 namespace media {
 
 // AudioDeviceThread::Callback implementation
@@ -64,6 +66,8 @@ void AudioDeviceThread::ThreadMain() {
 
   uint32_t buffer_index = 0;
   while (true) {
+GENODE_TRACE_DURATION_NAMED(0, "AudioDeviceThread::ThreadMain()");
+
     uint32_t pending_data = 0;
     size_t bytes_read = socket_.Receive(&pending_data, sizeof(pending_data));
     if (bytes_read != sizeof(pending_data))

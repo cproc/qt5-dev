@@ -29,6 +29,7 @@ RtcEventLogFactory::RtcEventLogFactory(TaskQueueFactory* task_queue_factory)
 std::unique_ptr<RtcEventLog> RtcEventLogFactory::CreateRtcEventLog(
     RtcEventLog::EncodingType encoding_type) {
 #ifdef WEBRTC_ENABLE_RTC_EVENT_LOG
+xxx
   return std::make_unique<RtcEventLogImpl>(encoding_type, task_queue_factory_);
 #else
   return std::make_unique<RtcEventLogNull>();

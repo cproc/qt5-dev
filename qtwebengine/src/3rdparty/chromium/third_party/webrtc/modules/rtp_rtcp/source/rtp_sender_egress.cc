@@ -413,6 +413,10 @@ bool RtpSenderEgress::SendPacketToNetwork(const RtpPacketToSend& packet,
   int bytes_sent = -1;
   if (transport_) {
     UpdateRtpOverhead(packet);
+//int dummy;
+//fprintf(stderr, "%p: RtpSenderEgress::SendPacketToNetwork(): 0x%x, 0x%x\n",
+//        &dummy, packet.data()[0], packet.data()[1]);
+
     bytes_sent = transport_->SendRtp(packet.data(), packet.size(), options)
                      ? static_cast<int>(packet.size())
                      : -1;

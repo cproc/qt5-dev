@@ -2,6 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#if defined(OS_GENODE)
+#include <trace/probe.h>
+#endif
+
 #include "base/message_loop/message_pump_default.h"
 
 #include "base/auto_reset.h"
@@ -36,15 +40,33 @@ void MessagePumpDefault::Run(Delegate* delegate) {
     mac::ScopedNSAutoreleasePool autorelease_pool;
 #endif
 
+#if defined(OS_GENODE)
+//GENODE_TRACE_CHECKPOINT_NAMED(0, "MessagePumpDefault::Run(): calling DoWork()");
+#endif
+
     Delegate::NextWorkInfo next_work_info = delegate->DoWork();
     bool has_more_immediate_work = next_work_info.is_immediate();
+
+#if defined(OS_GENODE)
+//GENODE_TRACE_CHECKPOINT_NAMED(has_more_immediate_work, "MessagePumpDefault::Run(): DoWork() returned");
+#endif
+
     if (!keep_running_)
       break;
 
     if (has_more_immediate_work)
       continue;
 
+#if defined(OS_GENODE)
+GENODE_TRACE_CHECKPOINT_NAMED(0, "MessagePumpDefault::Run(): calling DoIdleWork()");
+#endif
+
     has_more_immediate_work = delegate->DoIdleWork();
+
+#if defined(OS_GENODE)
+GENODE_TRACE_CHECKPOINT_NAMED(has_more_immediate_work, "MessagePumpDefault::Run(): DoIdleWork() returned");
+#endif
+
     if (!keep_running_)
       break;
 
@@ -52,9 +74,29 @@ void MessagePumpDefault::Run(Delegate* delegate) {
       continue;
 
     if (next_work_info.delayed_run_time.is_max()) {
+
+#if defined(OS_GENODE)
+GENODE_TRACE_CHECKPOINT_NAMED(0, "MessagePumpDefault::Run(): calling Wait()");
+#endif
+
       event_.Wait();
+
+#if defined(OS_GENODE)
+GENODE_TRACE_CHECKPOINT_NAMED(0, "MessagePumpDefault::Run(): Wait() returned");
+#endif
+
     } else {
+
+#if defined(OS_GENODE)
+GENODE_TRACE_CHECKPOINT_NAMED(next_work_info.remaining_delay().InMilliseconds(), "MessagePumpDefault::Run(): calling TimedWait()");
+#endif
+
       event_.TimedWait(next_work_info.remaining_delay());
+
+#if defined(OS_GENODE)
+GENODE_TRACE_CHECKPOINT_NAMED(0, "MessagePumpDefault::Run(): TimedWait() returned");
+#endif
+
     }
     // Since event_ is auto-reset, we don't need to do anything special here
     // other than service each delegate method.

@@ -120,6 +120,10 @@ RTCError SrtpTransport::SetSrtpReceiveKey(const cricket::CryptoParams& params) {
 bool SrtpTransport::SendRtpPacket(rtc::CopyOnWriteBuffer* packet,
                                   const rtc::PacketOptions& options,
                                   int flags) {
+int dummy;
+//fprintf(stderr, "%p: SrtpTransport::SendRtpPacket(): 0x%x, 0x%x\n",
+//        &dummy, packet->data()[0], packet->data()[1]);
+
   if (!IsSrtpActive()) {
     RTC_LOG(LS_ERROR)
         << "Failed to send the packet because SRTP transport is inactive.";
@@ -169,6 +173,9 @@ bool SrtpTransport::SendRtpPacket(rtc::CopyOnWriteBuffer* packet,
                       << ", seqnum=" << seq_num << ", SSRC=" << ssrc;
     return false;
   }
+
+//fprintf(stderr, "%p: SrtpTransport::SendRtpPacket() 2: 0x%x, 0x%x\n",
+//        &dummy, packet->data()[0], packet->data()[1]);
 
   // Update the length of the packet now that we've added the auth tag.
   packet->SetSize(len);

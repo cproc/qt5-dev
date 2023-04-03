@@ -23,6 +23,10 @@
 #include "base/mac/scoped_nsautorelease_pool.h"
 #endif
 
+#if defined(OS_GENODE)
+#include <trace/probe.h>
+#endif
+
 // Lifecycle of struct event
 // Libevent uses two main data structures:
 // struct event_base (of which there is one per message pump), and
@@ -204,8 +208,15 @@ void MessagePumpLibevent::Run(Delegate* delegate) {
 #if defined(OS_MACOSX)
     mac::ScopedNSAutoreleasePool autorelease_pool;
 #endif
+#if defined(OS_GENODE)
+//GENODE_TRACE_CHECKPOINT_NAMED(0, "MessagePumpLibevent::Run(): calling DoWork()");
+#endif
     // Do some work and see if the next task is ready right away.
     Delegate::NextWorkInfo next_work_info = delegate->DoWork();
+#if defined(OS_GENODE)
+//GENODE_TRACE_CHECKPOINT_NAMED(0, "MessagePumpLibevent::Run(): DoWork() returned");
+#endif
+
     bool immediate_work_available = next_work_info.is_immediate();
 
     if (!keep_running_)

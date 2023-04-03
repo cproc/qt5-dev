@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/thread.h"
 
 #if defined(WEBRTC_WIN)
@@ -79,6 +81,8 @@ class MessageHandlerWithTask final : public MessageHandler {
   MessageHandlerWithTask() = default;
 
   void OnMessage(Message* msg) override {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "MessageHandlerWithTask::OnMessage()");
+
     static_cast<rtc_thread_internal::MessageLikeTask*>(msg->pdata)->Run();
     delete msg->pdata;
   }
@@ -944,6 +948,8 @@ void Thread::InvokeInternal(const Location& posted_from,
 }
 
 void Thread::QueuedTaskHandler::OnMessage(Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "Thread::QueuedTaskHandler::OnMessage()");
+
   RTC_DCHECK(msg);
   auto* data = static_cast<ScopedMessageData<webrtc::QueuedTask>*>(msg->pdata);
   std::unique_ptr<webrtc::QueuedTask> task = std::move(data->data());

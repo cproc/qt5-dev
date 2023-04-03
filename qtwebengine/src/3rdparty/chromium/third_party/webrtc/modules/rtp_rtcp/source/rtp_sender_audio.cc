@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "modules/rtp_rtcp/source/rtp_sender_audio.h"
 
 #include <string.h>
@@ -159,6 +161,8 @@ bool RTPSenderAudio::SendAudio(AudioFrameType frame_type,
                                const uint8_t* payload_data,
                                size_t payload_size,
                                int64_t absolute_capture_timestamp_ms) {
+int dummy;
+
 #if RTC_TRACE_EVENTS_ENABLED
   TRACE_EVENT_ASYNC_STEP1("webrtc", "Audio", rtp_timestamp, "Send", "type",
                           FrameTypeToString(frame_type));
@@ -304,6 +308,24 @@ bool RTPSenderAudio::SendAudio(AudioFrameType frame_type,
                          packet->SequenceNumber());
   packet->set_packet_type(RtpPacketMediaType::kAudio);
   packet->set_allow_retransmission(true);
+
+GENODE_TRACE_DURATION_NAMED(packet->SequenceNumber(), "RtpSenderAudio::SendAudio(): seq");
+
+#if 0
+{
+::uint64_t now_ms = Genode::Trace::timestamp_ms();
+static ::uint64_t last_ms = now_ms;
+::uint64_t diff_ms = now_ms - last_ms;
+last_ms = now_ms;
+if (diff_ms >= 100) {
+	GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "RtpSenderAudio::SendAudio(): ms: xxx");
+//	fprintf(stderr, "RtpSenderAudio::SendAudio(): seq: %u, ms: %lu\n", packet->SequenceNumber(), diff_ms);
+} else {
+	GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "RtpSenderAudio::SendAudio(): ms");
+}
+}
+#endif
+
   bool send_result = rtp_sender_->SendToNetwork(std::move(packet));
   if (first_packet_sent_()) {
     RTC_LOG(LS_INFO) << "First audio RTP packet sent to pacer";

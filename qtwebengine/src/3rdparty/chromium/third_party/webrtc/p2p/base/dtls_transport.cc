@@ -403,6 +403,7 @@ int DtlsTransport::SendPacket(const char* data,
                               size_t size,
                               const rtc::PacketOptions& options,
                               int flags) {
+
   if (!dtls_active_) {
     // Not doing DTLS.
     return ice_transport_->SendPacket(data, size, options);
@@ -422,9 +423,16 @@ int DtlsTransport::SendPacket(const char* data,
         if (!IsRtpPacket(data, size)) {
           return -1;
         }
+//int dummy;
+//fprintf(stderr, "%p: DtlsTransport::SendPacket() 1: %u, 0x%x, 0x%x\n",
+//        &dummy, dtls_active_, (unsigned char)data[0], (unsigned char)data[1]);
 
         return ice_transport_->SendPacket(data, size, options);
       } else {
+//int dummy;
+//fprintf(stderr, "%p: DtlsTransport::SendPacket() 2: %u, 0x%x, 0x%x\n",
+//        &dummy, dtls_active_, (unsigned char)data[0], (unsigned char)data[1]);
+
         return (dtls_->WriteAll(data, size, NULL, NULL) == rtc::SR_SUCCESS)
                    ? static_cast<int>(size)
                    : -1;

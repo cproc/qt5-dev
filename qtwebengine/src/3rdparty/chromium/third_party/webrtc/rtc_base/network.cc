@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/network.h"
 
 #if defined(WEBRTC_POSIX)
@@ -829,6 +831,8 @@ void BasicNetworkManager::StopNetworkMonitor() {
 }
 
 void BasicNetworkManager::OnMessage(Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BasicNetworkManager::OnMessage()");
+
   switch (msg->message_id) {
     case kUpdateNetworksMessage: {
       UpdateNetworksContinually();

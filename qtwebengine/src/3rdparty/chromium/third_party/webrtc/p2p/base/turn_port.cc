@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "p2p/base/turn_port.h"
 
 #include <functional>
@@ -625,6 +627,11 @@ int TurnPort::SendTo(const void* data,
                      const rtc::SocketAddress& addr,
                      const rtc::PacketOptions& options,
                      bool payload) {
+//int dummy;
+//fprintf(stderr, "%p: TurnPort::SendTo(): 0x%x, 0x%x\n",
+//        &dummy, ((unsigned char*)data)[0], ((unsigned char*)data)[1]);
+
+
   // Try to find an entry for this specific address; we should have one.
   TurnEntry* entry = FindEntry(addr);
   if (!entry) {
@@ -939,6 +946,7 @@ rtc::DiffServCodePoint TurnPort::StunDscpValue() const {
 }
 
 void TurnPort::OnMessage(rtc::Message* message) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "TurnPort::OnMessage()");
   switch (message->message_id) {
     case MSG_ALLOCATE_ERROR:
       SignalPortError(this);

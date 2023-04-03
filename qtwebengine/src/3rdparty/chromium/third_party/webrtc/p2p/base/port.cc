@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "p2p/base/port.h"
 
 #include <math.h>
@@ -833,6 +835,7 @@ void Port::Prune() {
 }
 
 void Port::OnMessage(rtc::Message* pmsg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "Port::OnMessage()");
   RTC_DCHECK(pmsg->message_id == MSG_DESTROY_IF_DEAD);
   bool dead =
       (state_ == State::INIT || state_ == State::PRUNED) &&

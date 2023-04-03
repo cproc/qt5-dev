@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "api/proxy.h"
 
 namespace webrtc {
@@ -29,6 +31,7 @@ void SynchronousMethodCall::Invoke(const rtc::Location& posted_from,
 }
 
 void SynchronousMethodCall::OnMessage(rtc::Message*) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "SynchronousMethodCall::OnMessage()");
   proxy_->OnMessage(nullptr);
   e_.Set();
 }

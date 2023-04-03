@@ -1507,6 +1507,10 @@ int P2PTransportChannel::SendPacket(const char* data,
                                     size_t len,
                                     const rtc::PacketOptions& options,
                                     int flags) {
+//int dummy;
+//fprintf(stderr, "%p: P2PTransportChannel::SendPacket(): 0x%x, 0x%x\n",
+//        &dummy, ((unsigned char*)data)[0], ((unsigned char*)data)[1]);
+
   RTC_DCHECK_RUN_ON(network_thread_);
   if (flags != 0) {
     error_ = EINVAL;

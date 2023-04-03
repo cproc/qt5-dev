@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/async_invoker.h"
 
 #include "rtc_base/checks.h"
@@ -38,6 +40,8 @@ AsyncInvoker::~AsyncInvoker() {
 }
 
 void AsyncInvoker::OnMessage(Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "AsyncInvoker::OnMessage()");
+
   // Get the AsyncClosure shared ptr from this message's data.
   ScopedMessageData<AsyncClosure>* data =
       static_cast<ScopedMessageData<AsyncClosure>*>(msg->pdata);

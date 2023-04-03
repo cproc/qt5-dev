@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "pc/channel.h"
 
 #include <iterator>
@@ -32,6 +34,8 @@
 #include "rtc_base/network_route.h"
 #include "rtc_base/strings/string_builder.h"
 #include "rtc_base/trace_event.h"
+
+extern "C" void wait_for_continue();
 
 namespace cricket {
 using rtc::Bind;
@@ -354,6 +358,8 @@ void BaseChannel::OnWritableState(bool writable) {
 
 void BaseChannel::OnNetworkRouteChanged(
     absl::optional<rtc::NetworkRoute> network_route) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::OnNetworkRouteChanged()");
+
   RTC_LOG(LS_INFO) << "Network route was changed.";
 
   RTC_DCHECK(network_thread_->IsCurrent());
@@ -366,13 +372,18 @@ void BaseChannel::OnNetworkRouteChanged(
   // work correctly. Intentionally leave it broken to simplify the code and
   // encourage the users to stop using non-muxing RTCP.
   invoker_.AsyncInvoke<void>(RTC_FROM_HERE, worker_thread_, [=] {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::OnNetworkRouteChanged() async");
     media_channel_->OnNetworkRouteChanged(transport_name_, new_route);
   });
 }
 
 void BaseChannel::OnTransportReadyToSend(bool ready) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::OnTransportReadyToSend()");
+
   invoker_.AsyncInvoke<void>(RTC_FROM_HERE, worker_thread_,
-                             [=] { media_channel_->OnReadyToSend(ready); });
+                             [=] {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::OnTransportReadyToSend() async");
+                             media_channel_->OnReadyToSend(ready); });
 }
 
 bool BaseChannel::SendPacket(bool rtcp,
@@ -388,6 +399,42 @@ bool BaseChannel::SendPacket(bool rtcp,
   // The only downside is that we can't return a proper failure code if
   // needed. Since UDP is unreliable anyway, this should be a non-issue.
   if (!network_thread_->IsCurrent()) {
+
+#if 1
+
+if (((packet->cdata()[0] == 0x90) || (packet->cdata()[0] == 0xb0)) &&
+    ((packet->cdata()[1] == 0xef) || (packet->cdata()[1] == 0x6f))) {
+
+unsigned short seq = ((unsigned short)(packet->cdata()[2]) << 8) | packet->cdata()[3];
+
+GENODE_TRACE_DURATION_NAMED(seq, "BaseChannel::SendPacket() thread 1: audio: seq");
+
+#if 0
+::uint64_t now_ms = Genode::Trace::timestamp_ms();
+static ::uint64_t last_ms = now_ms;
+::uint64_t diff_ms = now_ms - last_ms;
+last_ms = now_ms;
+
+GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "BaseChannel::SendPacket() thread 1: audio: ms");
+
+if (diff_ms >= 100) {
+	GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "BaseChannel::SendPacket() thread 1: audio: ms: xxx");
+//	static int count = 0;
+//	fprintf(stderr, "%d: BaseChannel::SendPacket() thread 1: audio: seq: %u, ms: %lu\n", count, seq, diff_ms);
+//	count++;
+}
+#endif
+
+    // Avoid a copy by transferring the ownership of the packet data.
+    int message_id = rtcp ? MSG_SEND_RTCP_PACKET : MSG_SEND_RTP_PACKET;
+    SendPacketMessageData* data = new SendPacketMessageData;
+    data->packet = std::move(*packet);
+    data->options = options;
+    network_thread_->Post(RTC_FROM_HERE, this, message_id, data);
+	return true;
+}
+#endif
+
     // Avoid a copy by transferring the ownership of the packet data.
     int message_id = rtcp ? MSG_SEND_RTCP_PACKET : MSG_SEND_RTP_PACKET;
     SendPacketMessageData* data = new SendPacketMessageData;
@@ -437,12 +484,79 @@ bool BaseChannel::SendPacket(bool rtcp,
                         << " packet without encryption.";
   }
 
+#if 0
+int dummy;
+fprintf(stderr, "%p: BaseChannel::SendPacket(): 0x%x, 0x%x\n",
+        &dummy, packet->cdata()[0], packet->cdata()[1]);
+#endif
+
+#if 0
+{
+::uint64_t now_ms = Genode::Trace::timestamp_ms();
+static ::uint64_t last_ms = now_ms;
+::uint64_t diff_ms = now_ms - last_ms;
+last_ms = now_ms;
+
+GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "BaseChannel::SendPacket(): ms");
+}
+#endif
+
+
+#if 1
+
+if (((packet->cdata()[0] == 0x90) || (packet->cdata()[0] == 0xb0)) &&
+    ((packet->cdata()[1] == 0xef) || (packet->cdata()[1] == 0x6f))) {
+
+unsigned short seq = ((unsigned short)(packet->cdata()[2]) << 8) | packet->cdata()[3];
+
+GENODE_TRACE_DURATION_NAMED(seq, "BaseChannel::SendPacket() thread 2: audio: seq");
+
+#if 0
+::uint64_t now_ms = Genode::Trace::timestamp_ms();
+static ::uint64_t last_ms = now_ms;
+::uint64_t diff_ms = now_ms - last_ms;
+last_ms = now_ms;
+
+
+GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "BaseChannel::SendPacket() thread 2: audio: ms");
+
+if (diff_ms >= 100) {
+	GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "BaseChannel::SendPacket() thread 2: audio: ms: xxx");
+//	static int count = 0;
+//	fprintf(stderr, "%d: BaseChannel::SendPacket() thread 2: audio: seq: %u, ms: %lu\n", count, seq, diff_ms);
+//	count++;
+}
+#endif
+
   // Bon voyage.
-  return rtcp ? rtp_transport_->SendRtcpPacket(packet, options, PF_SRTP_BYPASS)
+  bool res = rtcp ? rtp_transport_->SendRtcpPacket(packet, options, PF_SRTP_BYPASS)
               : rtp_transport_->SendRtpPacket(packet, options, PF_SRTP_BYPASS);
+
+  return res;
+}
+#endif
+
+  // Bon voyage.
+  bool res = rtcp ? rtp_transport_->SendRtcpPacket(packet, options, PF_SRTP_BYPASS)
+              : rtp_transport_->SendRtpPacket(packet, options, PF_SRTP_BYPASS);
+
+  return res;
 }
 
 void BaseChannel::OnRtpPacket(const webrtc::RtpPacketReceived& parsed_packet) {
+
+#if 0
+int dummy;
+fprintf(stderr, "%p: BaseChannel::OnRtpPacket()\n", &dummy);
+wait_for_continue();
+#endif
+
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::OnRtpPacket()");
+
+if (parsed_packet.PayloadType() == 0x6f) {
+GENODE_TRACE_CHECKPOINT_NAMED(parsed_packet.SequenceNumber(), "BaseChannel::OnRtpPacket(): audio: seq");
+}
+
   // Take packet time from the |parsed_packet|.
   // RtpPacketReceived.arrival_time_ms = (timestamp_us + 500) / 1000;
   int64_t packet_time_us = -1;
@@ -476,9 +590,21 @@ void BaseChannel::OnRtpPacket(const webrtc::RtpPacketReceived& parsed_packet) {
 
   invoker_.AsyncInvoke<void>(
       RTC_FROM_HERE, worker_thread_, [this, packet_buffer, packet_time_us] {
+
+int seq = 0;
+GetRtpSeqNum(packet_buffer.cdata(), packet_buffer.size(), &seq);
+GENODE_TRACE_CHECKPOINT_NAMED(seq, "BaseChannel::OnRtpPacket() async");
+#if 0
+int dummy;
+fprintf(stderr, "%p: BaseChannel::OnRtpPacket() async\n", &dummy);
+wait_for_continue();
+#endif
         RTC_DCHECK(worker_thread_->IsCurrent());
         media_channel_->OnPacketReceived(packet_buffer, packet_time_us);
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::OnRtpPacket() async finished");
+
       });
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::OnRtpPacket() finished");
 }
 
 void BaseChannel::UpdateRtpHeaderExtensionMap(
@@ -723,6 +849,30 @@ RtpHeaderExtensions BaseChannel::GetFilteredRtpHeaderExtensions(
 }
 
 void BaseChannel::OnMessage(rtc::Message* pmsg) {
+
+#if 0
+{
+::uint64_t now_ms = Genode::Trace::timestamp_ms();
+static ::uint64_t last_ms = now_ms;
+::uint64_t diff_ms = now_ms - last_ms;
+last_ms = now_ms;
+
+GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "BaseChannel::OnMessage(): ms");
+
+if (diff_ms >= 100) {
+	GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "BaseChannel::OnMessage(): ms: xxx");
+	static int count = 0;
+	fprintf(stderr, "%d: BaseChannel::OnMessage(): ms: %lu\n", count, diff_ms);
+	count++;
+}
+
+}
+#else
+
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::OnMessage()");
+
+#endif
+
   TRACE_EVENT0("webrtc", "BaseChannel::OnMessage");
   switch (pmsg->message_id) {
     case MSG_SEND_RTP_PACKET:
@@ -763,9 +913,11 @@ void BaseChannel::FlushRtcpMessages_n() {
 }
 
 void BaseChannel::SignalSentPacket_n(const rtc::SentPacket& sent_packet) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::SignalSentPacket_n()");
   RTC_DCHECK(network_thread_->IsCurrent());
   invoker_.AsyncInvoke<void>(RTC_FROM_HERE, worker_thread_,
                              [this, sent_packet] {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::SignalSentPacket_n() async");
                                RTC_DCHECK(worker_thread_->IsCurrent());
                                SignalSentPacket(sent_packet);
                              });
@@ -796,9 +948,13 @@ VoiceChannel::~VoiceChannel() {
 }
 
 void BaseChannel::UpdateMediaSendRecvState() {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::UpdateMediaSendRecvState()");
+
   RTC_DCHECK(network_thread_->IsCurrent());
   invoker_.AsyncInvoke<void>(RTC_FROM_HERE, worker_thread_,
-                             [this] { UpdateMediaSendRecvState_w(); });
+                             [this] {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BaseChannel::UpdateMediaSendRecvState() async");
+                             UpdateMediaSendRecvState_w(); });
 }
 
 void VoiceChannel::Init_w(
@@ -1333,6 +1489,8 @@ void RtpDataChannel::UpdateMediaSendRecvState_w() {
 }
 
 void RtpDataChannel::OnMessage(rtc::Message* pmsg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "RtpDataChannel::OnMessage()");
+
   switch (pmsg->message_id) {
     case MSG_READYTOSENDDATA: {
       DataChannelReadyToSendMessageData* data =
@@ -1358,11 +1516,13 @@ void RtpDataChannel::OnMessage(rtc::Message* pmsg) {
 void RtpDataChannel::OnDataReceived(const ReceiveDataParams& params,
                                     const char* data,
                                     size_t len) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "RtpDataChannel::OnDataReceived()");
   DataReceivedMessageData* msg = new DataReceivedMessageData(params, data, len);
   signaling_thread()->Post(RTC_FROM_HERE, this, MSG_DATARECEIVED, msg);
 }
 
 void RtpDataChannel::OnDataChannelReadyToSend(bool writable) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "RtpDataChannel::OnDataChannelReadyToSend()");
   // This is usded for congestion control to indicate that the stream is ready
   // to send by the MediaChannel, as opposed to OnReadyToSend, which indicates
   // that the transport channel is ready.

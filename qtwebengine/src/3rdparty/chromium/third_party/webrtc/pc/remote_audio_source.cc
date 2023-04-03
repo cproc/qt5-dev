@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "pc/remote_audio_source.h"
 
 #include <stddef.h>
@@ -165,6 +167,8 @@ void RemoteAudioSource::OnAudioChannelGone() {
 }
 
 void RemoteAudioSource::OnMessage(rtc::Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "RemoteAudioSource::OnMessage()");
+
   RTC_DCHECK(main_thread_->IsCurrent());
   sinks_.clear();
   state_ = MediaSourceInterface::kEnded;

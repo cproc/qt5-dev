@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/signal_thread.h"
 
 #include <memory>
@@ -96,6 +98,8 @@ bool SignalThread::ContinueWork() {
 }
 
 void SignalThread::OnMessage(Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "SignalThread::OnMessage()");
+
   EnterExit ee(this);
   if (ST_MSG_WORKER_DONE == msg->message_id) {
     RTC_DCHECK(main_->IsCurrent());

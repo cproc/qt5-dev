@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <trace/probe.h>
+
 #include "net/socket/udp_socket_posix.h"
 
 #include <errno.h>
@@ -873,12 +875,40 @@ int UDPSocketPosix::InternalRecvFromNonConnectedSocket(IOBuffer* buf,
   bytes_transferred = HANDLE_EINTR(recvfrom(socket_, buf->data(),
                                    buf_len, 0,
                                    storage.addr, &storage.addr_len));
+//fprintf(stderr, "recvfrom() returned %d\n", bytes_transferred);
+
   storage.addr_len = msg.msg_namelen;
   int result;
   if (bytes_transferred >= 0) {
     if (msg.msg_flags & MSG_TRUNC) {
       result = ERR_MSG_TOO_BIG;
     } else {
+
+unsigned char *ucbuf = (unsigned char*)buf->data();
+//fprintf(stderr, "recvfrom(): %x, %x\n", ucbuf[0], ucbuf[1]);
+
+bool rtp_opus = false;
+
+unsigned short seq = 0;
+
+if (((ucbuf[0] == 0x90) || (ucbuf[0] == 0xb0)) &&
+    ((ucbuf[1] == 0xef) || (ucbuf[1] == 0x6f))) {
+
+	rtp_opus = true;
+	seq = ((unsigned short)(ucbuf[2]) << 8) | ucbuf[3];
+
+} else if (((ucbuf[4] == 0x90) || (ucbuf[4] == 0xb0)) &&
+           ((ucbuf[5] == 0xef) || (ucbuf[5] == 0x6f))) {
+
+	rtp_opus = true;
+	seq = ((unsigned short)(ucbuf[6]) << 8) | ucbuf[7];
+}
+
+if (rtp_opus) {
+//fprintf(stderr, "recvfrom(): audio: %u\n", seq);
+//GENODE_TRACE_CHECKPOINT_NAMED(seq, "UDPSocketPosix::InternalRecvFromConnectedSocket(): audio: seq");
+}
+
       result = bytes_transferred;
       if (address && !address->FromSockAddr(storage.addr, storage.addr_len))
         result = ERR_ADDRESS_INVALID;
@@ -909,10 +939,39 @@ int UDPSocketPosix::InternalSendTo(IOBuffer* buf,
 
   int result = HANDLE_EINTR(sendto(socket_, buf->data(), buf_len, sendto_flags_,
                                    addr, storage.addr_len));
+//fprintf(stderr, "sendto(): %zu, %d\n", buf_len, result);
   if (result < 0)
     result = MapSystemError(errno);
   if (result != ERR_IO_PENDING)
     LogWrite(result, buf->data(), address);
+
+
+unsigned char *ucbuf = (unsigned char*)buf->data();
+//fprintf(stderr, "sendto(): %x, %x\n", ucbuf[0], ucbuf[1]);
+
+bool rtp_opus = false;
+
+unsigned short seq = 0;
+
+if (((ucbuf[0] == 0x90) || (ucbuf[0] == 0xb0)) &&
+    ((ucbuf[1] == 0xef) || (ucbuf[1] == 0x6f))) {
+
+	rtp_opus = true;
+	seq = ((unsigned short)(ucbuf[2]) << 8) | ucbuf[3];
+
+} else if (((ucbuf[4] == 0x90) || (ucbuf[4] == 0xb0)) &&
+           ((ucbuf[5] == 0xef) || (ucbuf[5] == 0x6f))) {
+
+	rtp_opus = true;
+	seq = ((unsigned short)(ucbuf[6]) << 8) | ucbuf[7];
+}
+
+if (rtp_opus) {
+//fprintf(stderr, "sendto(): audio: %u\n", seq);
+GENODE_TRACE_CHECKPOINT_NAMED(seq, "sendto(): audio: seq");
+}
+
+
   return result;
 }
 

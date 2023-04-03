@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "p2p/base/turn_server.h"
 
 #include <memory>
@@ -954,6 +956,8 @@ void TurnServerAllocation::SendExternal(const void* data,
 }
 
 void TurnServerAllocation::OnMessage(rtc::Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "TurnServerAllocation::OnMessage()");
+
   RTC_DCHECK(msg->message_id == MSG_ALLOCATION_TIMEOUT);
   SignalDestroyed(this);
   delete this;
@@ -988,6 +992,8 @@ void TurnServerAllocation::Permission::Refresh() {
 }
 
 void TurnServerAllocation::Permission::OnMessage(rtc::Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "TurnServerAllocation::Permission::OnMessage()");
+
   RTC_DCHECK(msg->message_id == MSG_ALLOCATION_TIMEOUT);
   SignalDestroyed(this);
   delete this;
@@ -1011,6 +1017,8 @@ void TurnServerAllocation::Channel::Refresh() {
 }
 
 void TurnServerAllocation::Channel::OnMessage(rtc::Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "TurnServerAllocation::Channel::OnMessage()");
+
   RTC_DCHECK(msg->message_id == MSG_ALLOCATION_TIMEOUT);
   SignalDestroyed(this);
   delete this;

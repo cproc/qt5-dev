@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <trace/probe.h>
+
 #include "jingle/glue/thread_wrapper.h"
 
 #include <stddef.h>
@@ -210,6 +212,8 @@ void JingleThreadWrapper::Send(const rtc::Location& posted_from,
 }
 
 void JingleThreadWrapper::ProcessPendingSends() {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "JingleThreadWrapper::ProcessPendingSends()");
+
   while (true) {
     PendingSend* pending_send = nullptr;
     {
@@ -246,6 +250,7 @@ void JingleThreadWrapper::PostTaskInternal(const rtc::Location& posted_from,
     task_id = ++last_task_id_;
     messages_.insert(std::pair<int, rtc::Message>(task_id, message));
   }
+GENODE_TRACE_CHECKPOINT_NAMED(task_id, "JingleThreadWrapper::PostTaskInternal()");
 
   if (delay_ms <= 0) {
     task_runner_->PostTask(
@@ -260,6 +265,8 @@ void JingleThreadWrapper::PostTaskInternal(const rtc::Location& posted_from,
 }
 
 void JingleThreadWrapper::RunTask(int task_id) {
+GENODE_TRACE_CHECKPOINT_NAMED(task_id, "JingleThreadWrapper::RunTask()");
+
   bool have_message = false;
   rtc::Message message;
   {

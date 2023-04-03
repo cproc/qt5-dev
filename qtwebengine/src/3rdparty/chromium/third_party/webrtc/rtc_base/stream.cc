@@ -7,6 +7,9 @@
  *  in the file PATENTS.  All contributing project authors may
  *  be found in the AUTHORS file in the root of the source tree.
  */
+
+#include <trace/probe.h>
+
 #include "rtc_base/stream.h"
 
 #include <errno.h>
@@ -60,6 +63,8 @@ bool StreamInterface::Flush() {
 StreamInterface::StreamInterface() {}
 
 void StreamInterface::OnMessage(Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "StreamInterface::OnMessage()");
+
   if (MSG_POST_EVENT == msg->message_id) {
     StreamEventData* pe = static_cast<StreamEventData*>(msg->pdata);
     SignalEvent(this, pe->events, pe->error);

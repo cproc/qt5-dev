@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "p2p/client/basic_port_allocator.h"
 
 #include <algorithm>
@@ -575,6 +577,7 @@ bool BasicPortAllocatorSession::CandidatesAllocationDone() const {
 }
 
 void BasicPortAllocatorSession::OnMessage(rtc::Message* message) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "BasicPortAllocator::OnMessage()");
   switch (message->message_id) {
     case MSG_CONFIG_START:
       GetPortConfigurations();
@@ -1344,6 +1347,8 @@ void AllocationSequence::Stop() {
 }
 
 void AllocationSequence::OnMessage(rtc::Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "AllocationSequence::OnMessage()");
+
   RTC_DCHECK(rtc::Thread::Current() == session_->network_thread());
   RTC_DCHECK(msg->message_id == MSG_ALLOCATION_PHASE);
 

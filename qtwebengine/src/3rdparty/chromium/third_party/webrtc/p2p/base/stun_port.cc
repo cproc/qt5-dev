@@ -296,6 +296,10 @@ int UDPPort::SendTo(const void* data,
                     const rtc::SocketAddress& addr,
                     const rtc::PacketOptions& options,
                     bool payload) {
+//int dummy;
+//fprintf(stderr, "%p: UDPPort::SendTo(): 0x%x, 0x%x\n",
+//        &dummy, ((unsigned char*)data)[0], ((unsigned char*)data)[1]);
+  
   rtc::PacketOptions modified_options(options);
   CopyPortInformationToPacketInfo(&modified_options.info_signaled_after_sent);
   int sent = socket_->SendTo(data, size, addr, modified_options);

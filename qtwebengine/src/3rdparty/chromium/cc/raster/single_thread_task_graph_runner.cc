@@ -11,6 +11,8 @@
 #include "base/threading/simple_thread.h"
 #include "base/trace_event/trace_event.h"
 
+#include <trace/probe.h>
+
 namespace cc {
 
 SingleThreadTaskGraphRunner::SingleThreadTaskGraphRunner()
@@ -114,6 +116,7 @@ void SingleThreadTaskGraphRunner::Run() {
   base::AutoLock lock(lock_);
 
   while (true) {
+GENODE_TRACE_DURATION_NAMED(0, "SingleThreadTaskGraphRunner::Run()");
     if (!RunTaskWithLockAcquired()) {
       // Exit when shutdown is set and no more tasks are pending.
       if (shutdown_)

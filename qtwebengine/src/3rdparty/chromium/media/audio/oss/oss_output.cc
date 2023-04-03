@@ -13,6 +13,8 @@
 #include "media/base/audio_timestamp_helper.h"
 #include "media/audio/oss/oss_output.h"
 
+#include <trace/probe.h>
+
 namespace media {
 
 static const SampleFormat kSampleFormat = kSampleFormatS16;
@@ -118,6 +120,8 @@ void OssAudioOutputStream::ThreadLoop(void) {
   static short up_mixing_buffer[16u << 10];
 
   while (state == kRunning) {
+GENODE_TRACE_DURATION_NAMED(0, "OssAudioOutputStream::ThreadLoop()");
+
     // Update volume if needed
     pthread_mutex_lock(&mutex);
     if (volpending) {

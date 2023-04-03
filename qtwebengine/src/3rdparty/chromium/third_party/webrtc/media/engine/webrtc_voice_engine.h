@@ -11,6 +11,8 @@
 #ifndef MEDIA_ENGINE_WEBRTC_VOICE_ENGINE_H_
 #define MEDIA_ENGINE_WEBRTC_VOICE_ENGINE_H_
 
+#include <trace/probe.h>
+
 #include <map>
 #include <memory>
 #include <string>
@@ -224,6 +226,28 @@ class WebRtcVoiceMediaChannel final : public VoiceMediaChannel,
   bool SendRtp(const uint8_t* data,
                size_t len,
                const webrtc::PacketOptions& options) override {
+
+#if 0
+if (((data[0] == 0x90) || (data[0] == 0xb0)) &&
+    ((data[1] == 0xef) || (data[1] == 0x6f))) {
+
+unsigned short seq = ((unsigned short)(data[2]) << 8) | data[3];
+
+::uint64_t now_ms = Genode::Trace::timestamp_ms();
+static ::uint64_t last_ms = now_ms;
+::uint64_t diff_ms = now_ms - last_ms;
+last_ms = now_ms;
+if (diff_ms >= 100) {
+//	GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "RtpSenderAudio::SendAudio(): ms: xxx");
+	static int count = 0;
+	count++;
+	fprintf(stderr, "%d: WebRtcVoiceMediaChannel::SendRtp(): len: %zu, seq: %u, ms: %lu\n", count, len, seq, diff_ms);
+} else {
+//	GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "RtpSenderAudio::SendAudio(): ms");
+}
+
+}
+#endif
     rtc::CopyOnWriteBuffer packet(data, len, kMaxRtpPacketLen);
     rtc::PacketOptions rtc_options;
     rtc_options.packet_id = options.packet_id;

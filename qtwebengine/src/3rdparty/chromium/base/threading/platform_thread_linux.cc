@@ -101,6 +101,7 @@ const ThreadPriorityToNiceValuePair kThreadPriorityToNiceValueMap[4] = {
 
 Optional<bool> CanIncreaseCurrentThreadPriorityForPlatform(
     ThreadPriority priority) {
+fprintf(stderr, "*** CanIncreaseCurrentThreadPriorityForPlatform()\n");
 #if !defined(OS_NACL) && !defined(OS_BSD)
   // A non-zero soft-limit on RLIMIT_RTPRIO is required to be allowed to invoke
   // pthread_setschedparam in SetCurrentThreadPriorityForPlatform().
@@ -112,8 +113,12 @@ Optional<bool> CanIncreaseCurrentThreadPriorityForPlatform(
 #endif
   return base::nullopt;
 }
-
+//extern "C" void wait_for_continue();
 bool SetCurrentThreadPriorityForPlatform(ThreadPriority priority) {
+fprintf(stderr, "*** SetCurrentThreadPriorityForPlatform(): %d\n", priority);
+//if (priority == ThreadPriority::BACKGROUND) {
+//	wait_for_continue();
+//}
 #if !defined(OS_NACL) && 0
   SetThreadCgroupsForThreadPriority(PlatformThread::CurrentId(), priority);
   return priority == ThreadPriority::REALTIME_AUDIO &&
@@ -167,6 +172,7 @@ void PlatformThread::SetName(const std::string& name) {
 // static
 void PlatformThread::SetThreadPriority(PlatformThreadId thread_id,
                                        ThreadPriority priority) {
+fprintf(stderr, "PlatformThread::SetThreadPriority(): %u\n", priority);
   // Changing current main threads' priority is not permitted in favor of
   // security, this interface is restricted to change only non-main thread
   // priority.

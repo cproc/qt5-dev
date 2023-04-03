@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/rtc_certificate_generator.h"
 
 #include <time.h>
@@ -61,6 +63,8 @@ class RTCCertificateGenerationTask : public RefCountInterface,
 
   // Handles |MSG_GENERATE| and its follow-up |MSG_GENERATE_DONE|.
   void OnMessage(Message* msg) override {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "RTCCertificateGenerationTask::OnMessage()");
+
     switch (msg->message_id) {
       case MSG_GENERATE:
         RTC_DCHECK(worker_thread_->IsCurrent());

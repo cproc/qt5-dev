@@ -20,6 +20,8 @@
 /* Qt includes */
 #include <QThread>
 
+#include <trace/probe.h>
+
 class QGenodeSignalProxyThread : public QThread
 {
 	Q_OBJECT
@@ -37,7 +39,7 @@ class QGenodeSignalProxyThread : public QThread
 		void run()
 		{
 			for (;;) {
-
+GENODE_TRACE_DURATION_NAMED(0, "QGenodeSignalProxyThread::run()");
 				_blockade.block();
 
 				if (_input) {

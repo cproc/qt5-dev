@@ -70,12 +70,12 @@ void* ThreadFunc(void* params) {
     if (!thread_params->joinable)
       base::ThreadRestrictions::SetSingletonAllowed(false);
 
-#if !defined(OS_NACL) && !defined(OS_BSD)
+//#if !defined(OS_NACL) && !defined(OS_BSD)
     // Threads on linux/android may inherit their priority from the thread
     // where they were created. This explicitly sets the priority of all new
     // threads.
     PlatformThread::SetCurrentThreadPriority(thread_params->priority);
-#endif
+//#endif
   }
 
   ThreadIdNameManager::GetInstance()->RegisterThread(
@@ -300,6 +300,7 @@ void PlatformThread::Detach(PlatformThreadHandle thread_handle) {
 
 // static
 bool PlatformThread::CanIncreaseThreadPriority(ThreadPriority priority) {
+fprintf(stderr, "*** PlatformThread::CanIncreaseThreadPriority()\n");
 #if defined(OS_NACL)
   return false;
 #else
@@ -315,6 +316,7 @@ bool PlatformThread::CanIncreaseThreadPriority(ThreadPriority priority) {
 
 // static
 void PlatformThread::SetCurrentThreadPriorityImpl(ThreadPriority priority) {
+fprintf(stderr, "*** PlatformThread::SetCurrentThreadPriorityImpl()\n");
 #if defined(OS_NACL)
   NOTIMPLEMENTED();
 #else

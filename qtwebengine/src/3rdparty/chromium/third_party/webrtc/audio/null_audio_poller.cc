@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "audio/null_audio_poller.h"
 
 #include <stddef.h>
@@ -43,6 +45,8 @@ NullAudioPoller::~NullAudioPoller() {
 }
 
 void NullAudioPoller::OnMessage(rtc::Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "NullAudioPoller::OnMessage()");
+
   RTC_DCHECK(thread_checker_.IsCurrent());
 
   // Buffer to hold the audio samples.

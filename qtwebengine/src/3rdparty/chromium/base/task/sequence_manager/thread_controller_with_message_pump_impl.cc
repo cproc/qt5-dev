@@ -18,6 +18,10 @@
 #include "base/message_loop/message_pump_android.h"
 #endif
 
+#if defined(OS_GENODE)
+#include <trace/probe.h>
+#endif
+
 namespace base {
 namespace sequence_manager {
 namespace internal {
@@ -234,6 +238,9 @@ void ThreadControllerWithMessagePumpImpl::BeforeWait() {
 
 MessagePump::Delegate::NextWorkInfo
 ThreadControllerWithMessagePumpImpl::DoWork() {
+#if defined(OS_GENODE)
+GENODE_TRACE_DURATION_NAMED(0, "DoWork()");
+#endif
   // Nested runloops are covered by the parent loop hang watch scope.
   // TODO(crbug/1034046): Provide more granular scoping that reuses the parent
   // scope deadline.

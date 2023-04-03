@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/openssl_stream_adapter.h"
 
 #include <openssl/bio.h>
@@ -951,6 +953,7 @@ void OpenSSLStreamAdapter::Cleanup(uint8_t alert) {
 }
 
 void OpenSSLStreamAdapter::OnMessage(Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "OpenSSLStreamAdapter::OnMessage()");
   // Process our own messages and then pass others to the superclass
   if (MSG_TIMEOUT == msg->message_id) {
     RTC_LOG(LS_INFO) << "DTLS timeout expired";

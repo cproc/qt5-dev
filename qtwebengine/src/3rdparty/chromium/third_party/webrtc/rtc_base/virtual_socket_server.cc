@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/virtual_socket_server.h"
 
 #include <errno.h>
@@ -386,6 +388,8 @@ int VirtualSocket::SetOption(Option opt, int value) {
 }
 
 void VirtualSocket::OnMessage(Message* pmsg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "VirtualSocket::OnMessage()");
+
   if (pmsg->message_id == MSG_ID_PACKET) {
     RTC_DCHECK(nullptr != pmsg->pdata);
     Packet* packet = static_cast<Packet*>(pmsg->pdata);

@@ -22,6 +22,10 @@
 #include "base/mac/scoped_nsautorelease_pool.h"
 #endif
 
+#if defined(OS_GENODE)
+#include <trace/probe.h>
+#endif
+
 namespace base {
 namespace internal {
 
@@ -46,6 +50,7 @@ WorkerThread::WorkerThread(ThreadPriority priority_hint,
       task_tracker_(std::move(task_tracker)),
       priority_hint_(priority_hint),
       current_thread_priority_(GetDesiredThreadPriority()) {
+fprintf(stderr, "WorkerThread(): %u\n", priority_hint);
   DCHECK(delegate_);
   DCHECK(task_tracker_);
   DCHECK(CanUseBackgroundPriorityForWorkerThread() ||
@@ -313,6 +318,7 @@ void WorkerThread::RunWorker() {
   }
 
   while (!ShouldExit()) {
+
 #if defined(OS_MACOSX)
     mac::ScopedNSAutoreleasePool autorelease_pool;
 #endif
@@ -336,6 +342,11 @@ void WorkerThread::RunWorker() {
       continue;
     }
 
+{
+#if defined(OS_GENODE)
+GENODE_TRACE_DURATION_NAMED(0, "WorkerThread::RunWorker()");
+#endif
+
     task_source = task_tracker_->RunAndPopNextTask(std::move(task_source));
 
     delegate_->DidProcessTask(std::move(task_source));
@@ -346,6 +357,7 @@ void WorkerThread::RunWorker() {
     // invariant and avoids a useless loop iteration before going to sleep if
     // WakeUp() is called while this WorkerThread is awake.
     wake_up_event_.Reset();
+}
   }
 
   // Important: It is unsafe to access unowned state (e.g. |task_tracker_|)

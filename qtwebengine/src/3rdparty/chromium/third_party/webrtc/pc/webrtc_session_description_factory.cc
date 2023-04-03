@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "pc/webrtc_session_description_factory.h"
 
 #include <stddef.h>
@@ -293,6 +295,8 @@ cricket::SecurePolicy WebRtcSessionDescriptionFactory::SdesPolicy() const {
 }
 
 void WebRtcSessionDescriptionFactory::OnMessage(rtc::Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "WebRtcSessionDescriptionFactory::OnMessage()");
+
   switch (msg->message_id) {
     case MSG_CREATE_SESSIONDESCRIPTION_SUCCESS: {
       CreateSessionDescriptionMsg* param =

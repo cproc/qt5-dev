@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "rtc_base/openssl_adapter.h"
 
 #include <errno.h>
@@ -671,6 +673,7 @@ bool OpenSSLAdapter::IsResumedSession() {
 }
 
 void OpenSSLAdapter::OnMessage(Message* msg) {
+GENODE_TRACE_CHECKPOINT_NAMED(0, "OpenSSLAdapter::OnMessage()");
   if (MSG_TIMEOUT == msg->message_id) {
     RTC_LOG(LS_INFO) << "DTLS timeout expired";
     DTLSv1_handle_timeout(ssl_);

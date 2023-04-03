@@ -8,6 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <trace/probe.h>
+
 #include "media/engine/webrtc_voice_engine.h"
 
 #include <algorithm>
@@ -869,6 +871,23 @@ class WebRtcVoiceMediaChannel::WebRtcAudioSendStream
               size_t number_of_channels,
               size_t number_of_frames,
               absl::optional<int64_t> absolute_capture_timestamp_ms) override {
+
+#if 0
+{
+::uint64_t now_ms = Genode::Trace::timestamp_ms();
+static ::uint64_t last_ms = now_ms;
+::uint64_t diff_ms = now_ms - last_ms;
+last_ms = now_ms;
+static ::uint64_t total_diff_ms = 0;
+total_diff_ms += diff_ms;
+static int count = 0;
+::uint64_t avg_diff_ms = (count > 0) ? total_diff_ms / count : 0;
+GENODE_TRACE_CHECKPOINT_NAMED(diff_ms, "WebRtcAudioSendStream::OnData()");
+GENODE_TRACE_CHECKPOINT_NAMED(avg_diff_ms, "WebRtcAudioSendStream::OnData(): avg");
+count++;
+}
+#endif
+
     RTC_DCHECK_EQ(16, bits_per_sample);
     RTC_CHECK_RUNS_SERIALIZED(&audio_capture_race_checker_);
     RTC_DCHECK(stream_);

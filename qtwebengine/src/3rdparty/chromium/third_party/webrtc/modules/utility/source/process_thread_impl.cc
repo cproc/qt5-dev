@@ -18,6 +18,8 @@
 #include "rtc_base/time_utils.h"
 #include "rtc_base/trace_event.h"
 
+#include <trace/probe.h>
+
 namespace webrtc {
 namespace {
 
@@ -200,6 +202,8 @@ void ProcessThreadImpl::Run(void* obj) {
 }
 
 bool ProcessThreadImpl::Process() {
+GENODE_TRACE_DURATION_NAMED(0, "ProcessThreadImpl::Process()");
+
   TRACE_EVENT1("webrtc", "ProcessThreadImpl", "name", thread_name_);
   int64_t now = rtc::TimeMillis();
   int64_t next_checkpoint = now + (1000 * 60);
@@ -222,6 +226,7 @@ bool ProcessThreadImpl::Process() {
           TRACE_EVENT2("webrtc", "ModuleProcess", "function",
                        m.location.function_name(), "file",
                        m.location.file_name());
+GENODE_TRACE_DURATION_NAMED(0, m.location.function_name());
           m.module->Process();
         }
         // Use a new 'now' reference to calculate when the next callback
@@ -246,6 +251,7 @@ bool ProcessThreadImpl::Process() {
     }
 
     while (!queue_.empty()) {
+GENODE_TRACE_DURATION_NAMED(0, "ProcessThreadImpl::Process(): delayed task");
       QueuedTask* task = queue_.front();
       queue_.pop();
       lock_.Leave();

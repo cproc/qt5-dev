@@ -52,6 +52,8 @@
 #include "rtc_base/trace_event.h"
 #include "system_wrappers/include/clock.h"
 
+#include <trace/probe.h>
+
 namespace webrtc {
 namespace {
 
@@ -499,6 +501,12 @@ int NetEqImpl::InsertPacketInternal(const RTPHeader& rtp_header,
     // Convert to Packet.
     Packet packet;
     packet.payload_type = rtp_header.payloadType;
+#if 0
+int dummy;
+fprintf(stderr, "%p: NetEqImpl::InsertPacketInternal(): %x\n", &dummy, packet.payload_type);
+#endif
+GENODE_TRACE_CHECKPOINT_NAMED(rtp_header.sequenceNumber, "NetEqImpl::InsertPacketInternal(): seq");
+
     packet.sequence_number = rtp_header.sequenceNumber;
     packet.timestamp = rtp_header.timestamp;
     packet.payload.SetData(payload.data(), payload.size());
@@ -744,6 +752,8 @@ int NetEqImpl::InsertPacketInternal(const RTPHeader& rtp_header,
   if (relative_delay) {
     stats_->RelativePacketArrivalDelay(relative_delay.value());
   }
+GENODE_TRACE_CHECKPOINT_NAMED(0, "NetEqImpl::InsertPacketInternal() finished");
+
   return 0;
 }
 
@@ -1917,9 +1927,10 @@ int NetEqImpl::DtmfOverdub(const DtmfEvent& dtmf_event,
   dtmf_output.ReadInterleaved(overdub_length, &output[out_index]);
   return dtmf_return_value < 0 ? dtmf_return_value : 0;
 }
-
+extern "C" void wait_for_continue();
 int NetEqImpl::ExtractPackets(size_t required_samples,
                               PacketList* packet_list) {
+
   bool first_packet = true;
   uint8_t prev_payload_type = 0;
   uint32_t prev_timestamp = 0;
@@ -1935,6 +1946,11 @@ int NetEqImpl::ExtractPackets(size_t required_samples,
   uint32_t first_timestamp = next_packet->timestamp;
   size_t extracted_samples = 0;
 
+#if 0
+int dummy;
+fprintf(stderr, "%p: NetEqImpl::ExtractPackets()\n", &dummy);
+#endif
+
   // Packet extraction loop.
   do {
     timestamp_ = next_packet->timestamp;
@@ -1949,6 +1965,12 @@ int NetEqImpl::ExtractPackets(size_t required_samples,
     const uint64_t waiting_time_ms = packet->waiting_time->ElapsedMs();
     stats_->StoreWaitingTime(waiting_time_ms);
     RTC_DCHECK(!packet->empty());
+
+#if 0
+fprintf(stderr, "%p: NetEqImpl::ExtractPackets(): seq: %u\n", &dummy, packet->sequence_number);
+#endif
+GENODE_TRACE_CHECKPOINT_NAMED(packet->sequence_number,
+                              "NetEqImpl::ExtractPackets(): seq");
 
     if (first_packet) {
       first_packet = false;
@@ -2010,6 +2032,8 @@ int NetEqImpl::ExtractPackets(size_t required_samples,
       prev_sequence_number = next_packet->sequence_number;
       prev_timestamp = next_packet->timestamp;
     }
+GENODE_TRACE_CHECKPOINT_NAMED(0, "NetEqImpl::ExtractPackets() finished");
+
   } while (extracted_samples < required_samples && next_packet_available);
 
   if (extracted_samples > 0) {
@@ -2019,6 +2043,11 @@ int NetEqImpl::ExtractPackets(size_t required_samples,
     // never be flooded and flushed.
     packet_buffer_->DiscardAllOldPackets(timestamp_, stats_.get());
   }
+
+#if 0
+fprintf(stderr, "%p: NetEqImpl::ExtractPackets() finished\n", &dummy);
+#endif
+//GENODE_TRACE_CHECKPOINT_NAMED(0, "NetEqImpl::ExtractPackets() finished");
 
   return rtc::dchecked_cast<int>(extracted_samples);
 }

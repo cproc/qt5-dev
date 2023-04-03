@@ -414,6 +414,9 @@ bool {{class_name}}StubDispatch::Accept(
           "(Impl){{namespace_as_string}}::{{class_name}}::{{method.name}}",
           "message", message->name());
 #endif
+
+GENODE_TRACE_DURATION_NAMED(0, "{{namespace_as_string}}::{{class_name}}::{{method.name}}");
+
       static constexpr uint32_t kMessageHash = base::MD5Hash32Constexpr(
               "(Impl){{namespace_as_string}}::{{class_name}}::{{method.name}}");
       base::TaskAnnotator::ScopedSetIpcHash scoped_ipc_hash(kMessageHash);

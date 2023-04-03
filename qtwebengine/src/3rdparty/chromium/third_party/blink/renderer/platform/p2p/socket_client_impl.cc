@@ -83,7 +83,19 @@ void P2PSocketClientImpl::SendWithPacketId(const net::IPEndPoint& address,
                                            const rtc::PacketOptions& options,
                                            uint64_t packet_id) {
   TRACE_EVENT_NESTABLE_ASYNC_BEGIN0("p2p", "Send", packet_id);
+int dummy;
+//fprintf(stderr, "%p: P2PSocketClientImpl::SendWithPacketId(): data.size(): %u\n", &dummy, data.size());
 
+//fprintf(stderr, "%p: P2PSocketClientImpl::SendWithPacketId(): %zu, 0x%x, 0x%x\n", &dummy, data.size(), (unsigned char)data[0], (unsigned char)data[1]);
+if ((((unsigned char)data[0] == 0x90) || ((unsigned char)data[0] == 0xb0)) &&
+    (((unsigned char)data[1] == 0xef) || ((unsigned char)data[1] == 0x6f))) {
+
+//fprintf(stderr, "%p: P2PSocketClientImpl::SendWithPacketId(): 0x%x, 0x%x\n", &dummy, (unsigned char)data[2], (unsigned char)data[3]);
+//fprintf(stderr, "%p: P2PSocketClientImpl::SendWithPacketId(): seq: %u\n", &dummy, ((unsigned short)data[2] << 8) | (unsigned char)data[3]);
+}
+
+//fprintf(stderr, "%p: P2PSocketClientImpl::SendWithPacketId(): calling socket_->Send()\n", &dummy);
+//wait_for_continue();
   socket_->Send(data, network::P2PPacketInfo(address, options, packet_id),
                 net::MutableNetworkTrafficAnnotationTag(traffic_annotation_));
 }
