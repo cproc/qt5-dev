@@ -20,6 +20,7 @@ namespace {
 NOINLINE void OnNoMemory(size_t size) {
   base::internal::RunPartitionAllocOomCallback();
   base::internal::OnNoMemoryInternal(size);
+  fprintf(stderr, "Error: out of memory while trying to allocate %zu bytes\n", size);
   IMMEDIATE_CRASH();
 }
 }  // namespace
