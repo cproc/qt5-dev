@@ -206,16 +206,28 @@ static QBasicMutex devicesMutex;
 
 struct TouchDevices {
     TouchDevices();
+    ~TouchDevices();
     QList<const QTouchDevice *> list;
 };
 Q_GLOBAL_STATIC(TouchDevices, deviceList)
 
 TouchDevices::TouchDevices()
 {
+/*
+ * With a static QApplication instance the post routine would
+ * be called after the device list has already been destroyed.
+ */
+#if 0
     qAddPostRoutine([]{
         const auto locker = qt_scoped_lock(devicesMutex);
         qDeleteAll(qExchange(deviceList->list, {}));
     });
+#endif
+}
+
+TouchDevices::~TouchDevices()
+{
+	qDeleteAll(deviceList->list);
 }
 
 /*!
