@@ -28,6 +28,7 @@ class QGenodeSignalProxyThread : public QThread
 
 		Genode::Blockade _blockade;
 
+		bool _quit              { false };
 		bool _input             { false };
 		bool _mode_changed      { false };
 		bool _clipboard_changed { false };
@@ -39,6 +40,9 @@ class QGenodeSignalProxyThread : public QThread
 			for (;;) {
 
 				_blockade.block();
+
+				if (_quit)
+					break;
 
 				if (_input) {
 					_input = false;
@@ -56,10 +60,17 @@ class QGenodeSignalProxyThread : public QThread
 				}
 			}
 		}
-	
+
 	public:
 
 		QGenodeSignalProxyThread() { start(); }
+
+		~QGenodeSignalProxyThread()
+		{
+			_quit = true;
+			_blockade.wakeup();
+			wait();
+		}
 
 		void input()
 		{
