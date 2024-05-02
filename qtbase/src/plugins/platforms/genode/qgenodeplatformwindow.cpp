@@ -426,10 +426,11 @@ Gui::Session::View_handle QGenodePlatformWindow::_create_view()
 		return _gui_session.create_view();
 
 	/*
-	 * Popup menus should never get a window decoration, therefore we set a top
-	 * level Qt window as 'transient parent'.
+	 * Popup menus and tooltips should never get a window decoration,
+	 * therefore we set a top level Qt window as 'transient parent'.
 	 */
-	if (!window()->transientParent() && (window()->type() == Qt::Popup)) {
+	if (!window()->transientParent() &&
+	    ((window()->type() == Qt::Popup) || (window()->type() == Qt::ToolTip))) {
 		QWindow *top_window = QGuiApplication::topLevelWindows().first();
 	    window()->setTransientParent(top_window);
 	}
@@ -456,9 +457,18 @@ void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 {
 	QRect adjusted_rect(rect);
 
-	/* Currently, top level windows must start at (0,0) */
-	if (!window()->transientParent())
+	if (!window()->transientParent()) {
+		/* Currently, top level windows must start at (0,0) */
 		adjusted_rect.moveTo(0, 0);
+	} else if (window()->type() == Qt::ToolTip) {
+		/* improve tooltip visibility */
+		if (adjusted_rect.topLeft().y() + adjusted_rect.height() >
+		    window()->transientParent()->geometry().height()) {
+			int dy = -adjusted_rect.height() -
+			         (adjusted_rect.topLeft().y() - QCursor::pos().y());
+			adjusted_rect.translate(0, dy);
+		}
+	}
 
 	QPlatformWindow::setGeometry(adjusted_rect);
 
@@ -526,8 +536,6 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
   _view_handle(_create_view()),
   _input_session(env.rm(), _gui_session.input_session()),
   _ev_buf(env.rm(), _input_session.dataspace()),
-  _resize_handle(!window->flags().testFlag(Qt::Popup)),
-  _decoration(!window->flags().testFlag(Qt::Popup)),
   _egl_display(egl_display),
   _egl_surface(EGL_NO_SURFACE),
   _input_signal_handler(_env.ep(), *this,

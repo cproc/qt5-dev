@@ -62,8 +62,6 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		Qt::KeyboardModifiers       _keyboard_modifiers;
 		Qt::MouseButtons            _mouse_button_state;
 		QByteArray                  _title;
-		bool                        _resize_handle;
-		bool                        _decoration;
 		EGLDisplay                  _egl_display;
 		EGLSurface                  _egl_surface;
 
