@@ -42,8 +42,8 @@ class QGenodeScreen : public QPlatformScreen
 
 			Framebuffer::Mode const scr_mode = _gui.mode();
 
-			_geometry.setRect(0, 0, scr_mode.area.w(),
-			                        scr_mode.area.h());
+			_geometry.setRect(0, 0, scr_mode.area.w,
+			                        scr_mode.area.h);
 		}
 
 		QRect geometry() const override { return _geometry; }

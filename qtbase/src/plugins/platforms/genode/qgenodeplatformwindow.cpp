@@ -397,7 +397,7 @@ void QGenodePlatformWindow::_mode_changed()
 {
 	Framebuffer::Mode mode(_gui_session.mode());
 
-	if ((mode.area.w() == 0) && (mode.area.h() == 0)) {
+	if ((mode.area.w == 0) && (mode.area.h == 0)) {
 		/* interpret a size of 0x0 as indication to close the window */
 		QWindowSystemInterface::handleCloseEvent(window());
 		/* don't actually set geometry to 0x0; either close or remain open */
@@ -407,8 +407,8 @@ void QGenodePlatformWindow::_mode_changed()
 	if (mode.area != _current_mode.area) {
 
 		QRect geo(geometry());
-		geo.setWidth (mode.area.w());
-		geo.setHeight(mode.area.h());
+		geo.setWidth (mode.area.w);
+		geo.setHeight(mode.area.h);
 
 		QWindowSystemInterface::handleGeometryChange(window(), geo);
 

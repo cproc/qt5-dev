@@ -7,7 +7,7 @@ QT += \
     fontdatabase_support-private \
     gui-private
 
-CONFIG += exceptions
+CONFIG += exceptions c++2a
 
 DEFINES += QT_NO_FOREACH
 
@@ -21,7 +21,7 @@ SOURCES =   main.cpp \
 
 HEADERS =   qgenodeclipboard.h \
             qgenodeintegrationplugin.h \
-            qgenodeplatformwindow.h \ 
+            qgenodeplatformwindow.h \
             qgenodesignalproxythread.h \
             qgenodewindowsurface.h
 
