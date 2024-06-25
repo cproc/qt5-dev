@@ -530,7 +530,7 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
   _gui_session_label(_sanitize_label(window->title())),
   _gui_session(env, _gui_session_label.toStdString().c_str()),
   _framebuffer_session(_gui_session.framebuffer_session()),
-  _framebuffer(0),
+  _framebuffer(nullptr),
   _framebuffer_changed(false),
   _geometry_changed(false),
   _view_handle(_create_view()),
@@ -908,10 +908,19 @@ unsigned char *QGenodePlatformWindow::framebuffer()
 
 	    _framebuffer_changed = false;
 
-		if (_framebuffer != 0)
+		if (_framebuffer != nullptr)
 		    _env.rm().detach(_framebuffer);
 
-		_framebuffer = _env.rm().attach(_framebuffer_session.dataspace());
+		Genode::Region_map::Attr attr { };
+		attr.writeable = true;
+		_env.rm().attach(_framebuffer_session.dataspace(), attr).with_result(
+			[&] (Genode::Region_map::Range range) {
+				_framebuffer = range.start;	},
+			[&] (Genode::Region_map::Attach_error) {
+				_framebuffer = nullptr;
+				Genode::error("could not attach framebuffer");
+			}
+		);
 	}
 
 	return _framebuffer;
