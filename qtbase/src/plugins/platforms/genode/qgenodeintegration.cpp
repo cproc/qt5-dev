@@ -33,7 +33,7 @@ static const bool verbose = false;
 
 QGenodeIntegration::QGenodeIntegration(Genode::Env &env)
 : _env(env),
-  _genode_screen(new QGenodeScreen(env))
+  _genode_screen(new QGenodeScreen(env, _signal_proxy))
 {
 	if (!eglBindAPI(EGL_OPENGL_API))
 		qFatal("eglBindAPI() failed");

@@ -20,25 +20,63 @@
 
 /* Qt includes */
 #include <qpa/qplatformscreen.h>
+#include <qpa/qwindowsysteminterface.h>
 
 #include <QDebug>
 
 #include "qgenodecursor.h"
+#include "qgenodesignalproxythread.h"
 
 QT_BEGIN_NAMESPACE
 
-class QGenodeScreen : public QPlatformScreen
+class QGenodeScreen : public QObject, public QPlatformScreen
 {
+	Q_OBJECT
+
 	private:
 
-		Genode::Env &_env;
-		QRect        _geometry;
+		Genode::Env              &_env;
+		QRect                     _geometry;
+
+		QGenodeSignalProxyThread &_signal_proxy;
+
+		Gui::Connection           _gui { _env };
+
+		Genode::Io_signal_handler<QGenodeScreen>
+			_mode_changed_signal_handler{_env.ep(), *this,
+			                             &QGenodeScreen::_handle_mode_changed};
+
+		void _handle_mode_changed()
+		{
+			_signal_proxy.screen_mode_changed();
+		}
+
+	private slots:
+
+		void _mode_changed()
+		{
+			Framebuffer::Mode const screen_mode = _gui.mode();
+
+			_geometry.setRect(0, 0, screen_mode.area.w(),
+			                        screen_mode.area.h());
+
+			QWindowSystemInterface::handleScreenGeometryChange(screen(),
+			                                                   _geometry,
+			                                                   _geometry);
+		}
 
 	public:
 
-		QGenodeScreen(Genode::Env &env) : _env(env)
+		QGenodeScreen(Genode::Env &env,
+		              QGenodeSignalProxyThread &signal_proxy)
+		: _env(env),
+		  _signal_proxy(signal_proxy)
 		{
-			Gui::Connection _gui(env);
+			_gui.mode_sigh(_mode_changed_signal_handler);
+
+			connect(&_signal_proxy, SIGNAL(screen_mode_changed_signal()),
+			        this, SLOT(_mode_changed()),
+			        Qt::QueuedConnection);
 
 			Framebuffer::Mode const scr_mode = _gui.mode();
 

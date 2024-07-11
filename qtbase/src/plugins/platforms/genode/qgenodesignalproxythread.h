@@ -28,10 +28,11 @@ class QGenodeSignalProxyThread : public QThread
 
 		Genode::Blockade _blockade;
 
-		bool _quit              { false };
-		bool _input             { false };
-		bool _mode_changed      { false };
-		bool _clipboard_changed { false };
+		bool _quit                { false };
+		bool _input               { false };
+		bool _mode_changed        { false };
+		bool _screen_mode_changed { false };
+		bool _clipboard_changed   { false };
 
 	protected:
 
@@ -52,6 +53,11 @@ class QGenodeSignalProxyThread : public QThread
 				if (_mode_changed) {
 					_mode_changed = false;
 					mode_changed_signal();
+				}
+
+				if (_screen_mode_changed) {
+					_screen_mode_changed = false;
+					screen_mode_changed_signal();
 				}
 
 				if (_clipboard_changed) {
@@ -84,6 +90,12 @@ class QGenodeSignalProxyThread : public QThread
 			_blockade.wakeup();
 		}
 
+		void screen_mode_changed()
+		{
+			_screen_mode_changed = true;
+			_blockade.wakeup();
+		}
+
 		void clipboard_changed()
 		{
 			_clipboard_changed = true;
@@ -94,6 +106,7 @@ class QGenodeSignalProxyThread : public QThread
 
 		void input_signal();
 		void mode_changed_signal();
+		void screen_mode_changed_signal();
 		void clipboard_changed_signal();
 };
 
