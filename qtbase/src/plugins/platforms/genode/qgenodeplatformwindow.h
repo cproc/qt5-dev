@@ -64,6 +64,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		QByteArray                  _title;
 		EGLDisplay                  _egl_display;
 		EGLSurface                  _egl_surface;
+		bool                        _hovered;
 
 		QPoint _local_position() const
 		{
@@ -105,6 +106,8 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		void _adjust_and_set_geometry(const QRect &rect);
 
 		QString _sanitize_label(QString label);
+
+		void _handle_hover_enter();
 
 		/*
 		 * Genode signals are handled as Qt signals to avoid blocking in the
@@ -207,6 +210,11 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 
 		Gui::Session_client &gui_session();
 		Gui::View_capability view_cap() const;
+
+
+		/* for any QGenodePlatformWindow */
+
+		void handle_hover_leave();
 
 	signals:
 

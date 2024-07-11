@@ -334,13 +334,55 @@ void QGenodePlatformWindow::_handle_input()
 }
 
 
+void QGenodePlatformWindow::_handle_hover_enter()
+{
+	if (!_hovered) {
+
+		/*
+		 * If a different window was hovered before and has
+		 * not processed its leave event yet, let it report
+		 * the leave event now to update the hover state of
+		 * the previously hovered widget ('qt_last_mouse_receiver'
+		 * in 'qwidgetwindow.cpp') before the variable gets
+		 * updated with the new hovered widget.
+		 */
+
+		for (QWindow *window : QGuiApplication::topLevelWindows()) {
+			QGenodePlatformWindow *platform_window =
+				static_cast<QGenodePlatformWindow*>(window->handle());
+			platform_window->handle_hover_leave();
+		}
+
+		_hovered = true;
+		QWindowSystemInterface::handleEnterEvent(window());
+	}
+}
+
+
+void QGenodePlatformWindow::handle_hover_leave()
+{
+	if (_hovered) {
+		_hovered = false;
+		QWindowSystemInterface::handleLeaveEvent(window());
+	}
+}
+
+
 void QGenodePlatformWindow::_input()
 {
 	QList<Input::Event> touch_events;
 
 	_input_session.for_each_event([&] (Input::Event const &event) {
 
+		if (event.hover_leave()) {
+			handle_hover_leave();
+			return;
+		}
+
 		event.handle_absolute_motion([&] (int x, int y) {
+
+			_handle_hover_enter();
+
 			_mouse_position = QPoint(x, y);
 
 			QWindowSystemInterface::handleMouseEvent(window(),
@@ -538,6 +580,7 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
   _ev_buf(env.rm(), _input_session.dataspace()),
   _egl_display(egl_display),
   _egl_surface(EGL_NO_SURFACE),
+  _hovered(false),
   _input_signal_handler(_env.ep(), *this,
                         &QGenodePlatformWindow::_handle_input),
   _mode_changed_signal_handler(_env.ep(), *this,
