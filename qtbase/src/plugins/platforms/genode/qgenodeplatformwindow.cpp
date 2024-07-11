@@ -617,15 +617,6 @@ void QGenodePlatformWindow::setVisible(bool visible)
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setVisible(" << visible << ")";
 
-	/*
-	 * This function must be called before the
-	 * 'QWindowSystemInterface::handleEnterEvent()' calls below to get the same
-	 * window event order as on Linux (xcb). Otherwise, a button with menu is
-	 * not displayed correctly when clicking on the button and then clicking
-	 * outside of the button.
-	 */
-	QPlatformWindow::setVisible(visible);
-
 	typedef Gui::Session::Command Command;
 
 	if (visible) {
@@ -641,15 +632,29 @@ void QGenodePlatformWindow::setVisible(bool visible)
 			Gui::Area(g.width(), g.height())));
 
 		/*
+		 * 'QWindowSystemInterface::handleExposeEvent()' was previously called
+		 * via 'QPlatformWindow::setVisible()', but that method also called
+		 * 'QWindowSystemInterface::flushWindowSystemEvents()', which had the
+		 * negative effect that a button with a visible tooltip "lost" the
+		 * mouse release event on a fast click, apparently because it got
+		 * handled too early (during tooltip cleanup).
+		 */
+		QRect expose_rect(QPoint(), g.size());
+		QWindowSystemInterface::handleExposeEvent(window(), expose_rect);
+
+		/*
 		 * xcb sends an enter event when a popup menu opens and this
 		 * appears to be necessary for correct button display in some cases.
 		 */
 		if (window()->type() == Qt::Popup)
 			QWindowSystemInterface::handleEnterEvent(window());
+
 	} else {
 
 		_gui_session.enqueue<Command::Geometry>(_view_handle,
 		     Gui::Rect(Gui::Point(), Gui::Area(0, 0)));
+
+		QWindowSystemInterface::handleExposeEvent(window(), QRegion());
 
 		/*
 		 * xcb sends an enter event when a popup menu is closed and this
