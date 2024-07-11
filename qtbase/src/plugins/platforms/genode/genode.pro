@@ -22,6 +22,7 @@ SOURCES =   main.cpp \
 HEADERS =   qgenodeclipboard.h \
             qgenodeintegrationplugin.h \
             qgenodeplatformwindow.h \
+            qgenodescreen.h \
             qgenodesignalproxythread.h \
             qgenodewindowsurface.h
 
