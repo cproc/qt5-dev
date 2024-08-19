@@ -348,9 +348,11 @@ void QGenodePlatformWindow::_handle_hover_enter()
 		 */
 
 		for (QWindow *window : QGuiApplication::topLevelWindows()) {
-			QGenodePlatformWindow *platform_window =
-				static_cast<QGenodePlatformWindow*>(window->handle());
-			platform_window->handle_hover_leave();
+			if (window->handle()) {
+				QGenodePlatformWindow *platform_window =
+					static_cast<QGenodePlatformWindow*>(window->handle());
+				platform_window->handle_hover_leave();
+			}
 		}
 
 		_hovered = true;
@@ -437,7 +439,7 @@ void QGenodePlatformWindow::_handle_mode_changed()
 
 void QGenodePlatformWindow::_mode_changed()
 {
-	Framebuffer::Mode mode(_gui_session.mode());
+	Framebuffer::Mode mode(_gui_connection.mode());
 
 	if ((mode.area.w == 0) && (mode.area.h == 0)) {
 		/* interpret a size of 0x0 as indication to close the window */
@@ -459,13 +461,16 @@ void QGenodePlatformWindow::_mode_changed()
 }
 
 
-Gui::Session::View_handle QGenodePlatformWindow::_create_view()
+void QGenodePlatformWindow::_create_view()
 {
 	if (window()->type() == Qt::Desktop)
-		return Gui::Session::View_handle();
+		return;
 
-	if (window()->type() == Qt::Dialog)
-		return _gui_session.create_view();
+	if (window()->type() == Qt::Dialog) {
+		_view_id.construct(_view_ref, _gui_connection.view_ids);
+		_gui_connection.view(_view_id->id(), { });
+		return;
+	}
 
 	/*
 	 * Popup menus and tooltips should never get a window decoration,
@@ -478,21 +483,25 @@ Gui::Session::View_handle QGenodePlatformWindow::_create_view()
 	}
 
 	if (window()->transientParent()) {
+
 		QGenodePlatformWindow *parent_platform_window =
 			static_cast<QGenodePlatformWindow*>(window()->transientParent()->handle());
 
-		Gui::Session::View_handle parent_handle =
-			_gui_session.view_handle(parent_platform_window->view_cap());
+		Gui::View_ref parent_view_ref { };
+		Gui::View_ids::Element parent_view_id { parent_view_ref, _gui_connection.view_ids };
 
-		Gui::Session::View_handle result =
-			_gui_session.create_view(parent_handle);
+		_gui_connection.associate(parent_view_id.id(), parent_platform_window->view_cap());
 
-		_gui_session.release_view_handle(parent_handle);
+		_view_id.construct(_view_ref, _gui_connection.view_ids);
+		_gui_connection.child_view(_view_id->id(), parent_view_id.id(), { });
 
-		return result;
+		_gui_connection.release_view_id(parent_view_id.id());
+
+		return;
 	}
 
-	return _gui_session.create_view();
+	_view_id.construct(_view_ref, _gui_connection.view_ids);
+	_gui_connection.view(_view_id->id(), { });
 }
 
 void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
@@ -516,7 +525,7 @@ void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 
 	Framebuffer::Mode const mode { .area = { (unsigned)adjusted_rect.width(),
 	                                         (unsigned)adjusted_rect.height() } };
-	_gui_session.buffer(mode, false);
+	_gui_connection.buffer(mode, false);
 
 	_current_mode = mode;
 
@@ -570,17 +579,15 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
   _env(env),
   _signal_proxy(signal_proxy),
   _gui_session_label(_sanitize_label(window->title())),
-  _gui_session(env, _gui_session_label.toStdString().c_str()),
-  _framebuffer_session(_gui_session.framebuffer_session()),
+  _gui_connection(env, _gui_session_label.toStdString().c_str()),
+  _gui_session(_gui_connection.cap()),
+  _framebuffer_session(_gui_session.framebuffer()),
   _framebuffer(nullptr),
   _framebuffer_changed(false),
   _geometry_changed(false),
-  _view_handle(_create_view()),
-  _input_session(env.rm(), _gui_session.input_session()),
+  _input_session(env.rm(), _gui_session.input()),
   _ev_buf(env.rm(), _input_session.dataspace()),
   _egl_display(egl_display),
-  _egl_surface(EGL_NO_SURFACE),
-  _hovered(false),
   _input_signal_handler(_env.ep(), *this,
                         &QGenodePlatformWindow::_handle_input),
   _mode_changed_signal_handler(_env.ep(), *this,
@@ -591,20 +598,21 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
 		if (window->transientParent())
 			qDebug() << "QGenodePlatformWindow(): child window of" << window->transientParent();
 
+	_create_view();
+
 	_gui_session_label_list.append(_gui_session_label);
 
 	_input_session.sigh(_input_signal_handler);
 
-	_gui_session.mode_sigh(_mode_changed_signal_handler);
+	_gui_connection.mode_sigh(_mode_changed_signal_handler);
 
 	_adjust_and_set_geometry(geometry());
 
-	if (_view_handle.valid()) {
-
+	if (_view_id.constructed()) {
 		/* bring the view to the top */
 		typedef Gui::Session::Command Command;
-		_gui_session.enqueue<Command::To_front>(_view_handle);
-		_gui_session.execute();
+		_gui_connection.enqueue<Command::Front>(_view_id->id());
+		_gui_connection.execute();
 	}
 
 	connect(&signal_proxy, SIGNAL(input_signal()),
@@ -670,9 +678,12 @@ void QGenodePlatformWindow::setVisible(bool visible)
 			g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
 		}
 
-		_gui_session.enqueue<Command::Geometry>(_view_handle,
-			Gui::Rect(Gui::Point(g.x(), g.y()),
-			Gui::Area(g.width(), g.height())));
+		if (_view_id.constructed()) {
+			_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
+				Gui::Rect(Gui::Point(g.x(), g.y()),
+				Gui::Area(g.width(), g.height())));
+			_gui_connection.execute();
+		}
 
 		/*
 		 * 'QWindowSystemInterface::handleExposeEvent()' was previously called
@@ -694,8 +705,11 @@ void QGenodePlatformWindow::setVisible(bool visible)
 
 	} else {
 
-		_gui_session.enqueue<Command::Geometry>(_view_handle,
-		     Gui::Rect(Gui::Point(), Gui::Area(0, 0)));
+		if (_view_id.constructed()) {
+			_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
+			     Gui::Rect(Gui::Point(), Gui::Area(0, 0)));
+			_gui_connection.execute();
+		}
 
 		QWindowSystemInterface::handleExposeEvent(window(), QRegion());
 
@@ -707,8 +721,6 @@ void QGenodePlatformWindow::setVisible(bool visible)
 			QWindowSystemInterface::handleEnterEvent(window()->transientParent(),
 			                                         QCursor::pos());
 	}
-
-	_gui_session.execute();
 
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setVisible() finished";
@@ -765,9 +777,9 @@ void QGenodePlatformWindow::setWindowTitle(const QString &title)
 
 	typedef Gui::Session::Command Command;
 
-	if (_view_handle.valid()) {
-		_gui_session.enqueue<Command::Title>(_view_handle, _title.constData());
-		_gui_session.execute();
+	if (_view_id.constructed()) {
+		_gui_connection.enqueue<Command::Title>(_view_id->id(), _title.constData());
+		_gui_connection.execute();
 	}
 
 	if (qnpw_verbose)
@@ -790,9 +802,11 @@ void QGenodePlatformWindow::setWindowIcon(const QIcon &icon)
 
 void QGenodePlatformWindow::raise()
 {
-	/* bring the view to the top */
-	_gui_session.enqueue<Gui::Session::Command::To_front>(_view_handle);
-	_gui_session.execute();
+	if (_view_id.constructed()) {
+		/* bring the view to the top */
+		_gui_connection.enqueue<Gui::Session::Command::Front>(_view_id->id());
+		_gui_connection.execute();
+	}
 
 	/* don't call the base class function which only prints a warning */
 }
@@ -957,13 +971,13 @@ unsigned char *QGenodePlatformWindow::framebuffer()
 	    _framebuffer_changed = false;
 
 		if (_framebuffer != nullptr)
-		    _env.rm().detach(_framebuffer);
+		    _env.rm().detach((Genode::addr_t)_framebuffer);
 
 		Genode::Region_map::Attr attr { };
 		attr.writeable = true;
 		_env.rm().attach(_framebuffer_session.dataspace(), attr).with_result(
 			[&] (Genode::Region_map::Range range) {
-				_framebuffer = range.start;	},
+				_framebuffer = (unsigned char*)range.start;	},
 			[&] (Genode::Region_map::Attach_error) {
 				_framebuffer = nullptr;
 				Genode::error("could not attach framebuffer");
@@ -991,11 +1005,13 @@ void QGenodePlatformWindow::refresh(int x, int y, int w, int h)
 				g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
 			}
 
-			typedef Gui::Session::Command Command;
-			_gui_session.enqueue<Command::Geometry>(_view_handle,
-			                             Gui::Rect(Gui::Point(g.x(), g.y()),
-			                             Gui::Area(g.width(), g.height())));
-			_gui_session.execute();
+			if (_view_id.constructed()) {
+				typedef Gui::Session::Command Command;
+				_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
+					Gui::Rect(Gui::Point(g.x(), g.y()),
+					Gui::Area(g.width(), g.height())));
+				_gui_connection.execute();
+			}
 		}
 	}
 
@@ -1031,8 +1047,13 @@ Gui::Session_client &QGenodePlatformWindow::gui_session()
 
 Gui::View_capability QGenodePlatformWindow::view_cap() const
 {
-	QGenodePlatformWindow *npw = const_cast<QGenodePlatformWindow *>(this);
-	return npw->_gui_session.view_capability(_view_handle);
+	if (_view_id.constructed()) {
+		QGenodePlatformWindow *non_const_platform_window =
+			const_cast<QGenodePlatformWindow *>(this);
+		return non_const_platform_window->_gui_connection.view_capability(_view_id->id());
+	}
+
+	return Gui::View_capability();
 }
 
 QT_END_NAMESPACE

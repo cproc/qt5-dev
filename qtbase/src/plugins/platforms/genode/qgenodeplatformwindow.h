@@ -17,6 +17,7 @@
 #define _QGENODEPLATFORMWINDOW_H_
 
 /* Genode includes */
+#include <util/reconstructible.h>
 #include <input/event.h>
 #include <gui_session/connection.h>
 
@@ -45,26 +46,29 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 
 	private:
 
-		Genode::Env                &_env;
-		QGenodeSignalProxyThread   &_signal_proxy;
-		QString                     _gui_session_label;
-		static QStringList          _gui_session_label_list;
-		Gui::Connection             _gui_session;
-		Framebuffer::Session_client _framebuffer_session;
-		unsigned char              *_framebuffer;
-		bool                        _framebuffer_changed;
-		bool                        _geometry_changed;
-		Framebuffer::Mode           _current_mode;
-		Gui::Session::View_handle   _view_handle;
-		Input::Session_client       _input_session;
-		Genode::Attached_dataspace  _ev_buf;
-		QPoint                      _mouse_position;
-		Qt::KeyboardModifiers       _keyboard_modifiers;
-		Qt::MouseButtons            _mouse_button_state;
-		QByteArray                  _title;
-		EGLDisplay                  _egl_display;
-		EGLSurface                  _egl_surface;
-		bool                        _hovered;
+		Genode::Env                 &_env;
+		QGenodeSignalProxyThread    &_signal_proxy;
+		QString                      _gui_session_label;
+		static QStringList           _gui_session_label_list;
+		Gui::Connection              _gui_connection;
+		Gui::Session_client          _gui_session;
+		Framebuffer::Session_client  _framebuffer_session;
+		unsigned char               *_framebuffer;
+		bool                         _framebuffer_changed;
+		bool                         _geometry_changed;
+		Framebuffer::Mode            _current_mode;
+		Input::Session_client        _input_session;
+		Genode::Attached_dataspace   _ev_buf;
+		QPoint                       _mouse_position;
+		Qt::KeyboardModifiers        _keyboard_modifiers;
+		Qt::MouseButtons             _mouse_button_state;
+		QByteArray                   _title;
+		EGLDisplay                   _egl_display;
+		EGLSurface                   _egl_surface { EGL_NO_SURFACE };
+		bool                         _hovered { false };
+
+		Gui::View_ref                                 _view_ref { };
+		Genode::Constructible<Gui::View_ids::Element> _view_id { };
 
 		QPoint _local_position() const
 		{
@@ -102,7 +106,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 
 		void _process_touch_events(QList<Input::Event> const &events);
 
-		Gui::Session::View_handle _create_view();
+		void _create_view();
 		void _adjust_and_set_geometry(const QRect &rect);
 
 		QString _sanitize_label(QString label);
