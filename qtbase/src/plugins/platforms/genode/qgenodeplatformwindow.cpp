@@ -524,8 +524,9 @@ void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 	QPlatformWindow::setGeometry(adjusted_rect);
 
 	Framebuffer::Mode const mode { .area = { (unsigned)adjusted_rect.width(),
-	                                         (unsigned)adjusted_rect.height() } };
-	_gui_connection.buffer(mode, false);
+	                                         (unsigned)adjusted_rect.height() },
+	                               .alpha = false };
+	_gui_connection.buffer(mode);
 
 	_current_mode = mode;
 
