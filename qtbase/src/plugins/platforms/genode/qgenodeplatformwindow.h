@@ -56,7 +56,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		unsigned char               *_framebuffer;
 		bool                         _framebuffer_changed;
 		bool                         _geometry_changed;
-		Framebuffer::Mode            _current_mode;
+		Gui::Area                    _current_window_area;
 		Input::Session_client        _input_session;
 		Genode::Attached_dataspace   _ev_buf;
 		QPoint                       _mouse_position;
@@ -95,10 +95,10 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		void _mouse_button_event(Input::Keycode, bool press);
 
 		Genode::Io_signal_handler<QGenodePlatformWindow> _input_signal_handler;
-		Genode::Io_signal_handler<QGenodePlatformWindow> _mode_changed_signal_handler;
+		Genode::Io_signal_handler<QGenodePlatformWindow> _info_changed_signal_handler;
 
 		void _handle_input();
-		void _handle_mode_changed();
+		void _handle_info_changed();
 
 		QVector<QWindowSystemInterface::TouchPoint>  _touch_points { 16 };
 		QTouchDevice                                *_touch_device;
@@ -122,7 +122,7 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 	private Q_SLOTS:
 
 		void _input();
-		void _mode_changed();
+		void _info_changed();
 
 	public:
 

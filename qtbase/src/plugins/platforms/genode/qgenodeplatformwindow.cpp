@@ -431,28 +431,35 @@ void QGenodePlatformWindow::_input()
 }
 
 
-void QGenodePlatformWindow::_handle_mode_changed()
+void QGenodePlatformWindow::_handle_info_changed()
 {
-	_signal_proxy.mode_changed();
+	_signal_proxy.info_changed();
 }
 
 
-void QGenodePlatformWindow::_mode_changed()
+void QGenodePlatformWindow::_info_changed()
 {
-	Framebuffer::Mode mode(_gui_connection.mode());
+	bool window_area_valid = false;
 
-	if ((mode.area.w == 0) && (mode.area.h == 0)) {
+	Gui::Area const window_area = _gui_connection.window().convert<Gui::Area>(
+		[&] (Gui::Rect rect) { window_area_valid = true; return rect.area; },
+		[&] (Gui::Undefined) { return Gui::Area { 1, 1 }; });
+
+	if (!window_area_valid)
+		return;
+
+	if ((window_area.w == 0) && (window_area.h == 0)) {
 		/* interpret a size of 0x0 as indication to close the window */
 		QWindowSystemInterface::handleCloseEvent(window());
 		/* don't actually set geometry to 0x0; either close or remain open */
 		return;
 	}
 
-	if (mode.area != _current_mode.area) {
+	if (window_area != _current_window_area) {
 
 		QRect geo(geometry());
-		geo.setWidth (mode.area.w);
-		geo.setHeight(mode.area.h);
+		geo.setWidth (window_area.w);
+		geo.setHeight(window_area.h);
 
 		QWindowSystemInterface::handleGeometryChange(window(), geo);
 
@@ -528,7 +535,7 @@ void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 	                               .alpha = false };
 	_gui_connection.buffer(mode);
 
-	_current_mode = mode;
+	_current_window_area = mode.area;
 
 	_framebuffer_changed = true;
 	_geometry_changed = true;
@@ -591,8 +598,8 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
   _egl_display(egl_display),
   _input_signal_handler(_env.ep(), *this,
                         &QGenodePlatformWindow::_handle_input),
-  _mode_changed_signal_handler(_env.ep(), *this,
-                               &QGenodePlatformWindow::_handle_mode_changed),
+  _info_changed_signal_handler(_env.ep(), *this,
+                               &QGenodePlatformWindow::_handle_info_changed),
   _touch_device(_init_touch_device())
 {
 	if (qnpw_verbose)
@@ -605,7 +612,7 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
 
 	_input_session.sigh(_input_signal_handler);
 
-	_gui_connection.mode_sigh(_mode_changed_signal_handler);
+	_gui_connection.info_sigh(_info_changed_signal_handler);
 
 	_adjust_and_set_geometry(geometry());
 
@@ -620,11 +627,11 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
 	        this, SLOT(_input()),
 	        Qt::QueuedConnection);
 
-	connect(&signal_proxy, SIGNAL(mode_changed_signal()),
-	        this, SLOT(_mode_changed()),
+	connect(&signal_proxy, SIGNAL(info_changed_signal()),
+	        this, SLOT(_info_changed()),
 	        Qt::QueuedConnection);
 
-	_mode_changed();
+	_info_changed();
 }
 
 QGenodePlatformWindow::~QGenodePlatformWindow()

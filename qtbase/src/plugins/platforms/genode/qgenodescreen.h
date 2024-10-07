@@ -43,22 +43,24 @@ class QGenodeScreen : public QObject, public QPlatformScreen
 		Gui::Connection           _gui { _env };
 
 		Genode::Io_signal_handler<QGenodeScreen>
-			_mode_changed_signal_handler{_env.ep(), *this,
-			                             &QGenodeScreen::_handle_mode_changed};
+			_info_changed_signal_handler{_env.ep(), *this,
+			                             &QGenodeScreen::_handle_info_changed};
 
-		void _handle_mode_changed()
+		void _handle_info_changed()
 		{
-			_signal_proxy.screen_mode_changed();
+			_signal_proxy.screen_info_changed();
 		}
 
 	private slots:
 
-		void _mode_changed()
+		void _info_changed()
 		{
-			Framebuffer::Mode const screen_mode = _gui.mode();
+			Gui::Area const screen_area = _gui.panorama().convert<Gui::Area>(
+				[&] (Gui::Rect rect) { return rect.area; },
+				[&] (Gui::Undefined) { return Gui::Area { 1, 1 }; });
 
-			_geometry.setRect(0, 0, screen_mode.area.w,
-			                        screen_mode.area.h);
+			_geometry.setRect(0, 0, screen_area.w,
+			                        screen_area.h);
 
 			QWindowSystemInterface::handleScreenGeometryChange(screen(),
 			                                                   _geometry,
@@ -72,16 +74,18 @@ class QGenodeScreen : public QObject, public QPlatformScreen
 		: _env(env),
 		  _signal_proxy(signal_proxy)
 		{
-			_gui.mode_sigh(_mode_changed_signal_handler);
+			_gui.info_sigh(_info_changed_signal_handler);
 
-			connect(&_signal_proxy, SIGNAL(screen_mode_changed_signal()),
-			        this, SLOT(_mode_changed()),
+			connect(&_signal_proxy, SIGNAL(screen_info_changed_signal()),
+			        this, SLOT(_info_changed()),
 			        Qt::QueuedConnection);
 
-			Framebuffer::Mode const scr_mode = _gui.mode();
+			Gui::Area const screen_area = _gui.panorama().convert<Gui::Area>(
+				[&] (Gui::Rect rect) { return rect.area; },
+				[&] (Gui::Undefined) { return Gui::Area { 1, 1 }; });
 
-			_geometry.setRect(0, 0, scr_mode.area.w,
-			                        scr_mode.area.h);
+			_geometry.setRect(0, 0, screen_area.w,
+			                        screen_area.h);
 		}
 
 		QRect geometry() const override { return _geometry; }
