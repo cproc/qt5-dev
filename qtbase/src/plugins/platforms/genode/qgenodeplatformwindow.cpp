@@ -462,6 +462,9 @@ void QGenodePlatformWindow::_info_changed()
 		geo.setHeight(window_area.h);
 
 		QWindowSystemInterface::handleGeometryChange(window(), geo);
+		QWindowSystemInterface::handleExposeEvent(window(),
+		                                          QRect(QPoint(0, 0),
+		                                                geo.size()));
 
 		setGeometry(geo);
 	}
@@ -755,6 +758,9 @@ void QGenodePlatformWindow::setWindowState(Qt::WindowStates state)
 	if ((state == Qt::WindowMaximized) || (state == Qt::WindowFullScreen)) {
 		QRect screen_geometry { screen()->geometry() };
 		QWindowSystemInterface::handleGeometryChange(window(), screen_geometry);
+		QWindowSystemInterface::handleExposeEvent(window(),
+		                                          QRect(QPoint(0, 0),
+		                                                screen_geometry.size()));
 		setGeometry(screen_geometry);
 	}
 }
