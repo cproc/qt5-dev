@@ -66,9 +66,11 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		EGLDisplay                   _egl_display;
 		EGLSurface                   _egl_surface { EGL_NO_SURFACE };
 		bool                         _hovered { false };
+		bool                         _raise { true };
 
 		Gui::View_ref                                 _view_ref { };
 		Genode::Constructible<Gui::View_ids::Element> _view_id { };
+		bool                                          _view_valid { false };
 
 		QPoint _local_position() const
 		{
@@ -107,6 +109,9 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		void _process_touch_events(QList<Input::Event> const &events);
 
 		void _create_view();
+		void _init_view(const QRect &geo);
+		void _destroy_view();
+
 		void _adjust_and_set_geometry(const QRect &rect);
 
 		QString _sanitize_label(QString label);

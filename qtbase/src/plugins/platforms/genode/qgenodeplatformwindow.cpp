@@ -473,23 +473,18 @@ void QGenodePlatformWindow::_info_changed()
 
 void QGenodePlatformWindow::_create_view()
 {
+	if (_view_valid)
+		return;
+
 	if (window()->type() == Qt::Desktop)
 		return;
 
 	if (window()->type() == Qt::Dialog) {
-		_view_id.construct(_view_ref, _gui_connection.view_ids);
+		if (!_view_id.constructed())
+			_view_id.construct(_view_ref, _gui_connection.view_ids);
 		_gui_connection.view(_view_id->id(), { });
+		_view_valid = true;
 		return;
-	}
-
-	/*
-	 * Popup menus and tooltips should never get a window decoration,
-	 * therefore we set a top level Qt window as 'transient parent'.
-	 */
-	if (!window()->transientParent() &&
-	    ((window()->type() == Qt::Popup) || (window()->type() == Qt::ToolTip))) {
-		QWindow *top_window = QGuiApplication::topLevelWindows().first();
-	    window()->setTransientParent(top_window);
 	}
 
 	if (window()->transientParent()) {
@@ -502,17 +497,57 @@ void QGenodePlatformWindow::_create_view()
 
 		_gui_connection.associate(parent_view_id.id(), parent_platform_window->view_cap());
 
-		_view_id.construct(_view_ref, _gui_connection.view_ids);
+		if (!_view_id.constructed())
+			_view_id.construct(_view_ref, _gui_connection.view_ids);
+
 		_gui_connection.child_view(_view_id->id(), parent_view_id.id(), { });
 
 		_gui_connection.release_view_id(parent_view_id.id());
 
+		_view_valid = true;
+
 		return;
 	}
 
-	_view_id.construct(_view_ref, _gui_connection.view_ids);
+	if (!_view_id.constructed())
+		_view_id.construct(_view_ref, _gui_connection.view_ids);
+
 	_gui_connection.view(_view_id->id(), { });
+	_view_valid = true;
 }
+
+
+void QGenodePlatformWindow::_destroy_view()
+{
+	if (!_view_valid)
+		return;
+
+	_gui_connection.destroy_view(_view_id->id());
+	_view_valid = false;
+}
+
+
+void QGenodePlatformWindow::_init_view(const QRect &geo)
+{
+	if (!_view_valid)
+		return;
+
+	typedef Gui::Session::Command Command;
+
+	_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
+		Gui::Rect(Gui::Point(geo.x(), geo.y()),
+		Gui::Area(geo.width(), geo.height())));
+
+	_gui_connection.enqueue<Command::Title>(_view_id->id(), _title.constData());
+
+	if (_raise) {
+		_gui_connection.enqueue<Command::Front>(_view_id->id());
+		_raise = false;
+	}
+
+	_gui_connection.execute();
+}
+
 
 void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 {
@@ -609,22 +644,23 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
 		if (window->transientParent())
 			qDebug() << "QGenodePlatformWindow(): child window of" << window->transientParent();
 
-	_create_view();
-
 	_gui_session_label_list.append(_gui_session_label);
 
 	_input_session.sigh(_input_signal_handler);
 
 	_gui_connection.info_sigh(_info_changed_signal_handler);
 
-	_adjust_and_set_geometry(geometry());
-
-	if (_view_id.constructed()) {
-		/* bring the view to the top */
-		typedef Gui::Session::Command Command;
-		_gui_connection.enqueue<Command::Front>(_view_id->id());
-		_gui_connection.execute();
+	/*
+	 * Popup menus and tooltips should never get a window decoration,
+	 * therefore we set a top level Qt window as 'transient parent'.
+	 */
+	if (!window->transientParent() &&
+	    ((window->type() == Qt::Popup) || (window->type() == Qt::ToolTip))) {
+		QWindow *top_window = QGuiApplication::topLevelWindows().first();
+	    window->setTransientParent(top_window);
 	}
+
+	_adjust_and_set_geometry(geometry());
 
 	connect(&signal_proxy, SIGNAL(input_signal()),
 	        this, SLOT(_input()),
@@ -679,9 +715,10 @@ void QGenodePlatformWindow::setVisible(bool visible)
 	if (qnpw_verbose)
 	    qDebug() << "QGenodePlatformWindow::setVisible(" << visible << ")";
 
-	typedef Gui::Session::Command Command;
-
 	if (visible) {
+
+		_create_view();
+
 		QRect g(geometry());
 
 		if (window()->transientParent()) {
@@ -689,12 +726,7 @@ void QGenodePlatformWindow::setVisible(bool visible)
 			g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
 		}
 
-		if (_view_id.constructed()) {
-			_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
-				Gui::Rect(Gui::Point(g.x(), g.y()),
-				Gui::Area(g.width(), g.height())));
-			_gui_connection.execute();
-		}
+		_init_view(g);
 
 		/*
 		 * 'QWindowSystemInterface::handleExposeEvent()' was previously called
@@ -716,11 +748,7 @@ void QGenodePlatformWindow::setVisible(bool visible)
 
 	} else {
 
-		if (_view_id.constructed()) {
-			_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
-			     Gui::Rect(Gui::Point(), Gui::Area(0, 0)));
-			_gui_connection.execute();
-		}
+		_destroy_view();
 
 		QWindowSystemInterface::handleExposeEvent(window(), QRegion());
 
@@ -791,7 +819,7 @@ void QGenodePlatformWindow::setWindowTitle(const QString &title)
 
 	typedef Gui::Session::Command Command;
 
-	if (_view_id.constructed()) {
+	if (_view_valid) {
 		_gui_connection.enqueue<Command::Title>(_view_id->id(), _title.constData());
 		_gui_connection.execute();
 	}
@@ -816,10 +844,12 @@ void QGenodePlatformWindow::setWindowIcon(const QIcon &icon)
 
 void QGenodePlatformWindow::raise()
 {
-	if (_view_id.constructed()) {
+	if (_view_valid) {
 		/* bring the view to the top */
 		_gui_connection.enqueue<Gui::Session::Command::Front>(_view_id->id());
 		_gui_connection.execute();
+	} else {
+		_raise = true;
 	}
 
 	/* don't call the base class function which only prints a warning */
@@ -1012,6 +1042,7 @@ void QGenodePlatformWindow::refresh(int x, int y, int w, int h)
 		_geometry_changed = false;
 
 		if (window()->isVisible()) {
+
 			QRect g(geometry());
 
 			if (window()->transientParent()) {
@@ -1019,7 +1050,7 @@ void QGenodePlatformWindow::refresh(int x, int y, int w, int h)
 				g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
 			}
 
-			if (_view_id.constructed()) {
+			if (_view_valid) {
 				typedef Gui::Session::Command Command;
 				_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
 					Gui::Rect(Gui::Point(g.x(), g.y()),
@@ -1061,7 +1092,7 @@ Gui::Session_client &QGenodePlatformWindow::gui_session()
 
 Gui::View_capability QGenodePlatformWindow::view_cap() const
 {
-	if (_view_id.constructed()) {
+	if (_view_valid) {
 		QGenodePlatformWindow *non_const_platform_window =
 			const_cast<QGenodePlatformWindow *>(this);
 		return non_const_platform_window->_gui_connection.view_capability(_view_id->id());
