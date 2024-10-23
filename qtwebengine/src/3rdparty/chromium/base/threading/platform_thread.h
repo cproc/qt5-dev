@@ -169,27 +169,31 @@ class BASE_EXPORT PlatformThread {
   // the Delegate object outlives the thread.
   static bool Create(size_t stack_size,
                      Delegate* delegate,
-                     PlatformThreadHandle* thread_handle) {
+                     PlatformThreadHandle* thread_handle,
+                     const std::string& name) {
     return CreateWithPriority(stack_size, delegate, thread_handle,
-                              ThreadPriority::NORMAL);
+                              ThreadPriority::NORMAL, name);
   }
 
   // CreateWithPriority() does the same thing as Create() except the priority of
   // the thread is set based on |priority|.
   static bool CreateWithPriority(size_t stack_size, Delegate* delegate,
                                  PlatformThreadHandle* thread_handle,
-                                 ThreadPriority priority);
+                                 ThreadPriority priority,
+                                 const std::string& name);
 
   // CreateNonJoinable() does the same thing as Create() except the thread
   // cannot be Join()'d.  Therefore, it also does not output a
   // PlatformThreadHandle.
-  static bool CreateNonJoinable(size_t stack_size, Delegate* delegate);
+  static bool CreateNonJoinable(size_t stack_size, Delegate* delegate,
+                                const std::string& name);
 
   // CreateNonJoinableWithPriority() does the same thing as CreateNonJoinable()
   // except the priority of the thread is set based on |priority|.
   static bool CreateNonJoinableWithPriority(size_t stack_size,
                                             Delegate* delegate,
-                                            ThreadPriority priority);
+                                            ThreadPriority priority,
+                                            const std::string& name);
 
   // Joins with a thread created via the Create function.  This function blocks
   // the caller until the designated thread exits.  This will invalidate

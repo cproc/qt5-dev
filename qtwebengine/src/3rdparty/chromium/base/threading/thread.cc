@@ -184,9 +184,10 @@ bool Thread::StartWithOptions(const Options& options) {
     bool success =
         options.joinable
             ? PlatformThread::CreateWithPriority(options.stack_size, this,
-                                                 &thread_, options.priority)
+                                                 &thread_, options.priority,
+                                                 name_)
             : PlatformThread::CreateNonJoinableWithPriority(
-                  options.stack_size, this, options.priority);
+                  options.stack_size, this, options.priority, name_);
     if (!success) {
       DLOG(ERROR) << "failed to create thread";
       return false;

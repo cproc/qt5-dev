@@ -49,9 +49,11 @@ void SimpleThread::StartAsync() {
   bool success =
       options_.joinable
           ? PlatformThread::CreateWithPriority(options_.stack_size, this,
-                                               &thread_, options_.priority)
+                                               &thread_, options_.priority,
+                                               name_)
           : PlatformThread::CreateNonJoinableWithPriority(
-                options_.stack_size, this, options_.priority);
+                options_.stack_size, this, options_.priority,
+                name_);
   CHECK(success);
 }
 

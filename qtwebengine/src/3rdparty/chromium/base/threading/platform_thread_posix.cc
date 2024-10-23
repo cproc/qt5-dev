@@ -38,6 +38,10 @@
 #include <sys/resource.h>
 #endif
 
+#if defined(OS_GENODE)
+#include <pthread_np.h>
+#endif
+
 namespace base {
 
 void InitThreading();
@@ -92,7 +96,8 @@ bool CreateThread(size_t stack_size,
                   bool joinable,
                   PlatformThread::Delegate* delegate,
                   PlatformThreadHandle* thread_handle,
-                  ThreadPriority priority) {
+                  ThreadPriority priority,
+                  const std::string &name) {
   DCHECK(thread_handle);
   base::InitThreading();
 
@@ -110,6 +115,10 @@ bool CreateThread(size_t stack_size,
 
   if (stack_size > 0)
     pthread_attr_setstacksize(&attributes, stack_size);
+
+#if defined(OS_GENODE)
+  pthread_attr_setname_np(&attributes, name.c_str());
+#endif
 
   std::unique_ptr<ThreadParams> params(new ThreadParams);
   params->delegate = delegate;
@@ -242,25 +251,28 @@ const char* PlatformThread::GetName() {
 // static
 bool PlatformThread::CreateWithPriority(size_t stack_size, Delegate* delegate,
                                         PlatformThreadHandle* thread_handle,
-                                        ThreadPriority priority) {
+                                        ThreadPriority priority,
+                                        const std::string& name) {
   return CreateThread(stack_size, true /* joinable thread */, delegate,
-                      thread_handle, priority);
+                      thread_handle, priority, name);
 }
 
 // static
-bool PlatformThread::CreateNonJoinable(size_t stack_size, Delegate* delegate) {
+bool PlatformThread::CreateNonJoinable(size_t stack_size, Delegate* delegate,
+                                       const std::string& name) {
   return CreateNonJoinableWithPriority(stack_size, delegate,
-                                       ThreadPriority::NORMAL);
+                                       ThreadPriority::NORMAL, name);
 }
 
 // static
 bool PlatformThread::CreateNonJoinableWithPriority(size_t stack_size,
                                                    Delegate* delegate,
-                                                   ThreadPriority priority) {
+                                                   ThreadPriority priority,
+                                                   const std::string& name) {
   PlatformThreadHandle unused;
 
   bool result = CreateThread(stack_size, false /* non-joinable thread */,
-                             delegate, &unused, priority);
+                             delegate, &unused, priority, name);
   return result;
 }
 

@@ -1159,10 +1159,10 @@ base::HistogramBase* ChromiumEnv::GetRecoveredFromErrorHistogram(
 
 class Thread : public base::PlatformThread::Delegate {
  public:
-  Thread(void (*function)(void* arg), void* arg)
+  Thread(void (*function)(void* arg), void* arg, const std::string& name)
       : function_(function), arg_(arg) {
     base::PlatformThreadHandle handle;
-    bool success = base::PlatformThread::Create(0, this, &handle);
+    bool success = base::PlatformThread::Create(0, this, &handle, name);
     DCHECK(success);
   }
   virtual ~Thread() {}
@@ -1222,7 +1222,7 @@ void ChromiumEnv::BGThread() {
 }
 
 void ChromiumEnv::StartThread(void (*function)(void* arg), void* arg) {
-  new Thread(function, arg);  // Will self-delete.
+  new Thread(function, arg, name_);  // Will self-delete.
 }
 
 LevelDBStatusValue GetLevelDBStatusUMAValue(const leveldb::Status& s) {

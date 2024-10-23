@@ -38,6 +38,10 @@
 #include "rtc_base/time_utils.h"
 #include "rtc_base/trace_event.h"
 
+#if defined(OS_GENODE)
+#include <pthread_np.h>
+#endif
+
 #if defined(WEBRTC_MAC)
 #include "rtc_base/system/cocoa_threading.h"
 
@@ -741,6 +745,10 @@ bool Thread::Start() {
 #elif defined(WEBRTC_POSIX)
   pthread_attr_t attr;
   pthread_attr_init(&attr);
+
+#if defined(OS_GENODE)
+  pthread_attr_setname_np(&attr, name_.c_str());
+#endif
 
   int error_code = pthread_create(&thread_, &attr, PreRun, this);
   if (0 != error_code) {
