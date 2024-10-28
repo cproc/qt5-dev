@@ -40,7 +40,7 @@ class QGenodeScreen : public QObject, public QPlatformScreen
 
 		QGenodeSignalProxyThread &_signal_proxy;
 
-		Gui::Connection           _gui { _env };
+		Gui::Connection           _gui { _env, "QGenodeScreen" };
 
 		Genode::Io_signal_handler<QGenodeScreen>
 			_info_changed_signal_handler{_env.ep(), *this,
