@@ -847,7 +847,7 @@ void FakeVideoCaptureDevice::BeepAndScheduleNextCapture(
 
   // Generate a synchronized beep twice per second.
   if (beep_time_ >= beep_interval) {
-    FakeAudioInputStream::BeepOnce();
+    //FakeAudioInputStream::BeepOnce();
     beep_time_ -= beep_interval;
   }
 
