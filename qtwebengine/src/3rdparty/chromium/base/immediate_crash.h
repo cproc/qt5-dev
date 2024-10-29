@@ -157,6 +157,7 @@
 // be packed in the function epilogue.
 #define IMMEDIATE_CRASH()     \
   ({                          \
+    fprintf(stderr, "Error: forced crash occurred in '%s'\n", __PRETTY_FUNCTION__); \
     WRAPPED_TRAP_SEQUENCE_(); \
     __builtin_unreachable();  \
   })
