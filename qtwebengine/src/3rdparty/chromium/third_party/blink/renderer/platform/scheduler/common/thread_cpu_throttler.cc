@@ -171,7 +171,7 @@ void ThreadCPUThrottler::ThrottlingThread::Start() {
 #if defined(USE_SIGNALS)
   InstallSignalHandler();
 #endif
-  if (!base::PlatformThread::Create(0, this, &throttling_thread_handle_)) {
+  if (!base::PlatformThread::Create(0, this, &throttling_thread_handle_, "CPUThrottlingThread")) {
     LOG(ERROR) << "Failed to create throttling thread.";
   }
 #else

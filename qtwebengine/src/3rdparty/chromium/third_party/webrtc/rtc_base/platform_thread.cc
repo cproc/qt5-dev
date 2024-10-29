@@ -19,6 +19,11 @@
 #include <algorithm>
 
 #include "rtc_base/checks.h"
+#include "rtc_base/event.h"
+
+#if defined(OS_GENODE)
+#include <pthread_np.h>
+#endif
 
 namespace rtc {
 namespace {
@@ -84,6 +89,9 @@ void PlatformThread::Start() {
   ThreadAttributes attr;
   // Set the stack stack size to 1M.
   pthread_attr_setstacksize(&attr, 1024 * 1024);
+#if defined(OS_GENODE)
+  pthread_attr_setname_np(&attr, name_.c_str());
+#endif
   RTC_CHECK_EQ(0, pthread_create(&thread_, &attr, &StartThread, this));
 #endif  // defined(WEBRTC_WIN)
 }

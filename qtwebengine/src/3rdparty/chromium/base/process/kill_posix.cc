@@ -169,7 +169,8 @@ void EnsureProcessTerminated(Process process) {
     return;
 
   PlatformThread::CreateNonJoinable(
-      0, new BackgroundReaper(std::move(process), TimeDelta::FromSeconds(2)));
+      0, new BackgroundReaper(std::move(process), TimeDelta::FromSeconds(2)),
+      "BackgroundReaper");
 }
 
 #if defined(OS_LINUX) || defined(OS_BSD)
@@ -181,7 +182,7 @@ void EnsureProcessGetsReaped(Process process) {
     return;
 
   PlatformThread::CreateNonJoinable(
-      0, new BackgroundReaper(std::move(process), TimeDelta()));
+      0, new BackgroundReaper(std::move(process), TimeDelta()), "BackgroundReaper");
 }
 #endif  // defined(OS_LINUX)
 
