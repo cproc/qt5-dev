@@ -23,12 +23,21 @@
 
 namespace media {
 
-static constexpr int capture_width  = 640;
-static constexpr int capture_height = 480;
+/* the default values are used when "/dev/.capture/info" cannot be read */
+static unsigned int capture_width  = 640;
+static unsigned int capture_height = 480;
 
 // static
 bool VideoCaptureDeviceGenode::GetVideoCaptureFormat(
     VideoCaptureFormat* video_format) {
+
+  FILE *info_file = fopen("/dev/.capture/info", "r");
+
+  if (info_file) {
+      fscanf(info_file, "<capture width=\"%u\" height=\"%u\"/>",
+             &capture_width, &capture_height);
+      fclose(info_file);
+  }
 
   VideoCaptureFormat format;
   format.pixel_format = PIXEL_FORMAT_ARGB;
@@ -147,6 +156,9 @@ void VideoCaptureDeviceGenode::OnAllocateAndStart(
 
   GetVideoCaptureFormat(&capture_format_);
 
+  capture_buf_size_ = capture_width * capture_height * sizeof(uint32_t);
+  capture_buf_ = (uint32_t*)malloc(capture_buf_size_);
+
   client_->OnStarted();
 
   capture_thread_.task_runner()->PostTask(
@@ -159,6 +171,7 @@ void VideoCaptureDeviceGenode::OnStopAndDeAllocate() {
   DCHECK(capture_thread_.task_runner()->BelongsToCurrentThread());
   client_.reset();
   next_frame_time_ = base::TimeTicks();
+  free(capture_buf_);
 }
 
 void VideoCaptureDeviceGenode::OnCaptureTask() {
@@ -169,20 +182,18 @@ void VideoCaptureDeviceGenode::OnCaptureTask() {
 
   // Give the captured frame to the client.
 
-  static uint32_t buf[capture_width*capture_height];
-
   if (file_ != -1) {
-    read(file_, buf, sizeof(buf));
+    read(file_, capture_buf_, capture_buf_size_);
   } else {
     static uint32_t val = 0xff000000;
-    for (size_t i = 0; i < sizeof(buf)/sizeof(uint32_t); i++) {
-      buf[i] = val;
+    for (size_t i = 0; i < (capture_width * capture_height); i++) {
+      capture_buf_[i] = val;
       val++;
     }
   }
 
-  int frame_size = sizeof(buf);
-  const uint8_t* frame_ptr = (const uint8_t*)buf;
+  const size_t frame_size = capture_buf_size_;
+  const uint8_t* frame_ptr = (const uint8_t*)capture_buf_;
 
   const base::TimeTicks current_time = base::TimeTicks::Now();
   if (first_ref_time_.is_null())

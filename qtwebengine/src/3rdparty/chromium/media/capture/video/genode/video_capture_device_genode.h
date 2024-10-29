@@ -64,6 +64,10 @@ class CAPTURE_EXPORT VideoCaptureDeviceGenode : public VideoCaptureDevice {
   // capture data file
   int file_ { -1 };
 
+  // capture data buffer
+  uint32_t *capture_buf_      { nullptr };
+  size_t    capture_buf_size_ { 0 };
+
   // Guards the below variables from concurrent access between methods running
   // on the main thread and |capture_thread_|.
   base::Lock lock_;
