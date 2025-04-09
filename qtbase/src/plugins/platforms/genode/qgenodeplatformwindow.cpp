@@ -1020,9 +1020,10 @@ unsigned char *QGenodePlatformWindow::framebuffer()
 		Genode::Region_map::Attr attr { };
 		attr.writeable = true;
 		_env.rm().attach(_framebuffer_session.dataspace(), attr).with_result(
-			[&] (Genode::Region_map::Range range) {
-				_framebuffer = (unsigned char*)range.start;	},
-			[&] (Genode::Region_map::Attach_error) {
+			[&] (Genode::Env::Local_rm::Attachment &a) {
+				a.deallocate = false;
+				_framebuffer = (unsigned char*)a.ptr; },
+			[&] (Genode::Env::Local_rm::Error) {
 				_framebuffer = nullptr;
 				Genode::error("could not attach framebuffer");
 			}
