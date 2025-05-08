@@ -136,12 +136,11 @@ void QGenodeClipboard::setMimeData(QMimeData *data, QClipboard::Mode mode)
 	if (!_clipboard_reporter)
 		return;
 
-	try {
-		Genode::Reporter::Xml_generator xml(*_clipboard_reporter, [&] () {
-			xml.append_sanitized(utf8text.constData(), utf8text.size()); });
-	} catch (...) {
+	_clipboard_reporter->generate([&] (Genode::Xml_generator &xml) {
+		xml.append_sanitized(utf8text.constData(), utf8text.size());
+	}).with_error([] (Genode::Buffer_error) {
 		Genode::error("could not write clipboard data");
-	}
+	});
 }
 
 QT_END_NAMESPACE
