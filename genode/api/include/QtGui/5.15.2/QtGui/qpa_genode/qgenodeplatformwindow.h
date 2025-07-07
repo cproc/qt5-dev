@@ -55,7 +55,6 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		Framebuffer::Session_client  _framebuffer_session;
 		unsigned char               *_framebuffer;
 		bool                         _framebuffer_changed;
-		bool                         _geometry_changed;
 		Framebuffer::Mode            _current_mode;
 		Input::Session_client        _input_session;
 		Genode::Attached_dataspace   _ev_buf;

@@ -576,7 +576,19 @@ void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 	_current_window_area = mode.area;
 
 	_framebuffer_changed = true;
-	_geometry_changed = true;
+
+	if (_view_valid) {
+		QRect g(geometry());
+		if (window()->transientParent()) {
+			/* translate global position to parent-relative position */
+			g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
+		}
+		typedef Gui::Session::Command Command;
+		_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
+			Gui::Rect(Gui::Point(g.x(), g.y()),
+			Gui::Area(g.width(), g.height())));
+		_gui_connection.execute();
+	}
 
 	if (_egl_surface != EGL_NO_SURFACE) {
 		eglDestroySurface(_egl_display, _egl_surface);
@@ -630,7 +642,6 @@ QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env,
   _framebuffer_session(_gui_session.framebuffer()),
   _framebuffer(nullptr),
   _framebuffer_changed(false),
-  _geometry_changed(false),
   _input_session(env.rm(), _gui_session.input()),
   _ev_buf(env.rm(), _input_session.dataspace()),
   _egl_display(egl_display),
@@ -1037,29 +1048,6 @@ void QGenodePlatformWindow::refresh(int x, int y, int w, int h)
 {
 	if (qnpw_verbose)
 	    qDebug("QGenodePlatformWindow::refresh(%d, %d, %d, %d)", x, y, w, h);
-
-	if (_geometry_changed) {
-
-		_geometry_changed = false;
-
-		if (window()->isVisible()) {
-
-			QRect g(geometry());
-
-			if (window()->transientParent()) {
-				/* translate global position to parent-relative position */
-				g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
-			}
-
-			if (_view_valid) {
-				typedef Gui::Session::Command Command;
-				_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
-					Gui::Rect(Gui::Point(g.x(), g.y()),
-					Gui::Area(g.width(), g.height())));
-				_gui_connection.execute();
-			}
-		}
-	}
 
 	_framebuffer_session.refresh(x, y, w, h);
 }
