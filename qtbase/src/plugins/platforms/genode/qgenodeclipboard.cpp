@@ -16,7 +16,7 @@
 #ifndef QT_NO_CLIPBOARD
 
 /* Genode includes */
-#include <util/xml_node.h>
+#include <base/node.h>
 
 /* Qt includes */
 #include <QMimeData>
@@ -62,7 +62,7 @@ QGenodeClipboard::QGenodeClipboard(Genode::Env &env, QGenodeSignalProxyThread &s
 
 QGenodeClipboard::~QGenodeClipboard()
 {
-	free(_decoded_clipboard_content);
+	free(_unquoted_clipboard_content);
 	delete _clipboard_ds;
 	delete _clipboard_reporter;
 }
@@ -83,43 +83,73 @@ void QGenodeClipboard::_clipboard_changed()
 QMimeData *QGenodeClipboard::mimeData(QClipboard::Mode mode)
 {
 	if (!supportsMode(mode) || !_clipboard_ds)
-		return 0;
+		return nullptr;
 
 	_clipboard_ds->update();
 
 	if (!_clipboard_ds->valid()) {
 		if (verbose)
 			Genode::error("invalid clipboard dataspace");
-		return 0;
+		return nullptr;
 	}
 
-	char *xml_data = _clipboard_ds->local_addr<char>();
+	Genode::Const_byte_range_ptr clipboard_ds_content {
+		_clipboard_ds->local_addr<char>(), _clipboard_ds->size() };
 
-	try {
-		Genode::Xml_node node(xml_data);
+	Genode::Node node(clipboard_ds_content);
 
-		if (!node.has_type("clipboard")) {
-			Genode::error("invalid clipboard xml syntax");
-			return 0;
-		}
-
-		free(_decoded_clipboard_content);
-
-		_decoded_clipboard_content = (char*)malloc(node.content_size());
-
-		if (!_decoded_clipboard_content) {
-			Genode::error("could not allocate buffer for decoded clipboard content");
-			return 0;
-		}
-
-		_mimedata->setText(QString::fromUtf8(_decoded_clipboard_content,
-		                                     node.decoded_content(_decoded_clipboard_content,
-		                                                          node.content_size())));
-
-	} catch (Genode::Xml_node::Invalid_syntax) {
-		Genode::error("invalid clipboard xml syntax");
-		return 0;
+	if (!node.has_type("clipboard")) {
+		Genode::error("invalid clipboard node syntax");
+		return nullptr;
 	}
+
+	free(_unquoted_clipboard_content);
+
+	_unquoted_clipboard_content = (char*)malloc(node.num_bytes());
+
+	if (!_unquoted_clipboard_content) {
+		Genode::error("could not allocate buffer for unquoted clipboard content");
+		return nullptr;
+	}
+
+	struct Output : Genode::Output, Genode::Noncopyable
+	{
+		struct {
+			char  *dst;
+			size_t capacity; /* remaining capacity in bytes */
+		};
+
+		void out_char(char c) override
+		{
+			if (capacity) { *dst++ = c; capacity--; }
+		}
+
+		void out_string(char const *s, size_t n) override
+		{
+			while (n-- && capacity) out_char(*s++);
+		}
+
+		Output(char *dst, size_t n) : dst(dst), capacity(n) { }
+
+	} output { _unquoted_clipboard_content, node.num_bytes() };
+
+	size_t unquoted_clipboard_content_size = 0;
+
+	bool quoted = false;
+	node.for_each_quoted_line([&] (auto const &line) {
+		quoted = true;
+		line.print(output);
+		if (!line.last) output.out_char('\n');
+	});
+	if (quoted) {
+		if (!output.capacity)
+			Genode::warning("unquoted clipboard content exceeded buffer: ", node);
+		else
+			unquoted_clipboard_content_size = node.num_bytes() - output.capacity;
+	}
+
+	_mimedata->setText(QString::fromUtf8(_unquoted_clipboard_content,
+	                                     unquoted_clipboard_content_size));
 
 	return _mimedata;
 }

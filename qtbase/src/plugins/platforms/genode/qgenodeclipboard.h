@@ -46,7 +46,7 @@ class QGenodeClipboard : public QObject, public QPlatformClipboard
 
 		Genode::Reporter *_clipboard_reporter = nullptr;
 
-		char *_decoded_clipboard_content = nullptr;
+		char *_unquoted_clipboard_content = nullptr;
 
 		QMember<QMimeData> _mimedata;
 
@@ -64,8 +64,8 @@ class QGenodeClipboard : public QObject, public QPlatformClipboard
 
 		QGenodeClipboard(Genode::Env &env, QGenodeSignalProxyThread &signal_proxy);
 		~QGenodeClipboard();
-		QMimeData *mimeData(QClipboard::Mode mode = QClipboard::Clipboard);
-		void setMimeData(QMimeData *data, QClipboard::Mode mode = QClipboard::Clipboard);
+		QMimeData *mimeData(QClipboard::Mode mode = QClipboard::Clipboard) override;
+		void setMimeData(QMimeData *data, QClipboard::Mode mode = QClipboard::Clipboard) override;
 };
 
 QT_END_NAMESPACE
