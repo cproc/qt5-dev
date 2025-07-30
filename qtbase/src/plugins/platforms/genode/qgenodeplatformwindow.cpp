@@ -319,7 +319,7 @@ void QGenodePlatformWindow::_mouse_button_event(Input::Keycode button, bool pres
 
 	QWindowSystemInterface::handleMouseEvent(window(),
 	                                         _local_position(),
-	                                         _mouse_position,
+	                                         _global_position(),
 	                                         _mouse_button_state,
 	                                         current_mouse_button,
 	                                         press ? QEvent::MouseButtonPress
@@ -389,7 +389,7 @@ void QGenodePlatformWindow::_input()
 
 			QWindowSystemInterface::handleMouseEvent(window(),
 			                                         _local_position(),
-			                                         _mouse_position,
+			                                         _global_position(),
 			                                         _mouse_button_state,
 			                                         Qt::NoButton,
 			                                         QEvent::MouseMove,
@@ -480,6 +480,10 @@ void QGenodePlatformWindow::_create_view()
 		return;
 
 	if (window()->type() == Qt::Dialog) {
+		/*
+		 * Dialogs are supposed to have a window decoration, so they
+		 * get a top-level view regardless of 'transientParent()'.
+		 */
 		if (!_view_id.constructed())
 			_view_id.construct(_view_ref, _gui_connection.view_ids);
 		_gui_connection.view(_view_id->id(), { });
@@ -536,7 +540,7 @@ void QGenodePlatformWindow::_init_view(const QRect &geo)
 
 	_gui_connection.enqueue<Command::Geometry>(_view_id->id(),
 		Gui::Rect(Gui::Point(geo.x(), geo.y()),
-		Gui::Area(geo.width(), geo.height())));
+		          Gui::Area(geo.width(), geo.height())));
 
 	_gui_connection.enqueue<Command::Title>(_view_id->id(), _title.constData());
 
@@ -553,10 +557,7 @@ void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 {
 	QRect adjusted_rect(rect);
 
-	if (!window()->transientParent()) {
-		/* Currently, top level windows must start at (0,0) */
-		adjusted_rect.moveTo(0, 0);
-	} else if (window()->type() == Qt::ToolTip) {
+	if (window()->type() == Qt::ToolTip) {
 		/* improve tooltip visibility */
 		if (adjusted_rect.topLeft().y() + adjusted_rect.height() >
 		    window()->transientParent()->geometry().height()) {
@@ -579,8 +580,11 @@ void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 
 	if (_view_valid) {
 		QRect g(geometry());
-		if (window()->transientParent()) {
-			/* translate global position to parent-relative position */
+		if (window()->transientParent() && (window()->type() != Qt::Dialog)) {
+			/*
+			 * Translate global position to parent-relative position,
+			 * except for dialogs, which don't have a parent view.
+			 */
 			g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
 		}
 		typedef Gui::Session::Command Command;
@@ -732,8 +736,11 @@ void QGenodePlatformWindow::setVisible(bool visible)
 
 		QRect g(geometry());
 
-		if (window()->transientParent()) {
-			/* translate global position to parent-relative position */
+		if (window()->transientParent() && (window()->type() != Qt::Dialog)) {
+			/*
+			 * Translate global position to parent-relative position,
+			 * except for dialogs, which don't have a parent view.
+			 */
 			g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
 		}
 

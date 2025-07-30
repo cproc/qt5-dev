@@ -71,12 +71,33 @@ class QGenodePlatformWindow : public QObject, public QPlatformWindow
 		Genode::Constructible<Gui::View_ids::Element> _view_id { };
 		bool                                          _view_valid { false };
 
-		QPoint _local_position() const
+		QPoint _global_position() const
 		{
-			return QPoint(_mouse_position.x() - geometry().x(),
-			              _mouse_position.y() - geometry().y());
+			QWindow *w = window();
+
+			if (!w->transientParent() || (w->type() == Qt::Dialog)) {
+				/*
+				 * '_mouse_position' is the global position for windows
+				 * with top-level views.
+				 */
+				return _mouse_position;
+			}
+
+			/*
+			 * '_mouse_position' is relative to the parent window
+			 * with top-level view.
+			 */
+
+			while (w->transientParent() && (w->type() != Qt::Dialog))
+				w = w->transientParent();
+
+			return w->geometry().topLeft() + _mouse_position;
 		}
 
+		QPoint _local_position() const
+		{
+			return _global_position() - geometry().topLeft();
+		}
 
 		typedef Genode::Codepoint Codepoint;
 

@@ -523,7 +523,27 @@ void QWidgetWindow::handleMouseEvent(QMouseEvent *event)
         QPointer<QWidget> activePopupWidget = QApplication::activePopupWidget();
         QPoint mapped = event->pos();
         if (activePopupWidget != m_widget)
+#ifdef Q_OS_GENODE
+            /*
+             * Prevent the false detection of "popup widget under mouse",
+             * because Qt does not know the actual position of the popup
+             * widget. Since the popup widget receives its own input events
+             * from the Gui session, there should be no need to forward this
+             * event of a different widget to the popup widget.
+             *
+             * The original problem could be reproduced with the textedit example
+             * by maximizing the size of the main window, then opening a
+             * "File open" dialog, then moving the dialog upwards to have some
+             * free space below, then opening the file type combo box and then
+             * moving the mouse pointer downwards into the main window. The
+             * highlighting of the combo box entries would move as if the combo
+             * box was under the mouse pointer even though it wasn't.
+             */
+            mapped = QPoint(-1, -1);
+#else
             mapped = activePopupWidget->mapFromGlobal(event->globalPos());
+#endif
+
         bool releaseAfter = false;
         QWidget *popupChild  = activePopupWidget->childAt(mapped);
 
